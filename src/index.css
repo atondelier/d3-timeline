@@ -1,0 +1,30 @@
+#container {
+    float:left;
+}
+#container svg {
+    font: 12px Open Sans, sans-serif;
+}
+#container .axis path,
+#container .axis line {
+    fill: none;
+    shape-rendering: optimizeSpeed;
+}
+#container .axis line {
+    stroke: #999;
+}
+#container .y.axis line {
+    stroke: #ccc;
+}
+#container rect.boundingrect {
+    stroke: black;
+    fill: none;
+}
+
+#container .timelineElement rect {
+    fill: white;
+    stroke: #555;
+}
+
+#container .bookingLabel {
+    text-anchor: left;
+}
