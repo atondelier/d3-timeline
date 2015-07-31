@@ -6,10 +6,20 @@
     <link rel="stylesheet" href="src/index.css"/>
 </head>
 <body>
-<label style="position: absolute;">
-    debug
-    <input type="checkbox" onchange="document.body.className = this.checked ? 'debug' : ''"/>
-</label>
+<div style="position: absolute;">
+    <label style="float: left">
+        debug
+        <input type="checkbox" onchange="document.body.className = this.checked ? 'debug' : ''"/>
+    </label>
+    <label style="float: left">
+        render on idle
+        <input type="checkbox" checked onchange="timeline.options.renderOnIdle = this.checked"/>
+    </label>
+    <label style="float: left">
+        culling tolerance
+        <input type="number" step="1" value="1" min="1" max="50" onkeyup="timeline.options.cullingTolerance = +this.value"/>
+    </label>
+</div>
 <div id="container"></div>
 <script src="dist/built.js"></script>
 </body>

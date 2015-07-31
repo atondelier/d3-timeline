@@ -30,4 +30,4 @@ node_modules
 .idea
 
 # Dist
-built.js
+dist

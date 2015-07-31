@@ -13,10 +13,10 @@ console.clear();
 /** @type {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} */
 var gdsData = [];
 
-function randomizeEntries(rows) {
+function randomizeEntries(rows, elements) {
     gdsData = _(0).range(rows,1).map(function(i) {
         var minutesDeltaByRow = 10 * (Math.random() * 15 >>0);
-        return { id: i, name: 'T'+(i+1), elements: _(0).range(3,1).map(function(j) {
+        return { id: i, name: 'T'+(i+1), elements: _(0).range(elements,1).map(function(j) {
             return {
                 id: (i+1)*1e2+j,
                 start: new Date(2015,7,23,10, minutesDeltaByRow+j*60),
@@ -26,7 +26,7 @@ function randomizeEntries(rows) {
     }).value()
 }
 
-randomizeEntries(20);
+randomizeEntries(50, 1);
 
 /**
  *
@@ -52,14 +52,14 @@ $(window).resize(_.debounce(function() {
 }, 100));
 
 
-var si = setInterval(function loop() {
+/*var si = setInterval(function loop() {
     loop.inc = loop.inc || 0;
     loop.inc ++;
     if (loop.inc > 2) clearInterval(si);
-    randomizeEntries(timeline.data.length + 4);
+    randomizeEntries(timeline.data.length + 4, 3);
     timeline.setData(gdsData);
     timeline.drawElements(1000);
-}, 2000);
+}, 2000);*/
 
 
 global.timeline = timeline;
