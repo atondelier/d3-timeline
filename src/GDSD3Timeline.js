@@ -8,8 +8,8 @@ import inherits from 'inherits';
  * @extends {D3Timeline}
  * @constructor
  */
-function GDSD3Timeline() {
-    D3Timeline.apply(this, arguments);
+function GDSD3Timeline(options) {
+    D3Timeline.call(this, options);
 }
 
 inherits(GDSD3Timeline, D3Timeline);

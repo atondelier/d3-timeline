@@ -2,6 +2,7 @@
 
 import regeneratorRuntime from 'babel-runtime/regenerator';
 import _ from 'lodash';
+import $ from 'jquery';
 import GDSD3Timeline from './GDSD3Timeline';
 
 console.clear();
@@ -25,7 +26,7 @@ function randomizeEntries(rows) {
     }).value()
 }
 
-randomizeEntries(4);
+randomizeEntries(20);
 
 /**
  *
@@ -38,17 +39,23 @@ var timeline = new GDSD3Timeline({
 timeline
     .toggleDrawing(false)
     .initialize()
-    .setAvailableHeight(500)
-    .setAvailableWidth(800)
+    .setAvailableWidth(innerWidth)
+    .setAvailableHeight(innerHeight)
     .setTimeRange(new Date(2015,7,23, 10), new Date(2015,7,23, 16))
     .toggleDrawing(true)
     .setData(gdsData);
+
+$(window).resize(_.debounce(function() {
+    timeline
+        .setAvailableWidth(innerWidth)
+        .setAvailableHeight(innerHeight)
+}, 100));
 
 
 var si = setInterval(function loop() {
     loop.inc = loop.inc || 0;
     loop.inc ++;
-    if (loop.inc > 5) clearInterval(si);
+    if (loop.inc > 2) clearInterval(si);
     randomizeEntries(timeline.data.length + 4);
     timeline.setData(gdsData);
     timeline.drawElements(1000);
