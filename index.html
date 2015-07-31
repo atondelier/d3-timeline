@@ -6,7 +6,11 @@
     <link rel="stylesheet" href="src/index.css"/>
 </head>
 <body>
+<label>
+    debug
+    <input type="checkbox" onchange="document.body.className = this.checked ? 'debug' : ''"/>
+</label>
 <div id="container"></div>
-<script src="built.js"></script>
+<script src="dist/built.js"></script>
 </body>
 </html>

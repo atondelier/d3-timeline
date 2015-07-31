@@ -19,7 +19,7 @@ module.exports = function(grunt) {
             },
             example: {
                 src: './src/index.js',
-                dest: 'built.js'
+                dest: './dist/built.js'
             }
         }
     });

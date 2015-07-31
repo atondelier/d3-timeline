@@ -10,6 +10,8 @@
     "grunt": "^0.4.5",
     "grunt-cli": "^0.1.13",
     "grunt-watchify": "^0.1.0",
+    "http-server": "^0.8.0",
+    "inherits": "^2.0.1",
     "jquery": "^2.1.4",
     "lodash": "^3.10.0"
   },

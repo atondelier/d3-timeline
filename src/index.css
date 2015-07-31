@@ -1,6 +1,3 @@
-#container {
-    float:left;
-}
 #container svg {
     font: 12px Open Sans, sans-serif;
 }
@@ -27,4 +24,17 @@
 
 #container .bookingLabel {
     text-anchor: left;
+}
+
+.debug g {
+    outline: 1px solid red;
+}
+.debug g g {
+    outline: 1px solid blue;
+}
+.debug g g g  {
+    outline: 1px solid green;
+}
+.debug g g g g {
+    outline: 1px solid yellow;
 }
