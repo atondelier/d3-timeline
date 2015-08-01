@@ -26,7 +26,7 @@ function randomizeEntries(rows, elements) {
     }).value();
 }
 
-randomizeEntries(50, 1);
+randomizeEntries(30, 3);
 
 /**
  *
@@ -52,14 +52,43 @@ $(window).resize(_.debounce(function() {
 }, 100));
 
 
-/*var si = setInterval(function loop() {
+var si = setInterval(function loop() {
     loop.inc = loop.inc || 0;
     loop.inc ++;
     if (loop.inc > 2) clearInterval(si);
     randomizeEntries(timeline.data.length + 4, 3);
-    timeline.setData(gdsData);
-    timeline.drawElements(1000);
-}, 2000);*/
+    timeline.setData(gdsData, 500);
+}, 2000);
 
 
 global.timeline = timeline;
+
+var form = document.forms.timelineOptions;
+[].slice.call(form.elements, 0).forEach(function(input) {
+    if (input.className === 'ignore') {
+        return;
+    }
+    var optionName = input.name;
+    var optionValue = timeline.options[optionName];
+
+    switch(input.type) {
+        case 'checkbox':
+            input.checked = optionValue;
+            input.onchange = function() {
+                timeline.options[optionName] = input.checked;
+            };
+            break;
+        case 'number':
+            input.value = optionValue;
+            input.onchange = function() {
+                timeline.options[optionName] = +input.value;
+            };
+            break;
+        default:
+            input.value = optionValue;
+            input.onchange = function() {
+                timeline.options[optionName] = input.value;
+            };
+            break;
+    }
+});

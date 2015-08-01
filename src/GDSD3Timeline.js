@@ -25,6 +25,7 @@ GDSD3Timeline.prototype.elementEnter = function(selection) {
     selection
         .append('text')
         .classed('bookingLabel', true)
+        .text('test')
         .attr({
             dx: 2,
             dy: 20

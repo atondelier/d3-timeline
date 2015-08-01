@@ -4,7 +4,7 @@
 #container .axis path,
 #container .axis line {
     fill: none;
-    shape-rendering: optimizeSpeed;
+    shape-rendering: crispEdges;
 }
 #container .axis line {
     stroke: #999;
@@ -12,9 +12,13 @@
 #container .y.axis line {
     stroke: #ccc;
 }
+#container rect.contactrect {
+    stroke-width: 0;
+    fill: transparent;
+}
 #container rect.boundingrect {
     stroke: black;
-    /*fill: none;*/
+    fill: none;
 }
 
 #container .timelineElement rect {
@@ -37,4 +41,10 @@
 }
 .debug g g g g {
     outline: 1px solid yellow;
+}
+
+form label {
+    border: 1px solid lightgrey;
+    margin: 0 3px;
+    background-color: rgba(88, 148, 66, 0.3);
 }

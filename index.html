@@ -6,20 +6,28 @@
     <link rel="stylesheet" href="src/index.css"/>
 </head>
 <body>
-<div style="position: absolute;">
+<form style="position: absolute;" name="timelineOptions">
     <label style="float: left">
         debug
-        <input type="checkbox" onchange="document.body.className = this.checked ? 'debug' : ''"/>
+        <input type="checkbox" class="ignore" name="debug" onchange="document.body.className = this.checked ? 'debug' : ''"/>
     </label>
     <label style="float: left">
         render on idle
-        <input type="checkbox" checked onchange="timeline.options.renderOnIdle = this.checked"/>
+        <input type="checkbox" name="renderOnIdle"/>
     </label>
     <label style="float: left">
         culling tolerance
-        <input type="number" step="1" value="1" min="1" max="50" onkeyup="timeline.options.cullingTolerance = +this.value"/>
+        <input type="number" name="cullingTolerance" step="1" min="1" max="50"/>
     </label>
-</div>
+    <label style="float: left">
+        hide ticks on zoom
+        <input type="checkbox" name="hideTicksOnZoom"/>
+    </label>
+    <label style="float: left">
+        hide ticks on drag
+        <input type="checkbox" name="hideTicksOnDrag"/>
+    </label>
+</form>
 <div id="container"></div>
 <script src="dist/built.js"></script>
 </body>
