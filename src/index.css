@@ -1,5 +1,6 @@
 #container svg {
     font: 12px Open Sans, sans-serif;
+    background: #555;
 }
 #container .axis path,
 #container .axis line {
@@ -7,10 +8,10 @@
     shape-rendering: crispEdges;
 }
 #container .axis line {
-    stroke: #999;
+    stroke: #111;
 }
 #container .y.axis line {
-    stroke: #ccc;
+    stroke: #222;
 }
 #container rect.contactrect {
     stroke-width: 0;
@@ -21,9 +22,18 @@
     fill: none;
 }
 
+#container rect.backgroundrect {
+    stroke: black;
+    fill: #333;
+}
+
 #container .timelineElement rect {
-    fill: white;
+    fill: #111;
     stroke: #555;
+}
+
+#container .timelineElement text {
+    stroke: #777;
 }
 
 #container .bookingLabel {
@@ -46,5 +56,16 @@
 form label {
     border: 1px solid lightgrey;
     margin: 0 3px;
-    background-color: rgba(88, 148, 66, 0.3);
+    background-color: #589442;
+    opacity: 0.3;
+}
+
+form label:hover, form label:focus {
+    opacity: 1;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: black;
 }

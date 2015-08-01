@@ -32,7 +32,7 @@ function D3Timeline(options) {
         bottom: 50,
         left: this.options.yAxisWidth
     };
-    
+
     /** @type {Number} */
     this.yScale = 0.0;
 
@@ -145,7 +145,7 @@ D3Timeline.prototype.defaults = {
     container: 'body',
     cullingTolerance: 1,
     renderOnIdle: true,
-    flattenRowElements: false, // @todo: make it dynamic
+    flattenRowElements: true, // @todo: make it dynamic
     hideTicksOnZoom: true,
     hideTicksOnDrag: true
 };
@@ -161,11 +161,17 @@ D3Timeline.prototype.initialize = function() {
     this.elements.defs = this.container.append('defs');
 
     // clip rect in defs
-    var clipId = 'bodyClip' + D3Timeline.instancesCount;
+    var clipId = 'timelineBodyClipPath_' + D3Timeline.instancesCount;
     this.elements.clip = this.elements.defs.append('clipPath')
         .property('id', clipId);
     this.elements.clip
         .append('rect');
+
+
+    // surrounding rect
+    this.container.append('rect')
+        .attr({ x: this.margin.left, y: this.margin.top })
+        .classed('backgroundrect', true);
 
     // axises containers
     this.elements.xAxisContainer = this.container.append('g')
@@ -299,13 +305,19 @@ D3Timeline.prototype.handleDragging = function() {
     this._lastTranslate = updatedT;
 },
 
-D3Timeline.prototype.toggleDrawing = function(active) {
+    D3Timeline.prototype.toggleDrawing = function(active) {
 
-    this._preventDrawing = typeof active === 'boolean' ? !active : !this._preventDrawing;
+        this._preventDrawing = typeof active === 'boolean' ? !active : !this._preventDrawing;
 
-    return this;
-};
+        return this;
+    };
 
+/**
+ *
+ * @param {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} data
+ * @param {Number} [transitionDuration]
+ * @returns {D3Timeline}
+ */
 D3Timeline.prototype.setData = function(data, transitionDuration) {
 
     this._dataChangeCount += 1;
@@ -414,6 +426,7 @@ D3Timeline.prototype.updateX = function() {
 
     this.elements.body.select('rect.boundingrect').attr('width', this.dimensions.width);
     this.elements.body.select('rect.contactrect').attr('width', this.dimensions.width);
+    this.container.select('rect.backgroundrect').attr('width', this.dimensions.width);
     this.elements.clip.select('rect').attr('width', this.dimensions.width);
 
     return this;
@@ -454,7 +467,7 @@ D3Timeline.prototype.drawXAxis = function(transitionDuration, skipTicks) {
         .innerTickSize(skipTicks ? 0 : -this.dimensions.width);
 
     var self = this;
-    
+
     if (this._xAxisAF) {
         this.cancelAnimationFrame(this._xAxisAF);
     }
@@ -494,9 +507,9 @@ D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTick
 
     this.axises.x
         .innerTickSize(skipTicks ? 0 : -this.dimensions.height);
-    
+
     var self = this;
-    
+
     if (this._yAxisAF) {
         this.cancelAnimationFrame(this._yAxisAF);
     }
@@ -761,6 +774,7 @@ D3Timeline.prototype.updateY = function() {
     // update inner rect height
     this.elements.body.select('rect.boundingrect').attr('height', this.dimensions.height);
     this.elements.body.select('rect.contactrect').attr('height', this.dimensions.height);
+    this.container.select('rect.backgroundrect').attr('height', this.dimensions.height);
     this.elements.clip.select('rect').attr('height', this.dimensions.height);
 
     this.stopElementTransition();

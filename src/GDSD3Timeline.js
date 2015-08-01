@@ -2,6 +2,7 @@
 
 import D3Timeline from './D3Timeline';
 import inherits from 'inherits';
+import $ from 'jquery';
 
 /**
  *
@@ -14,13 +15,49 @@ function GDSD3Timeline(options) {
 
 inherits(GDSD3Timeline, D3Timeline);
 
+GDSD3Timeline.prototype.defaults = $.extend(true, {}, D3Timeline.prototype.defaults, {
+    clipElement: true
+});
+
+GDSD3Timeline.prototype.generateClipPathId = function(d) {
+    return  'timelineElementClipPath_' + d.id;
+};
+
+GDSD3Timeline.prototype.generateClipRectLink = function(d) {
+    return  '#' + this.generateClipPathId(d);
+};
+
+GDSD3Timeline.prototype.generateClipPathLink = function(d) {
+    return  'url(#' + this.generateClipPathId(d) + ')';
+};
+
+GDSD3Timeline.prototype.generateClipRectId = function(d) {
+    return  'timelineElementClipPath_' + d.id;
+};
+
 GDSD3Timeline.prototype.elementEnter = function(selection) {
 
-    selection
+    var self = this;
+
+    var elementHeight = this.options.rowHeight - this.options.rowPadding * 2;
+
+    var rect = selection
         .append('rect')
-        .attr({
-            height: this.options.rowHeight - this.options.rowPadding * 2
-        });
+        .attr('height', elementHeight);
+
+    if (this.options.clipElement) {
+
+        selection
+            .attr('clip-path', this.generateClipPathLink.bind(this));
+
+        rect
+            .property('id', this.generateClipRectId.bind(this));
+
+        selection.append('clipPath')
+            .property('id', this.generateClipPathId.bind(this))
+            .append('use')
+            .attr('xlink:href', this.generateClipRectLink.bind(this));
+    }
 
     selection
         .append('text')
@@ -28,7 +65,7 @@ GDSD3Timeline.prototype.elementEnter = function(selection) {
         .text('test')
         .attr({
             dx: 2,
-            dy: 20
+            dy: this.options.rowHeight/2 + 4
         });
 
 };
@@ -46,9 +83,10 @@ GDSD3Timeline.prototype.elementUpdate = function(selection) {
             }
         });
 
+
     selection
         .select('text')
-        .text(d => d.id);
+        .text(d => d.card.name);
 
 };
 

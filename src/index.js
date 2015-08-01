@@ -4,13 +4,9 @@ import regeneratorRuntime from 'babel-runtime/regenerator';
 import _ from 'lodash';
 import $ from 'jquery';
 import GDSD3Timeline from './GDSD3Timeline';
-
-console.clear();
-
-// external variables
+import Faker from 'Faker';
 
 
-/** @type {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} */
 var gdsData = [];
 
 function randomizeEntries(rows, elements) {
@@ -20,7 +16,8 @@ function randomizeEntries(rows, elements) {
             return {
                 id: (i+1)*1e2+j,
                 start: new Date(2015,7,23,10, minutesDeltaByRow+j*60),
-                end: new Date(2015,7,23,10, minutesDeltaByRow+j*60+(20 + Math.random()*40 >>0))
+                end: new Date(2015,7,23,10, minutesDeltaByRow+j*60+(20 + Math.random()*40 >>0)),
+                card: Faker.Helpers.createCard()
             };
         }).value() };
     }).value();
@@ -40,7 +37,7 @@ timeline
     .toggleDrawing(false)
     .initialize()
     .setAvailableWidth(innerWidth)
-    .setAvailableHeight(innerHeight)
+    .setAvailableHeight(innerHeight-5)
     .setTimeRange(new Date(2015,7,23, 10), new Date(2015,7,23, 16))
     .toggleDrawing(true)
     .setData(gdsData);
@@ -48,7 +45,7 @@ timeline
 $(window).resize(_.debounce(function() {
     timeline
         .setAvailableWidth(innerWidth)
-        .setAvailableHeight(innerHeight)
+        .setAvailableHeight(innerHeight-5)
 }, 100));
 
 
