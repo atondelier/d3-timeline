@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Timeline POC</title>
+    <link rel="stylesheet" href="src/index.css"/>
+</head>
+<body>
+<form style="position: absolute;" name="timelineOptions">
+    <label style="float: left">
+        debug
+        <input type="checkbox" class="ignore" name="debug" onchange="document.body.className = this.checked ? 'debug' : ''"/>
+    </label>
+    <label style="float: left">
+        render on idle
+        <input type="checkbox" name="renderOnIdle"/>
+    </label>
+    <label style="float: left">
+        culling tolerance
+        <input type="number" name="cullingTolerance" step="1" min="1" max="50"/>
+    </label>
+    <label style="float: left">
+        hide ticks on zoom
+        <input type="checkbox" name="hideTicksOnZoom"/>
+    </label>
+    <label style="float: left">
+        hide ticks on drag
+        <input type="checkbox" name="hideTicksOnDrag"/>
+    </label>
+</form>
+<div id="container"></div>
+<script src="dist/built.js"></script>
+</body>
+</html>

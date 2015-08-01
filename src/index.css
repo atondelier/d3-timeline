@@ -1,0 +1,71 @@
+#container svg {
+    font: 12px Open Sans, sans-serif;
+    background: #555;
+}
+#container .axis path,
+#container .axis line {
+    fill: none;
+    shape-rendering: crispEdges;
+}
+#container .axis line {
+    stroke: #111;
+}
+#container .y.axis line {
+    stroke: #222;
+}
+#container rect.contactrect {
+    stroke-width: 0;
+    fill: transparent;
+}
+#container rect.boundingrect {
+    stroke: black;
+    fill: none;
+}
+
+#container rect.backgroundrect {
+    stroke: black;
+    fill: #333;
+}
+
+#container .timelineElement rect {
+    fill: #111;
+    stroke: #555;
+}
+
+#container .timelineElement text {
+    stroke: #777;
+}
+
+#container .bookingLabel {
+    text-anchor: left;
+}
+
+.debug g {
+    outline: 1px solid red;
+}
+.debug g g {
+    outline: 1px solid blue;
+}
+.debug g g g  {
+    outline: 1px solid green;
+}
+.debug g g g g {
+    outline: 1px solid yellow;
+}
+
+form label {
+    border: 1px solid lightgrey;
+    margin: 0 3px;
+    background-color: #589442;
+    opacity: 0.3;
+}
+
+form label:hover, form label:focus {
+    opacity: 1;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: black;
+}
