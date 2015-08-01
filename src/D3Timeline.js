@@ -7,7 +7,7 @@ import d3 from 'd3';
 import $ from 'jquery';
 
 /**
- * @typedef {{xAxisHeight: number, yAxisWidth: number, maxBodyHeight: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
+ * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
  */
 
 /**
@@ -125,7 +125,6 @@ function D3Timeline(options) {
 D3Timeline.prototype.defaults = {
     xAxisHeight: 50,
     yAxisWidth: 50,
-    maxBodyHeight: 500,
     rowHeight: 30,
     rowPadding: 5,
     axisConfigs: [
@@ -170,25 +169,20 @@ D3Timeline.prototype.initialize = function() {
 
     // surrounding rect
     this.container.append('rect')
-        .attr({ x: this.margin.left, y: this.margin.top })
         .classed('backgroundrect', true);
 
     // axises containers
     this.elements.xAxisContainer = this.container.append('g')
-        .attr('class', 'x axis')
-        .attr('transform', 'translate(' + this.options.yAxisWidth + ',' + this.options.xAxisHeight + ')');
+        .attr('class', 'x axis');
 
     this.elements.x2AxisContainer = this.container.append('g')
-        .attr('class', 'x2 axis')
-        .attr('transform', 'translate(' + this.options.yAxisWidth + ',' + this.options.xAxisHeight + ')');
+        .attr('class', 'x2 axis');
 
     this.elements.yAxisContainer = this.container.append('g')
-        .attr('class', 'y axis')
-        .attr('transform', 'translate(' + this.options.xAxisHeight + ',' + this.options.yAxisWidth + ')');
+        .attr('class', 'y axis');
 
     // body container inner container and surrounding rect
     this.elements.body = this.container.append('g')
-        .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')')
         .attr('clip-path', 'url(#' + clipId + ')');
 
     // surrounding rect
@@ -202,10 +196,51 @@ D3Timeline.prototype.initialize = function() {
     this.elements.body.append('rect')
         .classed('boundingrect', true);
 
+    this.updateMargins();
+
     this.elements.body.call(this.behaviors.pan);
     this.elements.body.call(this.behaviors.zoom);
 
     return this;
+};
+
+D3Timeline.prototype.updateMargins = function(updateDimensions) {
+
+    this.margin = {
+        top: this.options.xAxisHeight,
+        right: 50,
+        bottom: 50,
+        left: this.options.yAxisWidth
+    };
+
+    this.dimensions.width = this._lastAvailableWidth - this.margin.left - this.margin.right;
+    this._maxBodyHeight = this._lastAvailableHeight - this.margin.top - this.margin.bottom;
+
+    var contentPosition = { x: this.margin.left, y: this.margin.top };
+    var contentTransform = 'translate(' + this.margin.left + ',' + this.margin.top + ')';
+
+    this.container.select('rect.backgroundrect')
+        .attr(contentPosition);
+    this.container.select('rect.contactrect')
+        .attr(contentPosition);
+
+    this.elements.body
+        .attr('transform', contentTransform);
+
+    this.elements.xAxisContainer
+        .attr('transform', contentTransform);
+
+    this.elements.x2AxisContainer
+        .attr('transform', contentTransform);
+
+    this.elements.yAxisContainer
+        .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
+
+    if (updateDimensions) {
+        this.updateX();
+        this.updateY();
+    }
+
 };
 
 D3Timeline.prototype.destroy = function() {
@@ -377,7 +412,7 @@ D3Timeline.prototype.setAvailableWidth = function(availableWidth) {
     var isAvailableWidthChanging = availableWidth !== this._lastAvailableWidth;
     this._lastAvailableWidth = availableWidth;
 
-    this.dimensions.width = availableWidth - this.margin.left - this.margin.right;
+    this.dimensions.width = this._lastAvailableWidth - this.margin.left - this.margin.right;
 
     if (isAvailableWidthChanging || this._dimensionsChangeCount === 1) {
         this
@@ -397,7 +432,7 @@ D3Timeline.prototype.setAvailableHeight = function(availableHeight) {
     var isAvailableHeightChanging = availableHeight !== this._lastAvailableHeight;
     this._lastAvailableHeight = availableHeight;
 
-    this.options.maxBodyHeight = availableHeight - this.margin.top - this.margin.bottom;
+    this._maxBodyHeight = this._lastAvailableHeight - this.margin.top - this.margin.bottom;
 
     if (isAvailableHeightChanging || this._dimensionsChangeCount === 1) {
         this
@@ -746,7 +781,7 @@ D3Timeline.prototype.updateY = function() {
     var elementsRange = [0, elementAmount];
 
     // compute new height
-    this.dimensions.height = Math.min(this.data.length * 30, this.options.maxBodyHeight);
+    this.dimensions.height = Math.min(this.data.length * 30, this._maxBodyHeight);
 
     // compute new Y scale
     this.yScale = this.options.rowHeight / this.dimensions.height * elementAmount;
