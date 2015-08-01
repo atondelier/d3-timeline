@@ -14,7 +14,7 @@
 }
 #container rect.boundingrect {
     stroke: black;
-    fill: none;
+    /*fill: none;*/
 }
 
 #container .timelineElement rect {

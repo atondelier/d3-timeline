@@ -23,7 +23,7 @@ function randomizeEntries(rows, elements) {
                 end: new Date(2015,7,23,10, minutesDeltaByRow+j*60+(20 + Math.random()*40 >>0))
             };
         }).value() };
-    }).value()
+    }).value();
 }
 
 randomizeEntries(50, 1);

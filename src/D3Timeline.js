@@ -85,7 +85,7 @@ function D3Timeline(options) {
             })
     };
 
-    this.behaviors = {
+    /*this.behaviors = {
 
         // zoom X with ctrlkey+wheel & pan X&Y
         zoom: d3.behavior.zoom()
@@ -102,7 +102,98 @@ function D3Timeline(options) {
         pan: d3.behavior.zoom()
             .y(this.scales.y)
 
+    };*/
+
+    var lastTranslate;
+    var lastScale;
+
+    this.behaviors = {
+        zoom: d3.behavior.zoom()
+            .scaleExtent([1, 10])
+            .on('zoom', function handleZooming() {
+                if (!d3.event.sourceEvent.ctrlKey) {
+                    self.behaviors.zoom.translate(lastTranslate);
+                    self.behaviors.zoom.scale(lastScale);
+                    if (d3.event.sourceEvent.type === 'wheel') {
+                        handleWheeling();
+                    }
+                    return;
+                }
+
+                var t = self.behaviors.zoom.translate();
+                var updatedT = [t[0], lastTranslate[1]];
+
+                updatedT = self._clampTranslationWithScale(updatedT, [self.behaviors.zoom.scale(), self.behaviors.zoomY.scale()]);
+
+                self.behaviors.zoom.translate(updatedT);
+                self.behaviors.zoomX.translate(updatedT);
+                self.behaviors.zoomX.scale(self.behaviors.zoom.scale());
+
+                draw(true);
+
+                lastTranslate = updatedT;
+                lastScale = self.behaviors.zoom.scale();
+            })
+            .on('zoomend', function() {
+                self.elements.innerContainer.attr('transform', '');
+                self.drawElements();
+            }),
+        zoomX: d3.behavior.zoom()
+            .x(this.scales.x)
+            .scale(1)
+            .scaleExtent([1, 10]),
+        zoomY: d3.behavior.zoom()
+            .y(this.scales.y)
+            .scale(1)
+            .scaleExtent([1, 1]),
+        pan: d3.behavior.drag()
+            .on('drag', function handleDragging() {
+
+                if (d3.event.sourceEvent.changedTouches && d3.event.sourceEvent.changedTouches.length >= 2) {
+                    return;
+                }
+
+                var t = self.behaviors.zoom.translate();
+                var updatedT = [t[0] + d3.event.dx, t[1] + d3.event.dy];
+
+                updatedT = self._clampTranslationWithScale(updatedT, [self.behaviors.zoom.scale(), self.behaviors.zoomY.scale()]);
+
+                self.behaviors.zoom.translate(updatedT);
+                self.behaviors.zoomX.translate(updatedT);
+                self.behaviors.zoomX.scale(self.behaviors.zoom.scale());
+                self.behaviors.zoomY.translate(updatedT);
+
+                draw();
+
+                lastTranslate = updatedT;
+            })
     };
+
+    lastTranslate = self.behaviors.zoom.translate();
+    lastScale = self.behaviors.zoom.scale();
+
+    function handleWheeling() {
+
+        var t = self.behaviors.zoom.translate();
+        var updatedT = [t[0], t[1] + d3.event.sourceEvent.deltaY];
+
+        updatedT = self._clampTranslationWithScale(updatedT, [self.behaviors.zoom.scale(), self.behaviors.zoomY.scale()]);
+
+        self.behaviors.zoom.translate(updatedT);
+        self.behaviors.zoomY.translate(updatedT);
+
+        draw();
+
+        lastTranslate = updatedT;
+    }
+
+    function draw(draw) {
+//        draw= true;
+        draw ? self.drawElements() : self.translateElements(self.behaviors.zoom.translate(), lastTranslate);
+        self.drawYAxis();
+        self.updateXAxisInterval();
+        self.drawXAxis();
+    }
 
     this._lastXScale = this.behaviors.zoom.scale();
     this._lastZoomTranslate = this.behaviors.zoom.translate();
@@ -144,7 +235,8 @@ D3Timeline.prototype.defaults = {
     ],
     container: 'body',
     cullingTolerance: 1,
-    renderOnIdle: true
+    renderOnIdle: true,
+    flattenRowElements: true
 };
 
 D3Timeline.prototype.initialize = function() {
@@ -184,9 +276,6 @@ D3Timeline.prototype.initialize = function() {
         })
         .attr('clip-path', 'url(#bodyClip)');
 
-    // inner container
-    this.elements.innerContainer = this.elements.body.append('g');
-
     // surrounding rect
     this.elements.body.append('rect')
         .attr({
@@ -194,7 +283,17 @@ D3Timeline.prototype.initialize = function() {
         })
         .classed('boundingrect', true);
 
-    this.container.call(this.behaviors.zoom);
+    // inner container
+    this.elements.innerContainer = this.elements.body.append('g');
+
+
+    this.elements.body.call(this.behaviors.pan);
+    this.elements.body.call(this.behaviors.zoom);
+
+    //@todo do sth with this
+    /*$(this.container[0]).on('mousewheel', function(){
+        event.preventDefault();
+    });*/
 
     return this;
 };
@@ -205,7 +304,7 @@ D3Timeline.prototype.destroy = function() {
     this.behaviors.zoom.on('zoom', null);
 
     // remove dom listeners
-    this.container.on('.zoom', null);
+    this.elements.body.on('.zoom', null);
 
     // remove references
     this.container = null;
@@ -213,12 +312,18 @@ D3Timeline.prototype.destroy = function() {
     this.scales = null;
     this.axises = null;
     this.behaviors = null;
+    this.data = null;
+    this.flattenedData = null;
 };
 
 /**
  * pan X/Y & zoom X handler (clamped pan Y when wheel is pressed without ctrl, zoom X and pan X/Y otherwise)
  */
 D3Timeline.prototype.handleZooming = function() {
+
+    console.log('should not call this handleZooming');
+
+    var currentTranslateY = this.behaviors.pan.translate()[1];
 
     if (this._preventZooming) {
         this.behaviors.zoom.translate(this._lastZoomTranslate);
@@ -239,12 +344,16 @@ D3Timeline.prototype.handleZooming = function() {
 
     var clampedTranslate = this._clampTranslationWithScale(this.behaviors.zoom.translate(), [this.behaviors.zoom.scale(), this.behaviors.pan.scale()]);
 
-    this.behaviors.zoom.translate(clampedTranslate);
-    this.behaviors.pan.translate(clampedTranslate);
-
     var isScaleChanging = this.behaviors.zoom.scale() !== this._lastXScale;
     var isXChanging = clampedTranslate[0] !== this._lastZoomTranslate[0];
     var isYChanging = clampedTranslate[1] !== this._lastZoomTranslate[1];
+
+    if (isScaleChanging || (!isXChanging && !isYChanging) || sourceEvent.type == 'wheel' || (sourceEvent.changedTouches && sourceEvent.changedTouches.length >= 2)) {
+        clampedTranslate[1] = currentTranslateY;
+    }
+
+    this.behaviors.zoom.translate(clampedTranslate);
+    this.behaviors.pan.translate(clampedTranslate);
 
     if (isYChanging) {
         this.drawYAxis();
@@ -276,6 +385,7 @@ D3Timeline.prototype.handleZoomingEnd = function() {
  * wheel handler (clamped pan Y)
  */
 D3Timeline.prototype.handleWheeling = function() {
+    console.log('should not call this handleWheeling');
 
     var event = d3.event.sourceEvent;
     var translation = this.behaviors.pan.translate();
@@ -312,6 +422,17 @@ D3Timeline.prototype.setData = function(data) {
             .updateY()
             .drawXAxis()
             .drawYAxis();
+    }
+
+    if (this.options.flattenRowElements) {
+        this.flattenedData = _(this.data).map(function(d, i) {
+            _.each(d.elements, function(e, j) {
+                e.rowIndex = i;
+            });
+            return d.elements;
+        }).flatten().value();
+    } else {
+        this.flattenedData = [];
     }
 
     this.drawElements();
@@ -390,7 +511,7 @@ D3Timeline.prototype.updateX = function() {
     this.axises.y
         .innerTickSize(-this.dimensions.width);
 
-    this.behaviors.zoom
+    this.behaviors.zoomX
         .x(this.scales.x);
 
     this.elements.body.select('rect.boundingrect').attr('width', this.dimensions.width);
@@ -498,6 +619,14 @@ D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration) {
 };
 
 D3Timeline.prototype.drawElements = function(transitionDuration, skipX) {
+    if (this.options.flattenRowElements) {
+        return this.drawFlattenedElements(transitionDuration, skipX);
+    } else {
+        return this.drawGroupedElements(transitionDuration, skipX);
+    }
+}
+
+D3Timeline.prototype.drawGroupedElements = function(transitionDuration, skipX) {
 
     if (this._preventDrawing) {
         return this;
@@ -530,7 +659,8 @@ D3Timeline.prototype.drawElements = function(transitionDuration, skipX) {
 
             var g = d3.select(this);
 
-            var isInBody = i >= domainStart - cullingTolerance && i < domainEnd + cullingTolerance - 1;
+            //@todo do sth with this
+            var isInBody = true;//i >= domainStart - cullingTolerance && i < domainEnd + cullingTolerance - 1;
             var previousDisplay = g.style('display');
 
             g.style('display', isInBody ? '' : 'none');
@@ -562,6 +692,76 @@ D3Timeline.prototype.drawElements = function(transitionDuration, skipX) {
             if (!skipX || previousDisplay === 'none') {
                 var updatingSG = self._wrapWithAnimation(sg, transitionDuration)
                     .attr('transform', self.moveElement.bind(self));
+
+                updatingSG
+                    .call(self.elementUpdate.bind(self))
+            }
+        });
+
+        self._currentElementsGroupTranslate = [0.0, 0.0];
+
+    });
+
+    return this;
+};
+
+D3Timeline.prototype.drawFlattenedElements = function(transitionDuration, skipX) {
+
+    if (this._preventDrawing) {
+        return this;
+    }
+
+    var self = this;
+
+    if (this._elementsAF) {
+        this.cancelAnimationFrame(this._elementsAF)
+    }
+
+    this._elementsAF = this.requestAnimationFrame(function() {
+
+        var domain = self.scales.y.domain();
+        var domainStart = domain[0];
+        var domainEnd = domain[1];
+        var cullingTolerance = self.options.cullingTolerance;
+
+        var g = self.elements.innerContainer.selectAll('g.timelineElement')
+            .data(self.flattenedData, self._getter('id'));
+
+        g.exit().remove();
+
+        g.enter().append('g')
+            .attr('class', 'timelineElement')
+
+        g.each(function(d) {
+
+            var g = d3.select(this);
+
+            // @todo do sth here
+            var isInBody = true;//d.rowIndex >= domainStart - cullingTolerance && d.rowIndex < domainEnd + cullingTolerance - 1;
+            var previouslyHidden = g.style('display') === 'none';
+
+            if (isInBody && previouslyHidden) {
+                g.style('display', '');
+            } else if (!isInBody && !previouslyHidden) {
+                g.style('display', 'none');
+            }
+
+            if (!isInBody) return;
+
+            if (!d._entered) {
+                d._entered = true;
+                g
+                    .call(self.elementEnter.bind(self))
+            }
+
+            g
+                .attr('transform', function(d) {
+                    return 'translate(' + self.scales.x(d.start) + ',' + self.scales.y(d.rowIndex) + ')';
+                });
+
+            // don't allow skipping X update if the element was previously hidden
+            if (!skipX || previouslyHidden) {
+                var updatingSG = self._wrapWithAnimation(g, transitionDuration);
 
                 updatingSG
                     .call(self.elementUpdate.bind(self))
@@ -629,7 +829,8 @@ D3Timeline.prototype.updateY = function() {
         .domain(elementsRange)
         .range([0, this.dimensions.height]);
 
-    this.behaviors.pan
+    //@todo change this
+    this.behaviors.zoomY
         .y(this.scales.y)
         .scale(this.yScale);
 
