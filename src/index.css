@@ -40,28 +40,17 @@
     text-anchor: left;
 }
 
-.debug g {
+.debug-outlineGroups g {
     outline: 1px solid red;
 }
-.debug g g {
+.debug-outlineGroups g g {
     outline: 1px solid blue;
 }
-.debug g g g  {
+.debug-outlineGroups g g g  {
     outline: 1px solid green;
 }
-.debug g g g g {
+.debug-outlineGroups g g g g {
     outline: 1px solid yellow;
-}
-
-form label {
-    border: 1px solid lightgrey;
-    margin: 0 3px;
-    background-color: #589442;
-    opacity: 0.3;
-}
-
-form label:hover, form label:focus {
-    opacity: 1;
 }
 
 body {
