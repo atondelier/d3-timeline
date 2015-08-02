@@ -39925,7 +39925,8 @@ D3Timeline.prototype.handleWheeling = function () {
 
     var event = _d32['default'].event.sourceEvent;
     var t = this.behaviors.zoom.translate();
-    var dy = (event.wheelDeltaY / 120 || event.deltaY * -3) * this.options.rowHeight;
+    var downSide = event.wheelDelta > 0 || event.wheelDeltaY > 0 || event.detail < 0 || event.deltaY < 0;
+    var dy = (downSide ? 1 : -1) * this.options.rowHeight;
     var updatedT = [t[0], t[1] + dy];
 
     updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
