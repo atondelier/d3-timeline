@@ -304,6 +304,7 @@ D3Timeline.prototype.handleZoomingEnd = function() {
  */
 D3Timeline.prototype.handleWheeling = function() {
 
+    var event = d3.event.sourceEvent;
     var t = this.behaviors.zoom.translate();
     var dy = ((event.wheelDeltaY / 120) || (event.deltaY * -3)) * this.options.rowHeight;
     var updatedT = [t[0], t[1] + dy];
