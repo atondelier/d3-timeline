@@ -24,7 +24,7 @@ D3BlockTimeline.prototype.generateClipPathId = function(d) {
 };
 
 D3BlockTimeline.prototype.generateClipRectLink = function(d) {
-    return  '#' + this.generateClipPathId(d);
+    return  '#' + this.generateClipRectId(d);
 };
 
 D3BlockTimeline.prototype.generateClipPathLink = function(d) {
@@ -32,7 +32,7 @@ D3BlockTimeline.prototype.generateClipPathLink = function(d) {
 };
 
 D3BlockTimeline.prototype.generateClipRectId = function(d) {
-    return  'timelineElementClipPath_' + d.id;
+    return  'timelineElementClipRect_' + d.id;
 };
 
 D3BlockTimeline.prototype.elementEnter = function(selection) {
