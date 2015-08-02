@@ -16,7 +16,8 @@ function D3BookingTimeline(options) {
 inherits(D3BookingTimeline, D3BlockTimeline);
 
 D3BlockTimeline.prototype.defaults = $.extend(true, {}, D3BlockTimeline.prototype.defaults, {
-    alignLeft: true
+    alignLeft: true,
+    alignOnTranslate: true
 });
 
 D3BookingTimeline.prototype.elementEnter = function(selection) {
@@ -44,6 +45,16 @@ D3BookingTimeline.prototype.elementUpdate = function(selection) {
 
     text
         .text(d => d.card.name);
+
+};
+
+D3BookingTimeline.prototype.elementsTranslate = function(selection) {
+
+    if (this.options.alignLeft && this.options.alignOnTranslate) {
+        selection
+            .select('text')
+            .attr('dx', d => Math.max(-this.scales.x(d.start), 2));
+    }
 
 };
 

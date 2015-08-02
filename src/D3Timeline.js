@@ -153,6 +153,8 @@ D3Timeline.prototype.defaults = {
 
 D3Timeline.instancesCount = 0;
 
+D3Timeline.prototype.noop = function() {};
+
 D3Timeline.prototype.initialize = function() {
 
     // container
@@ -781,6 +783,12 @@ D3Timeline.prototype.translateElements = function(translate, previousTranslate) 
         self.elements.innerContainer.attr({
             transform: 'translate(' + self._currentElementsGroupTranslate + ')'
         });
+
+        if (self.elementsTranslate !== self.noop) {
+            self.elements.innerContainer
+                .selectAll('.timelineElement')
+                .call(self.elementsTranslate.bind(self));
+        }
 
     });
 
