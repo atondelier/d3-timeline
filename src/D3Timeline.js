@@ -19,6 +19,8 @@ function D3Timeline(options) {
 
     D3Timeline.instancesCount += 1;
 
+    this.instanceNumber = D3Timeline.instancesCount;
+
     var self = this;
 
     this.options = $.extend(true, {}, this.defaults, options);
