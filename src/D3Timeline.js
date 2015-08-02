@@ -292,7 +292,12 @@ D3Timeline.prototype.handleZooming = function() {
 };
 
 D3Timeline.prototype.handleZoomingEnd = function() {
-    this.elements.innerContainer.attr('transform', '');
+
+    var self = this;
+    this.requestAnimationFrame(function() {
+        self.elements.innerContainer.attr('transform', null);
+    });
+
     this.stopElementTransition();
     this.moveElements(true);
     this.drawYAxis();
@@ -758,14 +763,25 @@ D3Timeline.prototype.moveElements = function(forceDraw, skipXAxis, forceTicks) {
 
 D3Timeline.prototype.translateElements = function(translate, previousTranslate) {
 
+    var self = this;
+
     var tx = translate[0] - previousTranslate[0];
     var ty = translate[1] - previousTranslate[1];
 
     this._currentElementsGroupTranslate[0] = this._currentElementsGroupTranslate[0] + tx;
     this._currentElementsGroupTranslate[1] = this._currentElementsGroupTranslate[1] + ty;
 
-    this.elements.innerContainer.attr({
-        transform: 'translate('+this._currentElementsGroupTranslate+')'
+
+    if (this._eltsTranslateAF) {
+        this.cancelAnimationFrame(this._eltsTranslateAF);
+    }
+
+    this._eltsTranslateAF = this.requestAnimationFrame(function() {
+
+        self.elements.innerContainer.attr({
+            transform: 'translate(' + self._currentElementsGroupTranslate + ')'
+        });
+
     });
 
 };
