@@ -39614,7 +39614,8 @@ function D3BookingTimeline(options) {
 (0, _inherits2['default'])(D3BookingTimeline, _D3BlockTimeline2['default']);
 
 _D3BlockTimeline2['default'].prototype.defaults = _jquery2['default'].extend(true, {}, _D3BlockTimeline2['default'].prototype.defaults, {
-    alignLeft: true
+    alignLeft: true,
+    alignOnTranslate: true
 });
 
 D3BookingTimeline.prototype.elementEnter = function (selection) {
@@ -39640,6 +39641,16 @@ D3BookingTimeline.prototype.elementUpdate = function (selection) {
     text.text(function (d) {
         return d.card.name;
     });
+};
+
+D3BookingTimeline.prototype.elementsTranslate = function (selection) {
+    var _this2 = this;
+
+    if (this.options.alignLeft && this.options.alignOnTranslate) {
+        selection.select('text').attr('dx', function (d) {
+            return Math.max(-_this2.scales.x(d.start), 2);
+        });
+    }
 };
 
 exports['default'] = D3BookingTimeline;
@@ -39788,6 +39799,8 @@ D3Timeline.prototype.defaults = {
 };
 
 D3Timeline.instancesCount = 0;
+
+D3Timeline.prototype.noop = function () {};
 
 D3Timeline.prototype.initialize = function () {
 
@@ -40340,6 +40353,10 @@ D3Timeline.prototype.translateElements = function (translate, previousTranslate)
         self.elements.innerContainer.attr({
             transform: 'translate(' + self._currentElementsGroupTranslate + ')'
         });
+
+        if (self.elementsTranslate !== self.noop) {
+            self.elements.innerContainer.selectAll('.timelineElement').call(self.elementsTranslate.bind(self));
+        }
     });
 };
 
