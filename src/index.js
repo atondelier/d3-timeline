@@ -23,21 +23,31 @@ function randomizeEntries(rows, elements) {
     }).value();
 }
 
-randomizeEntries(30, 3);
+var randomDataRows = 50;
+var randomDataElementsPerRow = 3;
+
+randomizeEntries(randomDataRows, randomDataElementsPerRow);
 
 /**
  *
  * @type {D3BookingTimeline}
  */
 var timeline = new D3BookingTimeline({
-    container: '#container'
+    container: '#container',
+    renderOnIdle: true,
+    flattenRowElements: true,
+    hideTicksOnZoom: true,
+    hideTicksOnDrag: true
 });
+
 
 var debugOptions = {
     outlineGroups: false
 };
 
-var gui = new dat.GUI();
+var gui = new dat.GUI({
+    width: 300
+});
 
 var debugGui = gui.addFolder('Debug');
 
@@ -46,34 +56,6 @@ debugGui.add(debugOptions, 'outlineGroups').name('Outline groups').onChange(func
 });
 
 var timelineGui = gui.addFolder('Timeline options');
-
-/*{
-    xAxisHeight: 50,
-        yAxisWidth: 50,
-    maxBodyHeight: 500,
-    rowHeight: 30,
-    rowPadding: 5,
-    axisConfigs: [
-    {
-        threshold: 2,
-        minutes: 30
-    },
-    {
-        threshold: 4,
-        minutes: 15
-    },
-    {
-        threshold: 10,
-        minutes: 5
-    }
-],
-    container: 'body',
-    cullingTolerance: 1,
-    renderOnIdle: true,
-    flattenRowElements: true, // @todo: make it dynamic
-    hideTicksOnZoom: true,
-    hideTicksOnDrag: true
-}*/
 
 function forceFullRedraw() {
     timeline.container.selectAll('g.timelineElement').remove();
@@ -98,7 +80,7 @@ timeline
     .initialize()
     .setAvailableWidth(innerWidth)
     .setAvailableHeight(innerHeight-5)
-    .setTimeRange(new Date(2015,7,23, 10), new Date(2015,7,23, 16))
+    .setTimeRange(new Date(2015,7,23, 10), new Date(2015,7,23,16))
     .toggleDrawing(true)
     .setData(gdsData);
 
@@ -109,13 +91,15 @@ $(window).resize(_.debounce(function() {
 }, 100));
 
 
+/*
 var si = setInterval(function loop() {
     loop.inc = loop.inc || 0;
     loop.inc ++;
     if (loop.inc > 2) clearInterval(si);
-    randomizeEntries(timeline.data.length + 4, 3);
+    randomizeEntries(randomDataRows, randomDataElementsPerRow);
     timeline.setData(gdsData, 500);
 }, 2000);
+*/
 
 
 global.timeline = timeline;

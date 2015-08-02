@@ -142,11 +142,13 @@ D3Timeline.prototype.defaults = {
         }
     ],
     container: 'body',
+    cullingX: true,
+    cullingY: true,
     cullingTolerance: 1,
     renderOnIdle: true,
-    flattenRowElements: true, // @todo: make it dynamic
-    hideTicksOnZoom: true,
-    hideTicksOnDrag: true
+    flattenRowElements: false, // @todo: make it dynamic
+    hideTicksOnZoom: false,
+    hideTicksOnDrag: false
 };
 
 D3Timeline.instancesCount = 0;
@@ -220,8 +222,6 @@ D3Timeline.prototype.updateMargins = function(updateDimensions) {
     var contentTransform = 'translate(' + this.margin.left + ',' + this.margin.top + ')';
 
     this.container.select('rect.backgroundrect')
-        .attr(contentPosition);
-    this.container.select('rect.contactrect')
         .attr(contentPosition);
 
     this.elements.body
@@ -340,12 +340,12 @@ D3Timeline.prototype.handleDragging = function() {
     this._lastTranslate = updatedT;
 },
 
-    D3Timeline.prototype.toggleDrawing = function(active) {
+D3Timeline.prototype.toggleDrawing = function(active) {
 
-        this._preventDrawing = typeof active === 'boolean' ? !active : !this._preventDrawing;
+    this._preventDrawing = typeof active === 'boolean' ? !active : !this._preventDrawing;
 
-        return this;
-    };
+    return this;
+};
 
 /**
  *
@@ -498,6 +498,8 @@ D3Timeline.prototype.drawXAxis = function(transitionDuration, skipTicks) {
         return this;
     }
 
+    var domainY = this.scales.y.domain();
+
     this.axises.y
         .innerTickSize(skipTicks ? 0 : -this.dimensions.width);
 
@@ -543,6 +545,11 @@ D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTick
     this.axises.x
         .innerTickSize(skipTicks ? 0 : -this.dimensions.height);
 
+    var domainY = this.scales.y.domain();
+
+    this.axises.y
+        .tickValues(_.range(Math.round(domainY[0]), Math.round(domainY[1]), 1));
+
     var self = this;
 
     if (this._yAxisAF) {
@@ -555,15 +562,11 @@ D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTick
         container.call(self.axises.y);
 
         container
-            .selectAll('text').attr({
-                y: self.options.rowHeight / 2
-            });
+            .selectAll('text').attr('y', self.options.rowHeight / 2);
 
         container
-            .selectAll('line').style({
-                display: function(d) {
-                    return self._isRound(d) ? '' : 'none';
-                }
+            .selectAll('line').style('display', function(d,i) {
+                return i ? '' : 'none';
             });
 
     });
@@ -594,13 +597,32 @@ D3Timeline.prototype.drawGroupedElements = function(transitionDuration) {
 
     this._elementsAF = this.requestAnimationFrame(function() {
 
-        var domain = self.scales.y.domain();
-        var domainStart = domain[0];
-        var domainEnd = domain[1];
+        var domainX = self.scales.x.domain();
+        var domainXStart = domainX[0];
+        var domainXEnd = domainX[1];
+
+        var domainY = self.scales.y.domain();
+        var domainYStart = domainY[0];
+        var domainYEnd = domainY[1];
+
         var cullingTolerance = self.options.cullingTolerance;
 
+        var data = self.options.cullingY ? self.data.filter(function(row, i) {
+            return i >= domainYStart - cullingTolerance && i < domainYEnd + cullingTolerance - 1
+        }) : self.data;
+
+        var elementsDataGetter = self.options.cullingX ?
+            function(d) {
+                return d.elements.filter(function(element) {
+                    return !(element.end < domainXStart || element.start > domainXEnd);
+                });
+            }
+            : function(d) {
+                return d.elements;
+            };
+
         var g = self.elements.innerContainer.selectAll('g.timelineRow')
-            .data(self.data, self._getter('id'));
+            .data(data, self._getter('id'));
 
         g.exit().remove();
 
@@ -613,18 +635,11 @@ D3Timeline.prototype.drawGroupedElements = function(transitionDuration) {
 
             var g = d3.select(this);
 
-            var isInBody = i >= domainStart - cullingTolerance && i < domainEnd + cullingTolerance - 1;
-            var previousDisplay = g.style('display');
-
-            g.style('display', isInBody ? '' : 'none');
-
-            if (!isInBody) return;
-
             g
                 .attr('transform', self.moveRow.bind(self));
 
             var sg = g.selectAll('g.timelineElement')
-                .data(self._getter('elements'), self._getter('id'));
+                .data(elementsDataGetter, self._getter('id'));
 
             sg.exit().remove();
 
@@ -660,13 +675,25 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
 
     this._elementsAF = this.requestAnimationFrame(function() {
 
-        var domain = self.scales.y.domain();
-        var domainStart = domain[0];
-        var domainEnd = domain[1];
+        var domainX = self.scales.x.domain();
+        var domainXStart = domainX[0];
+        var domainXEnd = domainX[1];
+
+        var domainY = self.scales.y.domain();
+        var domainYStart = domainY[0];
+        var domainYEnd = domainY[1];
+
         var cullingTolerance = self.options.cullingTolerance;
+        var cullingX = self.options.cullingX;
+        var cullingY = self.options.cullingY;
+
+        var data = self.flattenedData.filter(function(d) {
+            return (!cullingY || (d.rowIndex >= domainYStart - cullingTolerance && d.rowIndex < domainYEnd + cullingTolerance - 1))
+                && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
+        });
 
         var g = self.elements.innerContainer.selectAll('g.timelineElement')
-            .data(self.flattenedData, self._getter('id'));
+            .data(data, self._getter('id'));
 
         g.exit().remove();
 
@@ -677,17 +704,7 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
 
             var g = d3.select(this);
 
-            var isInBody = d.rowIndex >= domainStart - cullingTolerance && d.rowIndex < domainEnd + cullingTolerance - 1;
-            var previouslyHidden = g.style('display') === 'none';
             var hasPreviousTransform = g.attr('transform') !== null;
-
-            if (isInBody && previouslyHidden) {
-                g.style('display', '');
-            } else if (!isInBody && !previouslyHidden) {
-                g.style('display', 'none');
-            }
-
-            if (!isInBody) return;
 
             var updatingSG;
 
@@ -795,9 +812,6 @@ D3Timeline.prototype.updateY = function() {
         .y(this.scales.y)
         .translate(this._lastTranslate)
         .scale(this.yScale);
-
-    this.axises.y
-        .ticks(elementsRange[1]);
 
     // and update X axis ticks height
     this.axises.x
