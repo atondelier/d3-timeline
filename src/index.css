@@ -2,12 +2,14 @@
     font: 12px Open Sans, sans-serif;
     background: #555;
 }
+
+circle, line, path, rect, {
+    shape-rendering: optimizeSpeed;
+}
+
 #container .axis path,
 #container .axis line {
     fill: none;
-    shape-rendering: crispEdges;
-}
-#container .axis line {
     stroke: #111;
 }
 #container .y.axis line {
@@ -33,7 +35,7 @@
 }
 
 #container .timelineElement text {
-    stroke: #777;
+    fill: #999;
 }
 
 #container .bookingLabel {
