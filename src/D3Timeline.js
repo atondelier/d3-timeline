@@ -150,7 +150,9 @@ D3Timeline.prototype.defaults = {
     renderOnIdle: true,
     flattenRowElements: false, // @todo: make it dynamic
     hideTicksOnZoom: false,
-    hideTicksOnDrag: false
+    hideTicksOnDrag: false,
+    panYOnWheel: true,
+    wheelMultiplier: 1
 };
 
 D3Timeline.instancesCount = 0;
@@ -265,18 +267,26 @@ D3Timeline.prototype.destroy = function() {
     this.flattenedData = null;
 };
 
+D3Timeline.prototype.restoreZoom = function() {
+    this.behaviors.zoom.translate(this._lastTranslate);
+    this.behaviors.zoom.scale(this._lastScale);
+};
+
 /**
  * pan X/Y & zoom X handler (clamped pan Y when wheel is pressed without ctrl, zoom X and pan X/Y otherwise)
  */
 D3Timeline.prototype.handleZooming = function() {
 
     if (!d3.event.sourceEvent.ctrlKey && !(d3.event.sourceEvent.changedTouches && d3.event.sourceEvent.changedTouches.length >= 2)) {
-        this.behaviors.zoom.translate(this._lastTranslate);
-        this.behaviors.zoom.scale(this._lastScale);
         if (d3.event.sourceEvent.type === 'wheel') {
-            this.handleWheeling();
+            if (this.options.panYOnWheel) {
+                this.restoreZoom();
+                this.handleWheeling();
+                return;
+            }
+        } else {
+            return;
         }
-        return;
     }
 
     var t = this.behaviors.zoom.translate();
@@ -316,7 +326,7 @@ D3Timeline.prototype.handleWheeling = function() {
     var event = d3.event.sourceEvent;
     var t = this.behaviors.zoom.translate();
     var downSide = event.wheelDelta > 0 || event.wheelDeltaY > 0 || event.detail < 0 || event.deltaY < 0;
-    var dy = (downSide ? 1 : -1) * this.options.rowHeight;
+    var dy = (downSide ? 1 : -1) * this.options.rowHeight * this.options.wheelMultiplier;
     var updatedT = [t[0], t[1] + dy];
 
     updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);

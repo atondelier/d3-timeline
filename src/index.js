@@ -59,6 +59,7 @@ var timelineGui = gui.addFolder('Rendering');
 var dimensionsGui = gui.addFolder('Dimensions');
 var cullingGui = gui.addFolder('Culling');
 var elementGui = gui.addFolder('Text alignment');
+var behaviorGui = gui.addFolder('Behaviors');
 
 function forceFullRedraw() {
     timeline.container.selectAll('g.timelineElement').remove();
@@ -84,6 +85,9 @@ cullingGui.add(timeline.options, 'cullingTolerance', -10, 10).step(1).name('Y cu
 
 elementGui.add(timeline.options, 'alignLeft').name('Keep text visible');
 elementGui.add(timeline.options, 'alignOnTranslate').name('Keep text visible on translate');
+
+behaviorGui.add(timeline.options, 'panYOnWheel').name('Y pan on mouse wheel');
+behaviorGui.add(timeline.options, 'wheelMultiplier', 1, 5).step(1).name('Y pan rows per rotation');
 
 timeline
     .toggleDrawing(false)
