@@ -3,6 +3,7 @@
 "use strict";
 
 import extend from 'extend';
+import d3 from 'd3';
 
 /**
  * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
@@ -325,9 +326,28 @@ D3Timeline.prototype.handleWheeling = function() {
 
     var event = d3.event.sourceEvent;
     var t = this.behaviors.zoom.translate();
-    var downSide = event.wheelDelta > 0 || event.wheelDeltaY > 0 || event.detail < 0 || event.deltaY < 0;
-    var dy = (downSide ? 1 : -1) * this.options.rowHeight * this.options.wheelMultiplier;
-    var updatedT = [t[0], t[1] + dy];
+
+    var dx = 0, dy = 0;
+
+    var movingX = event.wheelDeltaX || event.deltaX;
+
+    if (movingX) {
+
+        var movingRight = event.wheelDeltaX > 0 || event.deltaX < 0;
+        dx = (movingRight ? 1 : -1) * this.columnWidth * this.options.wheelMultiplier;
+
+    } else {
+
+        var movingY = event.wheelDelta || event.wheelDeltaY || event.detail || event.deltaY;
+
+        if (movingY) {
+            var movingDown = event.wheelDelta > 0 || event.wheelDeltaY > 0 || event.detail < 0 || event.deltaY < 0;
+            dy = movingY ? (movingDown ? 1 : -1) * this.options.rowHeight * this.options.wheelMultiplier : 0;
+        }
+
+    }
+
+    var updatedT = [t[0] + dx, t[1] + dy];
 
     updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
 
@@ -342,7 +362,7 @@ D3Timeline.prototype.handleWheeling = function() {
 
 D3Timeline.prototype.handleDragging = function() {
 
-    if (d3.event.sourceEvent.changedTouches && d3.event.sourceEvent.changedTouches.length >= 2) {
+    if (d3.event.sourceEvent.changedTouches && d3.event.sourceEvent.touches.length >= 2) {
         return;
     }
 
@@ -826,6 +846,8 @@ D3Timeline.prototype.updateXAxisInterval = function() {
     });
 
     this.axises.x.ticks(d3.time.minutes, conf.minutes);
+
+    this.columnWidth = this.scales.x(new Date(0, 0, 0, 0, Math.max(15, this._currentScaleConfig.minutes, 0))) - this.scales.x(new Date(0, 0, 0, 0, 0, 0));
 
     return this;
 };
