@@ -2,9 +2,7 @@
 
 "use strict";
 
-import _ from 'lodash';
-import d3 from 'd3';
-import $ from 'jquery';
+import extend from 'extend';
 
 /**
  * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
@@ -23,7 +21,7 @@ function D3Timeline(options) {
 
     var self = this;
 
-    this.options = $.extend(true, {}, this.defaults, options);
+    this.options = extend(true, {}, this.defaults, options);
 
     /** @type {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} */
     this.data = [];
@@ -392,12 +390,14 @@ D3Timeline.prototype.setData = function(data, transitionDuration) {
     }
 
     if (this.options.flattenRowElements) {
-        this.flattenedData = _(this.data).map(function(d, i) {
-            _.each(d.elements, function(e, j) {
+        this.flattenedData = this.data.map(function(d, i) {
+            d.elements.forEach(function(e) {
                 e.rowIndex = i;
             });
             return d.elements;
-        }).flatten().value();
+        }).reduce(function(result, elements) {
+            return result.concat(elements);
+        }, []);
     } else {
         this.flattenedData = [];
     }
@@ -570,7 +570,7 @@ D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTick
     var domainY = this.scales.y.domain();
 
     this.axises.y
-        .tickValues(_.range(Math.round(domainY[0]), Math.round(domainY[1]), 1));
+        .tickValues(this._range(Math.round(domainY[0]), Math.round(domainY[1]), 1));
 
     var self = this;
 
@@ -607,7 +607,7 @@ D3Timeline.prototype.drawElements = function(transitionDuration) {
     } else {
         return this.drawGroupedElements(transitionDuration);
     }
-}
+};
 
 D3Timeline.prototype.drawGroupedElements = function(transitionDuration) {
 
@@ -819,7 +819,7 @@ D3Timeline.prototype.updateXAxisInterval = function() {
 
     var scale = this.behaviors.zoom.scale();
 
-    var conf = this._currentScaleConfig = _(this.options.axisConfigs).find(function(params) {
+    var conf = this._currentScaleConfig = this._find(this.options.axisConfigs, function(params) {
         var threshold = params.threshold;
         return scale <= threshold;
     });
@@ -897,6 +897,35 @@ D3Timeline.prototype._entryNameGetter = function(entry) {
 D3Timeline.prototype._isRound = function(v) {
     var n = v|0;
     return v > n - 1e-3 && v < n + 1e-3;
+};
+
+D3Timeline.prototype._range = function(start, end, inc) {
+    var res = [];
+    while (start < end) {
+        res.push(start);
+        start = start + inc;
+    }
+    return res;
+};
+
+/**
+ * @see https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Objets_globaux/Array/find
+ * @type {*|Function}
+ * @private
+ */
+D3Timeline.prototype._find = function(list, predicate) {
+    var length = list.length >>> 0;
+    var thisArg = arguments[1];
+    var value;
+
+    for (var i = 0; i < length; i++) {
+        value = list[i];
+        if (predicate.call(thisArg, value, i, list)) {
+            return value;
+        }
+    }
+
+    return undefined;
 };
 
 D3Timeline.prototype._clampTranslationWithScale = function(translate, scale) {

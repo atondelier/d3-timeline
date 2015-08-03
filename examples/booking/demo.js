@@ -1,9 +1,7 @@
 "use strict";
 
 import regeneratorRuntime from 'babel-runtime/regenerator';
-import _ from 'lodash';
-import $ from 'jquery';
-import D3BookingTimeline from './D3BookingTimeline';
+import D3BookingTimeline from '../../src/D3BookingTimeline';
 import Faker from 'Faker';
 import dat from 'dat-gui';
 
@@ -103,17 +101,5 @@ $(window).resize(_.debounce(function() {
         .setAvailableWidth(innerWidth)
         .setAvailableHeight(innerHeight-5)
 }, 100));
-
-
-/*
-var si = setInterval(function loop() {
-    loop.inc = loop.inc || 0;
-    loop.inc ++;
-    if (loop.inc > 2) clearInterval(si);
-    randomizeEntries(randomDataRows, randomDataElementsPerRow);
-    timeline.setData(gdsData, 500);
-}, 2000);
-*/
-
 
 global.timeline = timeline;

@@ -2,7 +2,7 @@
 
 import D3Timeline from './D3Timeline';
 import inherits from 'inherits';
-import $ from 'jquery';
+import extend from 'extend';
 
 /**
  *
@@ -15,7 +15,7 @@ function D3BlockTimeline(options) {
 
 inherits(D3BlockTimeline, D3Timeline);
 
-D3BlockTimeline.prototype.defaults = $.extend(true, {}, D3Timeline.prototype.defaults, {
+D3BlockTimeline.prototype.defaults = extend(true, {}, D3Timeline.prototype.defaults, {
     clipElement: true
 });
 

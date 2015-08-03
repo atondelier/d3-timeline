@@ -2,7 +2,7 @@
 
 import D3BlockTimeline from './D3BlockTimeline';
 import inherits from 'inherits';
-import $ from 'jquery';
+import extend from 'extend';
 
 /**
  *
@@ -15,7 +15,7 @@ function D3BookingTimeline(options) {
 
 inherits(D3BookingTimeline, D3BlockTimeline);
 
-D3BlockTimeline.prototype.defaults = $.extend(true, {}, D3BlockTimeline.prototype.defaults, {
+D3BlockTimeline.prototype.defaults = extend(true, {}, D3BlockTimeline.prototype.defaults, {
     alignLeft: true,
     alignOnTranslate: true
 });
