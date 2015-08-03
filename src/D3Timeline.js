@@ -285,6 +285,7 @@ D3Timeline.prototype.handleZooming = function() {
                 return;
             }
         } else {
+            this.restoreZoom();
             return;
         }
     }
@@ -359,7 +360,7 @@ D3Timeline.prototype.handleDragging = function() {
     this.moveElements(false, false, !this.options.hideTicksOnDrag);
 
     this._lastTranslate = updatedT;
-},
+};
 
 D3Timeline.prototype.toggleDrawing = function(active) {
 
