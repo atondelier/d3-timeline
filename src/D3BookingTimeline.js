@@ -26,7 +26,7 @@ D3BookingTimeline.prototype.elementEnter = function(selection) {
 
     selection
         .append('text')
-        .classed('bookingLabel', true)
+        .classed('timeline-bookingLabel', true)
         .attr('dy', this.options.rowHeight/2 + 4);
 
 };

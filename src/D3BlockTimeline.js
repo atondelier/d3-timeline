@@ -20,7 +20,7 @@ D3BlockTimeline.prototype.defaults = extend(true, {}, D3Timeline.prototype.defau
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function(d) {
-    return  'timelineElementClipPath_' + this.instanceNumber + '_' + d.id;
+    return  'timeline-elementClipPath_' + this.instanceNumber + '_' + d.id;
 };
 
 D3BlockTimeline.prototype.generateClipRectLink = function(d) {
@@ -32,7 +32,7 @@ D3BlockTimeline.prototype.generateClipPathLink = function(d) {
 };
 
 D3BlockTimeline.prototype.generateClipRectId = function(d) {
-    return  'timelineElementClipRect_' + this.instanceNumber + '_' + d.id;
+    return  'timeline-elementClipRect_' + this.instanceNumber + '_' + d.id;
 };
 
 D3BlockTimeline.prototype.elementEnter = function(selection) {

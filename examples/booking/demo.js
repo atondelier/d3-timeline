@@ -60,7 +60,7 @@ var elementGui = gui.addFolder('Text alignment');
 var behaviorGui = gui.addFolder('Behaviors');
 
 function forceFullRedraw() {
-    timeline.container.selectAll('g.timelineElement').remove();
+    timeline.container.selectAll('g.timeline-element').remove();
     timeline.updateMargins();
     timeline.setData([]);
     timeline.requestAnimationFrame(timeline.setData.bind(timeline, gdsData));

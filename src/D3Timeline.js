@@ -160,7 +160,8 @@ D3Timeline.prototype.noop = function() {};
 D3Timeline.prototype.initialize = function() {
 
     // container
-    this.container = d3.select(this.options.container).append('svg');
+    this.container = d3.select(this.options.container).append('svg')
+        .attr('class', 'timeline');
 
     // defs
     this.elements.defs = this.container.append('defs');
@@ -175,17 +176,17 @@ D3Timeline.prototype.initialize = function() {
 
     // surrounding rect
     this.container.append('rect')
-        .classed('backgroundrect', true);
+        .classed('timeline-backgroundRect', true);
 
     // axises containers
     this.elements.xAxisContainer = this.container.append('g')
-        .attr('class', 'x axis');
+        .attr('class', 'timeline-axis timeline-axis--x');
 
     this.elements.x2AxisContainer = this.container.append('g')
-        .attr('class', 'x2 axis');
+        .attr('class', 'timeline-axis timeline-axis--x timeline-axis--secondary');
 
     this.elements.yAxisContainer = this.container.append('g')
-        .attr('class', 'y axis');
+        .attr('class', 'timeline-axis timeline-axis--y');
 
     // body container inner container and surrounding rect
     this.elements.body = this.container.append('g')
@@ -193,14 +194,14 @@ D3Timeline.prototype.initialize = function() {
 
     // surrounding rect
     this.elements.body.append('rect')
-        .classed('contactrect', true);
+        .classed('timeline-contactRect', true);
 
     // inner container
     this.elements.innerContainer = this.elements.body.append('g');
 
     // surrounding rect
     this.elements.body.append('rect')
-        .classed('boundingrect', true);
+        .classed('timeline-boundingRect', true);
 
     this.updateMargins();
 
@@ -225,7 +226,7 @@ D3Timeline.prototype.updateMargins = function(updateDimensions) {
     var contentPosition = { x: this.margin.left, y: this.margin.top };
     var contentTransform = 'translate(' + this.margin.left + ',' + this.margin.top + ')';
 
-    this.container.select('rect.backgroundrect')
+    this.container.select('rect.timeline-backgroundRect')
         .attr(contentPosition);
 
     this.elements.body
@@ -481,9 +482,9 @@ D3Timeline.prototype.updateX = function() {
     this.behaviors.zoomX
         .x(this.scales.x);
 
-    this.elements.body.select('rect.boundingrect').attr('width', this.dimensions.width);
-    this.elements.body.select('rect.contactrect').attr('width', this.dimensions.width);
-    this.container.select('rect.backgroundrect').attr('width', this.dimensions.width);
+    this.elements.body.select('rect.timeline-boundingRect').attr('width', this.dimensions.width);
+    this.elements.body.select('rect.timeline-contactRect').attr('width', this.dimensions.width);
+    this.container.select('rect.timeline-backgroundRect').attr('width', this.dimensions.width);
     this.elements.clip.select('rect').attr('width', this.dimensions.width);
 
     return this;
@@ -643,14 +644,14 @@ D3Timeline.prototype.drawGroupedElements = function(transitionDuration) {
                 return d.elements;
             };
 
-        var g = self.elements.innerContainer.selectAll('g.timelineRow')
+        var g = self.elements.innerContainer.selectAll('g.timeline-row')
             .data(data, self._getter('id'));
 
         g.exit().remove();
 
         g.enter()
             .append('g')
-            .classed('timelineRow', true)
+            .classed('timeline-row', true)
             .attr('transform', self.moveRow.bind(self));
 
         g.each(function(d,i) {
@@ -660,14 +661,14 @@ D3Timeline.prototype.drawGroupedElements = function(transitionDuration) {
             g
                 .attr('transform', self.moveRow.bind(self));
 
-            var sg = g.selectAll('g.timelineElement')
+            var sg = g.selectAll('g.timeline-element')
                 .data(elementsDataGetter, self._getter('id'));
 
             sg.exit().remove();
 
             var enteringSG = sg.enter()
                 .append('g')
-                .classed('timelineElement', true);
+                .classed('timeline-element', true);
 
             enteringSG
                 .call(self.elementEnter.bind(self))
@@ -714,13 +715,13 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
                 && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
         });
 
-        var g = self.elements.innerContainer.selectAll('g.timelineElement')
+        var g = self.elements.innerContainer.selectAll('g.timeline-element')
             .data(data, self._getter('id'));
 
         g.exit().remove();
 
         g.enter().append('g')
-            .attr('class', 'timelineElement')
+            .attr('class', 'timeline-element')
 
         g.each(function(d) {
 
@@ -799,7 +800,7 @@ D3Timeline.prototype.translateElements = function(translate, previousTranslate) 
 
         if (self.elementsTranslate !== self.noop) {
             self.elements.innerContainer
-                .selectAll('.timelineElement')
+                .selectAll('.timeline-element')
                 .call(self.elementsTranslate.bind(self));
         }
 
@@ -860,9 +861,9 @@ D3Timeline.prototype.updateY = function() {
     this.container.attr('height',this.dimensions.height + this.margin.top + this.margin.bottom);
 
     // update inner rect height
-    this.elements.body.select('rect.boundingrect').attr('height', this.dimensions.height);
-    this.elements.body.select('rect.contactrect').attr('height', this.dimensions.height);
-    this.container.select('rect.backgroundrect').attr('height', this.dimensions.height);
+    this.elements.body.select('rect.timeline-boundingRect').attr('height', this.dimensions.height);
+    this.elements.body.select('rect.timeline-contactRect').attr('height', this.dimensions.height);
+    this.container.select('rect.timeline-backgroundRect').attr('height', this.dimensions.height);
     this.elements.clip.select('rect').attr('height', this.dimensions.height);
 
     this.stopElementTransition();
@@ -871,7 +872,7 @@ D3Timeline.prototype.updateY = function() {
 };
 
 D3Timeline.prototype.stopElementTransition = function() {
-    this.elements.innerContainer.selectAll('g.timelineElement').transition();
+    this.elements.innerContainer.selectAll('g.timeline-element').transition();
 };
 
 D3Timeline.prototype.elementEnter = function(selection) { return selection; };

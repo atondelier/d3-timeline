@@ -1,62 +1,46 @@
-#container svg {
+.timeline {
     font: 12px Open Sans, sans-serif;
     background: #555;
 }
 
-circle, line, path, rect, {
+.timeline circle,
+.timeline line,
+.timeline path,
+.timeline rect, {
     shape-rendering: optimizeSpeed;
 }
 
-#container .axis path,
-#container .axis line {
+.timeline .timeline-axis path,
+.timeline .timeline-axis line {
     fill: none;
     stroke: #111;
 }
-#container .y.axis line {
+
+.timeline .timeline-axis.timeline-axis--y line {
     stroke: #222;
 }
-#container rect.contactrect {
+
+.timeline .timeline-contactRect {
     stroke-width: 0;
     fill: transparent;
 }
-#container rect.boundingrect {
+
+.timeline .timeline-boundingRect {
     stroke: black;
     fill: none;
 }
 
-#container rect.backgroundrect {
+.timeline .timeline-backgroundRect {
     stroke: black;
     fill: #333;
 }
 
-#container .timelineElement rect {
+.timeline .timeline-element rect {
     fill: #111;
     stroke: #555;
 }
 
-#container .timelineElement text {
+.timeline .timeline-element text {
     fill: #999;
-}
-
-#container .bookingLabel {
     text-anchor: left;
-}
-
-.debug-outlineGroups g {
-    outline: 1px solid red;
-}
-.debug-outlineGroups g g {
-    outline: 1px solid blue;
-}
-.debug-outlineGroups g g g  {
-    outline: 1px solid green;
-}
-.debug-outlineGroups g g g g {
-    outline: 1px solid yellow;
-}
-
-body {
-    margin: 0;
-    padding: 0;
-    background: black;
 }

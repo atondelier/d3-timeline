@@ -1,5 +1,5 @@
 {
-  "name": "d3-timeline",
+  "name": "d3Timeline",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/built.js",
