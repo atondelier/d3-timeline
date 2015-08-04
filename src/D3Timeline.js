@@ -86,6 +86,7 @@ function D3Timeline(options) {
                     return '';
                 }
             })
+            .outerTickSize(0)
     };
 
     this.behaviors = {
@@ -739,7 +740,7 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
         g.exit().remove();
 
         g.enter().append('g')
-            .attr('class', 'timeline-element')
+            .attr('class', 'timeline-element');
 
         g.each(function(d) {
 

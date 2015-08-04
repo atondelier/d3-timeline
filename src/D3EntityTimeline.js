@@ -9,29 +9,30 @@ import extend from 'extend';
  * @extends {D3BlockTimeline}
  * @constructor
  */
-function D3BookingTimeline(options) {
+function D3EntityTimeline(options) {
     D3BlockTimeline.call(this, options);
 }
 
-inherits(D3BookingTimeline, D3BlockTimeline);
+inherits(D3EntityTimeline, D3BlockTimeline);
 
 D3BlockTimeline.prototype.defaults = extend(true, {}, D3BlockTimeline.prototype.defaults, {
     alignLeft: true,
     alignOnTranslate: true
 });
 
-D3BookingTimeline.prototype.elementEnter = function(selection) {
+D3EntityTimeline.prototype.elementEnter = function(selection) {
 
     this.constructor.super_.prototype.elementEnter.call(this, selection);
 
     selection
+        .select('.timeline-elementContent')
         .append('text')
         .classed('timeline-bookingLabel', true)
         .attr('dy', this.options.rowHeight/2 + 4);
 
 };
 
-D3BookingTimeline.prototype.elementUpdate = function(selection) {
+D3EntityTimeline.prototype.elementUpdate = function(selection) {
 
     this.constructor.super_.prototype.elementUpdate.call(this, selection);
 
@@ -48,14 +49,14 @@ D3BookingTimeline.prototype.elementUpdate = function(selection) {
 
 };
 
-D3BookingTimeline.prototype.elementsTranslate = function(selection) {
+D3EntityTimeline.prototype.elementsTranslate = function(selection) {
 
     if (this.options.alignLeft && this.options.alignOnTranslate) {
         selection
-            .select('text')
+            .select('.timeline-elementContent > text')
             .attr('dx', d => Math.max(-this.scales.x(d.start), 2));
     }
 
 };
 
-export default D3BookingTimeline;
+export default D3EntityTimeline;

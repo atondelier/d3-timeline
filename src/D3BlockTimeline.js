@@ -42,7 +42,13 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
 
     var rect = selection
         .append('rect')
+        .attr('class', 'timeline-elementBackground')
         .attr('height', elementHeight);
+
+    var g = selection
+        .append('g')
+        .attr('class', 'timeline-elementContent');
+
 
     var clipElement = false;
 
@@ -56,7 +62,7 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
 
     if (clipElement) {
 
-        selection
+        g
             .attr('clip-path', this.generateClipPathLink.bind(this));
 
         rect
@@ -75,7 +81,7 @@ D3BlockTimeline.prototype.elementUpdate = function(selection) {
     var self = this;
 
     selection
-        .select('rect')
+        .select('rect.timeline-elementBackground')
         .attr({
             y: this.options.rowPadding,
             width: function(d) {

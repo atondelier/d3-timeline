@@ -1,7 +1,7 @@
 "use strict";
 
 import regeneratorRuntime from 'babel-runtime/regenerator';
-import D3BookingTimeline from '../../src/D3BookingTimeline';
+import D3EntityTimeline from '../../src/D3EntityTimeline';
 import Faker from 'Faker';
 import dat from 'dat-gui';
 
@@ -28,16 +28,16 @@ randomizeEntries(randomDataRows, randomDataElementsPerRow);
 
 /**
  *
- * @type {D3BookingTimeline}
+ * @type {D3EntityTimeline}
  */
-var timeline = new D3BookingTimeline({
+var timeline = new D3EntityTimeline({
     container: '#container',
     renderOnIdle: true,
     flattenRowElements: true,
     hideTicksOnZoom: true,
     hideTicksOnDrag: true,
     clipElementFilter: function(selection) {
-        return selection.datum().card.name.length > 12;
+        return selection.datum().card.name.length > 10;
     }
 });
 

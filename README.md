@@ -11,7 +11,7 @@ As of now, you have 2 levels of control:
  - using D3Timeline, you fully control how each element is rendered based on its data
  - using D3BlockTimeline, you have a sized rect based on start and end data properties (and clipping), but you still control its content
 
-The D3BookingTimeline is an example of extending the D3BlockTimeline (itself inheriting D3Timeline) to render a text based on the some information generated with [Faker](https://www.npmjs.com/package/Faker).
+The D3EntityTimeline is an example of extending the D3BlockTimeline (itself inheriting D3Timeline) to render a text based on the some information generated with [Faker](https://www.npmjs.com/package/Faker).
  
  
 ## Dependencies
