@@ -30,22 +30,22 @@ D3EntityTimeline.prototype.elementEnter = function(selection) {
         .classed('timeline-bookingLabel', true)
         .attr('dy', this.options.rowHeight/2 + 4);
 
+    selection.call(this.elementContentEnter.bind(this));
+
 };
 
 D3EntityTimeline.prototype.elementUpdate = function(selection) {
 
     this.constructor.super_.prototype.elementUpdate.call(this, selection);
 
-    var text = selection
-        .select('text');
-
     if (this.options.alignLeft) {
-        text
+
+        selection
+            .select('.timeline-elementContent > text')
             .attr('dx', d => Math.max(-this.scales.x(d.start), 2))
     }
 
-    text
-        .text(d => d.card.name);
+    selection.call(this.elementContentUpdate.bind(this));
 
 };
 
@@ -58,5 +58,9 @@ D3EntityTimeline.prototype.elementsTranslate = function(selection) {
     }
 
 };
+
+D3EntityTimeline.prototype.elementContentEnter = function() {};
+
+D3EntityTimeline.prototype.elementContentUpdate = function() {};
 
 export default D3EntityTimeline;

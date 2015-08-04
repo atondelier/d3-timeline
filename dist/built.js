@@ -3,9 +3,9 @@
 
 module.exports.D3Timeline = require('./src/D3Timeline.js');
 module.exports.D3BlockTimeline = require('./src/D3BlockTimeline.js');
-module.exports.D3BookingTimeline = require('./src/D3BookingTimeline.js');
+module.exports.D3EntityTimeline = require('./src/D3EntityTimeline.js');
 
-},{"./src/D3BlockTimeline.js":4,"./src/D3BookingTimeline.js":5,"./src/D3Timeline.js":6}],2:[function(require,module,exports){
+},{"./src/D3BlockTimeline.js":4,"./src/D3EntityTimeline.js":5,"./src/D3Timeline.js":6}],2:[function(require,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -152,11 +152,12 @@ function D3BlockTimeline(options) {
 (0, _inherits2['default'])(D3BlockTimeline, _D3Timeline2['default']);
 
 D3BlockTimeline.prototype.defaults = (0, _extend2['default'])(true, {}, _D3Timeline2['default'].prototype.defaults, {
-    clipElement: true
+    clipElement: true,
+    clipElementFilter: null
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function (d) {
-    return 'timelineElementClipPath_' + this.instanceNumber + '_' + d.id;
+    return 'timeline-elementClipPath_' + this.instanceNumber + '_' + d.id;
 };
 
 D3BlockTimeline.prototype.generateClipRectLink = function (d) {
@@ -168,20 +169,30 @@ D3BlockTimeline.prototype.generateClipPathLink = function (d) {
 };
 
 D3BlockTimeline.prototype.generateClipRectId = function (d) {
-    return 'timelineElementClipRect_' + this.instanceNumber + '_' + d.id;
+    return 'timeline-elementClipRect_' + this.instanceNumber + '_' + d.id;
 };
 
 D3BlockTimeline.prototype.elementEnter = function (selection) {
 
-    var self = this;
-
     var elementHeight = this.options.rowHeight - this.options.rowPadding * 2;
 
-    var rect = selection.append('rect').attr('height', elementHeight);
+    var rect = selection.append('rect').attr('class', 'timeline-elementBackground').attr('height', elementHeight);
+
+    var g = selection.append('g').attr('class', 'timeline-elementContent');
+
+    var clipElement = false;
 
     if (this.options.clipElement) {
+        if (typeof this.options.clipElementFilter === 'function') {
+            clipElement = !!this.options.clipElementFilter.call(this, selection);
+        } else {
+            clipElement = true;
+        }
+    }
 
-        selection.attr('clip-path', this.generateClipPathLink.bind(this));
+    if (clipElement) {
+
+        g.attr('clip-path', this.generateClipPathLink.bind(this));
 
         rect.property('id', this.generateClipRectId.bind(this));
 
@@ -193,7 +204,7 @@ D3BlockTimeline.prototype.elementUpdate = function (selection) {
 
     var self = this;
 
-    selection.select('rect').attr({
+    selection.select('rect.timeline-elementBackground').attr({
         y: this.options.rowPadding,
         width: function width(d) {
             return self.scales.x(d.end) - self.scales.x(d.start);
@@ -231,57 +242,60 @@ var _extend = require('extend');
 
 var _extend2 = _interopRequireDefault(_extend);
 
-function D3BookingTimeline(options) {
+function D3EntityTimeline(options) {
     _D3BlockTimeline2['default'].call(this, options);
 }
 
-(0, _inherits2['default'])(D3BookingTimeline, _D3BlockTimeline2['default']);
+(0, _inherits2['default'])(D3EntityTimeline, _D3BlockTimeline2['default']);
 
 _D3BlockTimeline2['default'].prototype.defaults = (0, _extend2['default'])(true, {}, _D3BlockTimeline2['default'].prototype.defaults, {
     alignLeft: true,
     alignOnTranslate: true
 });
 
-D3BookingTimeline.prototype.elementEnter = function (selection) {
+D3EntityTimeline.prototype.elementEnter = function (selection) {
 
     this.constructor.super_.prototype.elementEnter.call(this, selection);
 
-    selection.append('text').classed('bookingLabel', true).attr('dy', this.options.rowHeight / 2 + 4);
+    selection.select('.timeline-elementContent').append('text').classed('timeline-bookingLabel', true).attr('dy', this.options.rowHeight / 2 + 4);
+
+    selection.call(this.elementContentEnter.bind(this));
 };
 
-D3BookingTimeline.prototype.elementUpdate = function (selection) {
+D3EntityTimeline.prototype.elementUpdate = function (selection) {
     var _this = this;
 
     this.constructor.super_.prototype.elementUpdate.call(this, selection);
 
-    var text = selection.select('text');
-
     if (this.options.alignLeft) {
-        text.attr('dx', function (d) {
+
+        selection.select('.timeline-elementContent > text').attr('dx', function (d) {
             return Math.max(-_this.scales.x(d.start), 2);
         });
     }
 
-    text.text(function (d) {
-        return d.card.name;
-    });
+    selection.call(this.elementContentUpdate.bind(this));
 };
 
-D3BookingTimeline.prototype.elementsTranslate = function (selection) {
+D3EntityTimeline.prototype.elementsTranslate = function (selection) {
     var _this2 = this;
 
     if (this.options.alignLeft && this.options.alignOnTranslate) {
-        selection.select('text').attr('dx', function (d) {
+        selection.select('.timeline-elementContent > text').attr('dx', function (d) {
             return Math.max(-_this2.scales.x(d.start), 2);
         });
     }
 };
 
-exports['default'] = D3BookingTimeline;
+D3EntityTimeline.prototype.elementContentEnter = function () {};
+
+D3EntityTimeline.prototype.elementContentUpdate = function () {};
+
+exports['default'] = D3EntityTimeline;
 module.exports = exports['default'];
 
 },{"./D3BlockTimeline":4,"extend":2,"inherits":3}],6:[function(require,module,exports){
-/* global cancelAnimationFrame, requestAnimationFrame */
+var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/* global cancelAnimationFrame, requestAnimationFrame */
 
 "use strict";
 
@@ -293,6 +307,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 var _extend = require('extend');
 
+var _extend2 = _interopRequireDefault(_extend);
+
+var _d3 = (typeof window !== "undefined" ? window['d3'] : typeof global !== "undefined" ? global['d3'] : null);
+
 /**
  * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
  */
@@ -303,7 +321,7 @@ var _extend = require('extend');
  * @constructor
  */
 
-var _extend2 = _interopRequireDefault(_extend);
+var _d32 = _interopRequireDefault(_d3);
 
 function D3Timeline(options) {
 
@@ -343,34 +361,34 @@ function D3Timeline(options) {
     };
 
     this.scales = {
-        x: d3.time.scale(),
-        y: d3.scale.linear()
+        x: _d32['default'].time.scale(),
+        y: _d32['default'].scale.linear()
     };
 
     this.axises = {
 
-        x: d3.svg.axis().scale(this.scales.x).orient('top').tickFormat(function (d) {
-            return d.getMinutes() % 15 ? '' : d3.time.format('%H:%M')(d);
+        x: _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(function (d) {
+            return d.getMinutes() % 15 ? '' : _d32['default'].time.format('%H:%M')(d);
         }).outerTickSize(0).tickPadding(20),
 
-        x2: d3.svg.axis().scale(this.scales.x).orient('top').tickFormat(function (d) {
+        x2: _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(function (d) {
             return d.getMinutes() % 15 ? '' : '?/?';
         }).outerTickSize(0).innerTickSize(0),
 
-        y: d3.svg.axis().scale(this.scales.y).orient('left').tickFormat(function (d) {
+        y: _d32['default'].svg.axis().scale(this.scales.y).orient('left').tickFormat(function (d) {
             if (self._isRound(d)) {
                 return self._entryNameGetter(self.data[d | 0]);
             } else {
                 return '';
             }
-        })
+        }).outerTickSize(0)
     };
 
     this.behaviors = {
-        zoom: d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', this.handleZooming.bind(this)).on('zoomend', this.handleZoomingEnd.bind(this)),
-        zoomX: d3.behavior.zoom().x(this.scales.x).scale(1).scaleExtent([1, 10]),
-        zoomY: d3.behavior.zoom().y(this.scales.y).scale(1).scaleExtent([1, 1]),
-        pan: d3.behavior.drag().on('drag', this.handleDragging.bind(this))
+        zoom: _d32['default'].behavior.zoom().scaleExtent([1, 10]).on('zoom', this.handleZooming.bind(this)).on('zoomend', this.handleZoomingEnd.bind(this)),
+        zoomX: _d32['default'].behavior.zoom().x(this.scales.x).scale(1).scaleExtent([1, 10]),
+        zoomY: _d32['default'].behavior.zoom().y(this.scales.y).scale(1).scaleExtent([1, 1]),
+        pan: _d32['default'].behavior.drag().on('drag', this.handleDragging.bind(this))
     };
 
     this._lastTranslate = this.behaviors.zoom.translate();
@@ -425,7 +443,7 @@ D3Timeline.prototype.noop = function () {};
 D3Timeline.prototype.initialize = function () {
 
     // container
-    this.container = d3.select(this.options.container).append('svg');
+    this.container = _d32['default'].select(this.options.container).append('svg').attr('class', 'timeline');
 
     // defs
     this.elements.defs = this.container.append('defs');
@@ -436,26 +454,26 @@ D3Timeline.prototype.initialize = function () {
     this.elements.clip.append('rect');
 
     // surrounding rect
-    this.container.append('rect').classed('backgroundrect', true);
+    this.container.append('rect').classed('timeline-backgroundRect', true);
 
     // axises containers
-    this.elements.xAxisContainer = this.container.append('g').attr('class', 'x axis');
+    this.elements.xAxisContainer = this.container.append('g').attr('class', 'timeline-axis timeline-axis--x');
 
-    this.elements.x2AxisContainer = this.container.append('g').attr('class', 'x2 axis');
+    this.elements.x2AxisContainer = this.container.append('g').attr('class', 'timeline-axis timeline-axis--x timeline-axis--secondary');
 
-    this.elements.yAxisContainer = this.container.append('g').attr('class', 'y axis');
+    this.elements.yAxisContainer = this.container.append('g').attr('class', 'timeline-axis timeline-axis--y');
 
     // body container inner container and surrounding rect
     this.elements.body = this.container.append('g').attr('clip-path', 'url(#' + clipId + ')');
 
     // surrounding rect
-    this.elements.body.append('rect').classed('contactrect', true);
+    this.elements.body.append('rect').classed('timeline-contactRect', true);
 
     // inner container
     this.elements.innerContainer = this.elements.body.append('g');
 
     // surrounding rect
-    this.elements.body.append('rect').classed('boundingrect', true);
+    this.elements.body.append('rect').classed('timeline-boundingRect', true);
 
     this.updateMargins();
 
@@ -480,7 +498,7 @@ D3Timeline.prototype.updateMargins = function (updateDimensions) {
     var contentPosition = { x: this.margin.left, y: this.margin.top };
     var contentTransform = 'translate(' + this.margin.left + ',' + this.margin.top + ')';
 
-    this.container.select('rect.backgroundrect').attr(contentPosition);
+    this.container.select('rect.timeline-backgroundRect').attr(contentPosition);
 
     this.elements.body.attr('transform', contentTransform);
 
@@ -524,8 +542,8 @@ D3Timeline.prototype.restoreZoom = function () {
  */
 D3Timeline.prototype.handleZooming = function () {
 
-    if (!d3.event.sourceEvent.ctrlKey && !(d3.event.sourceEvent.changedTouches && d3.event.sourceEvent.changedTouches.length >= 2)) {
-        if (d3.event.sourceEvent.type === 'wheel') {
+    if (!_d32['default'].event.sourceEvent.ctrlKey && !(_d32['default'].event.sourceEvent.changedTouches && _d32['default'].event.sourceEvent.changedTouches.length >= 2)) {
+        if (_d32['default'].event.sourceEvent.type === 'wheel') {
             if (this.options.panYOnWheel) {
                 this.restoreZoom();
                 this.handleWheeling();
@@ -570,11 +588,29 @@ D3Timeline.prototype.handleZoomingEnd = function () {
  */
 D3Timeline.prototype.handleWheeling = function () {
 
-    var event = d3.event.sourceEvent;
+    var event = _d32['default'].event.sourceEvent;
     var t = this.behaviors.zoom.translate();
-    var downSide = event.wheelDelta > 0 || event.wheelDeltaY > 0 || event.detail < 0 || event.deltaY < 0;
-    var dy = (downSide ? 1 : -1) * this.options.rowHeight * this.options.wheelMultiplier;
-    var updatedT = [t[0], t[1] + dy];
+
+    var dx = 0,
+        dy = 0;
+
+    var movingX = event.wheelDeltaX || event.deltaX;
+
+    if (movingX) {
+
+        var movingRight = event.wheelDeltaX > 0 || event.deltaX < 0;
+        dx = (movingRight ? 1 : -1) * this.columnWidth * this.options.wheelMultiplier;
+    } else {
+
+        var movingY = event.wheelDelta || event.wheelDeltaY || event.detail || event.deltaY;
+
+        if (movingY) {
+            var movingDown = event.wheelDelta > 0 || event.wheelDeltaY > 0 || event.detail < 0 || event.deltaY < 0;
+            dy = movingY ? (movingDown ? 1 : -1) * this.options.rowHeight * this.options.wheelMultiplier : 0;
+        }
+    }
+
+    var updatedT = [t[0] + dx, t[1] + dy];
 
     updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
 
@@ -588,12 +624,12 @@ D3Timeline.prototype.handleWheeling = function () {
 
 D3Timeline.prototype.handleDragging = function () {
 
-    if (d3.event.sourceEvent.changedTouches && d3.event.sourceEvent.changedTouches.length >= 2) {
+    if (_d32['default'].event.sourceEvent.changedTouches && _d32['default'].event.sourceEvent.touches.length >= 2) {
         return;
     }
 
     var t = this.behaviors.zoom.translate();
-    var updatedT = [t[0] + d3.event.dx, t[1] + d3.event.dy];
+    var updatedT = [t[0] + _d32['default'].event.dx, t[1] + _d32['default'].event.dy];
 
     updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
 
@@ -708,9 +744,9 @@ D3Timeline.prototype.updateX = function () {
 
     this.behaviors.zoomX.x(this.scales.x);
 
-    this.elements.body.select('rect.boundingrect').attr('width', this.dimensions.width);
-    this.elements.body.select('rect.contactrect').attr('width', this.dimensions.width);
-    this.container.select('rect.backgroundrect').attr('width', this.dimensions.width);
+    this.elements.body.select('rect.timeline-boundingRect').attr('width', this.dimensions.width);
+    this.elements.body.select('rect.timeline-contactRect').attr('width', this.dimensions.width);
+    this.container.select('rect.timeline-backgroundRect').attr('width', this.dimensions.width);
     this.elements.clip.select('rect').attr('width', this.dimensions.width);
 
     return this;
@@ -746,8 +782,6 @@ D3Timeline.prototype.drawXAxis = function (transitionDuration, skipTicks) {
     if (this._preventDrawing) {
         return this;
     }
-
-    var domainY = this.scales.y.domain();
 
     this.axises.y.innerTickSize(skipTicks ? 0 : -this.dimensions.width);
 
@@ -835,11 +869,11 @@ D3Timeline.prototype.drawGroupedElements = function (transitionDuration) {
 
         var domainX = self.scales.x.domain();
         var domainXStart = domainX[0];
-        var domainXEnd = domainX[1];
+        var domainXEnd = domainX[domainX.length - 1];
 
         var domainY = self.scales.y.domain();
         var domainYStart = domainY[0];
-        var domainYEnd = domainY[1];
+        var domainYEnd = domainY[domainY.length - 1];
 
         var cullingTolerance = self.options.cullingTolerance;
 
@@ -855,23 +889,23 @@ D3Timeline.prototype.drawGroupedElements = function (transitionDuration) {
             return d.elements;
         };
 
-        var g = self.elements.innerContainer.selectAll('g.timelineRow').data(data, self._getter('id'));
+        var g = self.elements.innerContainer.selectAll('g.timeline-row').data(data, self._getter('id'));
 
         g.exit().remove();
 
-        g.enter().append('g').classed('timelineRow', true).attr('transform', self.moveRow.bind(self));
+        g.enter().append('g').classed('timeline-row', true).attr('transform', self.moveRow.bind(self));
 
         g.each(function (d, i) {
 
-            var g = d3.select(this);
+            var g = _d32['default'].select(this);
 
             g.attr('transform', self.moveRow.bind(self));
 
-            var sg = g.selectAll('g.timelineElement').data(elementsDataGetter, self._getter('id'));
+            var sg = g.selectAll('g.timeline-element').data(elementsDataGetter, self._getter('id'));
 
             sg.exit().remove();
 
-            var enteringSG = sg.enter().append('g').classed('timelineElement', true);
+            var enteringSG = sg.enter().append('g').classed('timeline-element', true);
 
             enteringSG.call(self.elementEnter.bind(self)).attr('transform', self.moveElement.bind(self));
 
@@ -898,11 +932,11 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
 
         var domainX = self.scales.x.domain();
         var domainXStart = domainX[0];
-        var domainXEnd = domainX[1];
+        var domainXEnd = domainX[domainX.length - 1];
 
         var domainY = self.scales.y.domain();
         var domainYStart = domainY[0];
-        var domainYEnd = domainY[1];
+        var domainYEnd = domainY[domainY.length - 1];
 
         var cullingTolerance = self.options.cullingTolerance;
         var cullingX = self.options.cullingX;
@@ -912,15 +946,15 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
             return (!cullingY || d.rowIndex >= domainYStart - cullingTolerance && d.rowIndex < domainYEnd + cullingTolerance - 1) && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
         });
 
-        var g = self.elements.innerContainer.selectAll('g.timelineElement').data(data, self._getter('id'));
+        var g = self.elements.innerContainer.selectAll('g.timeline-element').data(data, self._getter('id'));
 
         g.exit().remove();
 
-        g.enter().append('g').attr('class', 'timelineElement');
+        g.enter().append('g').attr('class', 'timeline-element');
 
         g.each(function (d) {
 
-            var g = d3.select(this);
+            var g = _d32['default'].select(this);
 
             var hasPreviousTransform = g.attr('transform') !== null;
 
@@ -934,9 +968,9 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
 
             if (transitionDuration > 0 && hasPreviousTransform) {
                 updatingSG = self._wrapWithAnimation(g, transitionDuration).attrTween("transform", function (interpolate) {
-                    var startTransform = d3.transform(g.attr('transform'));
+                    var startTransform = _d32['default'].transform(g.attr('transform'));
                     startTransform.translate[1] = self.scales.y(d.rowIndex);
-                    return d3.interpolateTransform(startTransform.toString(), newTransform);
+                    return _d32['default'].interpolateTransform(startTransform.toString(), newTransform);
                 });
             } else {
                 updatingSG = g.attr('transform', newTransform);
@@ -988,7 +1022,7 @@ D3Timeline.prototype.translateElements = function (translate, previousTranslate)
         });
 
         if (self.elementsTranslate !== self.noop) {
-            self.elements.innerContainer.selectAll('.timelineElement').call(self.elementsTranslate.bind(self));
+            self.elements.innerContainer.selectAll('.timeline-element').call(self.elementsTranslate.bind(self));
         }
     });
 };
@@ -1010,7 +1044,9 @@ D3Timeline.prototype.updateXAxisInterval = function () {
         return scale <= threshold;
     });
 
-    this.axises.x.ticks(d3.time.minutes, conf.minutes);
+    this.axises.x.ticks(_d32['default'].time.minutes, conf.minutes);
+
+    this.columnWidth = this.scales.x(new Date(0, 0, 0, 0, Math.max(15, this._currentScaleConfig.minutes, 0))) - this.scales.x(new Date(0, 0, 0, 0, 0, 0));
 
     return this;
 };
@@ -1040,9 +1076,9 @@ D3Timeline.prototype.updateY = function () {
     this.container.attr('height', this.dimensions.height + this.margin.top + this.margin.bottom);
 
     // update inner rect height
-    this.elements.body.select('rect.boundingrect').attr('height', this.dimensions.height);
-    this.elements.body.select('rect.contactrect').attr('height', this.dimensions.height);
-    this.container.select('rect.backgroundrect').attr('height', this.dimensions.height);
+    this.elements.body.select('rect.timeline-boundingRect').attr('height', this.dimensions.height);
+    this.elements.body.select('rect.timeline-contactRect').attr('height', this.dimensions.height);
+    this.container.select('rect.timeline-backgroundRect').attr('height', this.dimensions.height);
     this.elements.clip.select('rect').attr('height', this.dimensions.height);
 
     this.stopElementTransition();
@@ -1051,7 +1087,7 @@ D3Timeline.prototype.updateY = function () {
 };
 
 D3Timeline.prototype.stopElementTransition = function () {
-    this.elements.innerContainer.selectAll('g.timelineElement').transition();
+    this.elements.innerContainer.selectAll('g.timeline-element').transition();
 };
 
 D3Timeline.prototype.elementEnter = function (selection) {
@@ -1101,7 +1137,7 @@ D3Timeline.prototype._range = function (start, end, inc) {
  */
 D3Timeline.prototype._find = function (list, predicate) {
     var length = list.length >>> 0;
-    var thisArg = arguments[1];
+    var thisArg = list;
     var value;
 
     for (var i = 0; i < length; i++) {
@@ -1148,3 +1184,4 @@ module.exports = exports['default'];
 },{"extend":2}]},{},[1])
 (1)
 });
+;

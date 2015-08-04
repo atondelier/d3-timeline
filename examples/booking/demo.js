@@ -41,6 +41,14 @@ var timeline = new D3EntityTimeline({
     }
 });
 
+timeline.elementContentUpdate = function(selection) {
+
+    selection
+        .select('.timeline-elementContent > text')
+        .text(d => d.card.name);
+
+};
+
 
 var debugOptions = {
     outlineGroups: false
