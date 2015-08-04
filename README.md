@@ -13,6 +13,17 @@ As of now, you have 2 levels of control:
 
 The D3BookingTimeline is an example of extending the D3BlockTimeline (itself inheriting D3Timeline) to render a text based on the some information generated with [Faker](https://www.npmjs.com/package/Faker).
  
+ 
+## Dependencies
+
+ - **d3** is not included in the built file. If you include the built file, make sure d3 is included before timeline creation. If you import it with bundler tools like browserify or webpack, d3 is referenced as an import in the core files.
+ - **requestAnimationFrame** and **cancelAnimationFrame** and **es5** shims may be included to support older browsers.
+
+
+## Compatibility
+
+Tested on Chrome (desktop and android), Firefox, Safari (desktop and ipad).
+
 
 ## Demo
 
