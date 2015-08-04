@@ -16,7 +16,8 @@ function D3BlockTimeline(options) {
 inherits(D3BlockTimeline, D3Timeline);
 
 D3BlockTimeline.prototype.defaults = extend(true, {}, D3Timeline.prototype.defaults, {
-    clipElement: true
+    clipElement: true,
+    clipElementFilter: null
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function(d) {
@@ -37,15 +38,23 @@ D3BlockTimeline.prototype.generateClipRectId = function(d) {
 
 D3BlockTimeline.prototype.elementEnter = function(selection) {
 
-    var self = this;
-
     var elementHeight = this.options.rowHeight - this.options.rowPadding * 2;
 
     var rect = selection
         .append('rect')
         .attr('height', elementHeight);
 
+    var clipElement = false;
+
     if (this.options.clipElement) {
+        if (typeof this.options.clipElementFilter === 'function') {
+            clipElement = !!this.options.clipElementFilter.call(this, selection);
+        } else {
+            clipElement = true;
+        }
+    }
+
+    if (clipElement) {
 
         selection
             .attr('clip-path', this.generateClipPathLink.bind(this));

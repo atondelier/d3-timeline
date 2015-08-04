@@ -541,8 +541,6 @@ D3Timeline.prototype.drawXAxis = function(transitionDuration, skipTicks) {
         return this;
     }
 
-    var domainY = this.scales.y.domain();
-
     this.axises.y
         .innerTickSize(skipTicks ? 0 : -this.dimensions.width);
 
@@ -642,11 +640,11 @@ D3Timeline.prototype.drawGroupedElements = function(transitionDuration) {
 
         var domainX = self.scales.x.domain();
         var domainXStart = domainX[0];
-        var domainXEnd = domainX[1];
+        var domainXEnd = domainX[domainX.length - 1];
 
         var domainY = self.scales.y.domain();
         var domainYStart = domainY[0];
-        var domainYEnd = domainY[1];
+        var domainYEnd = domainY[domainY.length - 1];
 
         var cullingTolerance = self.options.cullingTolerance;
 
@@ -720,11 +718,11 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
 
         var domainX = self.scales.x.domain();
         var domainXStart = domainX[0];
-        var domainXEnd = domainX[1];
+        var domainXEnd = domainX[domainX.length - 1];
 
         var domainY = self.scales.y.domain();
         var domainYStart = domainY[0];
-        var domainYEnd = domainY[1];
+        var domainYEnd = domainY[domainY.length - 1];
 
         var cullingTolerance = self.options.cullingTolerance;
         var cullingX = self.options.cullingX;
@@ -938,7 +936,7 @@ D3Timeline.prototype._range = function(start, end, inc) {
  */
 D3Timeline.prototype._find = function(list, predicate) {
     var length = list.length >>> 0;
-    var thisArg = arguments[1];
+    var thisArg = list;
     var value;
 
     for (var i = 0; i < length; i++) {

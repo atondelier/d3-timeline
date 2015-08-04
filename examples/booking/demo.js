@@ -35,7 +35,10 @@ var timeline = new D3BookingTimeline({
     renderOnIdle: true,
     flattenRowElements: true,
     hideTicksOnZoom: true,
-    hideTicksOnDrag: true
+    hideTicksOnDrag: true,
+    clipElementFilter: function(selection) {
+        return selection.datum().card.name.length > 12;
+    }
 });
 
 
@@ -46,6 +49,8 @@ var debugOptions = {
 var gui = new dat.GUI({
     width: 400
 });
+
+gui.close();
 
 var debugGui = gui.addFolder('Debug');
 
