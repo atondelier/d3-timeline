@@ -505,7 +505,9 @@ D3BlockTimeline.prototype.elementEnter = function (selection) {
     }
 
     selection.on('click', function (d) {
-        self.emit('elementClick', d, selection, d3.event);
+        if (!d3.event.defaultPrevented) {
+            self.emit('elementClick', d, selection, d3.event);
+        }
     });
 };
 
@@ -771,6 +773,8 @@ D3Timeline.prototype.noop = function () {};
 
 D3Timeline.prototype.initialize = function () {
 
+    var self = this;
+
     // container
     this.container = _d32['default'].select(this.options.container).append('svg').attr('class', 'timeline');
 
@@ -808,6 +812,13 @@ D3Timeline.prototype.initialize = function () {
 
     this.elements.body.call(this.behaviors.pan);
     this.elements.body.call(this.behaviors.zoom);
+
+    this.elements.body.on('click', function () {
+        // ensure default has not been prevented by the drag behavior and the target is the contact rect
+        if (!_d32['default'].event.defaultPrevented && _d32['default'].select(_d32['default'].event.target).classed('timeline-contactRect')) {
+            self.emit('timelineClick', self, self.elements.body, _d32['default'].event);
+        }
+    });
 
     return this;
 };
@@ -850,6 +861,7 @@ D3Timeline.prototype.destroy = function () {
 
     // remove dom listeners
     this.elements.body.on('.zoom', null);
+    this.elements.body.on('click', null);
 
     // remove references
     this.container = null;
@@ -871,7 +883,7 @@ D3Timeline.prototype.restoreZoom = function () {
  */
 D3Timeline.prototype.handleZooming = function () {
 
-    if (!_d32['default'].event.sourceEvent.ctrlKey && !(_d32['default'].event.sourceEvent.changedTouches && _d32['default'].event.sourceEvent.changedTouches.length >= 2)) {
+    if (_d32['default'].event.sourceEvent && !_d32['default'].event.sourceEvent.ctrlKey && !(_d32['default'].event.sourceEvent.changedTouches && _d32['default'].event.sourceEvent.changedTouches.length >= 2)) {
         if (_d32['default'].event.sourceEvent.type === 'wheel') {
             if (this.options.panYOnWheel) {
                 this.restoreZoom();
@@ -923,7 +935,7 @@ D3Timeline.prototype.handleWheeling = function () {
     var dx = 0,
         dy = 0;
 
-    var movingX = event.wheelDeltaX || event.deltaX;
+    var movingX = event && event.wheelDeltaX || event.deltaX;
 
     if (movingX) {
 
@@ -1026,7 +1038,9 @@ D3Timeline.prototype.setTimeRange = function (minDate, maxDate) {
     this.minDate = minDate;
     this.maxDate = maxDate;
 
-    this.updateX().drawXAxis().drawYAxis().drawElements();
+    this.scales.x.domain([this.minDate, this.maxDate]);
+
+    this.updateX().updateXAxisInterval().drawXAxis().drawYAxis().drawElements();
 
     return this;
 };
@@ -1041,7 +1055,7 @@ D3Timeline.prototype.setAvailableWidth = function (availableWidth) {
     this.dimensions.width = this._lastAvailableWidth - this.margin.left - this.margin.right;
 
     if (isAvailableWidthChanging || this._dimensionsChangeCount === 1) {
-        this.updateX().drawXAxis().drawYAxis().drawElements();
+        this.updateX().updateXAxisInterval().drawXAxis().drawYAxis().drawElements();
     }
 
     return this;
@@ -1071,7 +1085,7 @@ D3Timeline.prototype.updateX = function () {
 
     this.axises.y.innerTickSize(-this.dimensions.width);
 
-    this.behaviors.zoomX.x(this.scales.x);
+    this.behaviors.zoomX.x(this.scales.x).translate(this.behaviors.zoom.translate()).scale(this.behaviors.zoom.scale());
 
     this.elements.body.select('rect.timeline-boundingRect').attr('width', this.dimensions.width);
     this.elements.body.select('rect.timeline-contactRect').attr('width', this.dimensions.width);
