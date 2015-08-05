@@ -77,7 +77,7 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
     }
 
     selection.on('click', function(d) {
-        self.emit('elementClick', d, selection);
+        self.emit('elementClick', d, selection, d3.event);
     });
 
 };
