@@ -153,7 +153,7 @@ D3Timeline.prototype.defaults = {
         return d.getMinutes() % 15 ? '' : d3.time.format('%H:%M')(d);
     },
     xAxis2TicksFormatter: function(d) {
-        return d.getMinutes() % 15 ? '' : '?/?';
+        return '';
     }
 };
 
