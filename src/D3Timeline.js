@@ -142,7 +142,7 @@ D3Timeline.prototype.defaults = {
     container: 'body',
     cullingX: true,
     cullingY: true,
-    cullingTolerance: 1,
+    cullingDistance: 1,
     renderOnIdle: true,
     flattenRowElements: false, // @todo: make it dynamic
     hideTicksOnZoom: false,
@@ -650,10 +650,10 @@ D3Timeline.prototype.drawGroupedElements = function(transitionDuration) {
         var domainYStart = domainY[0];
         var domainYEnd = domainY[domainY.length - 1];
 
-        var cullingTolerance = self.options.cullingTolerance;
+        var cullingDistance = self.options.cullingDistance;
 
         var data = self.options.cullingY ? self.data.filter(function(row, i) {
-            return i >= domainYStart - cullingTolerance && i < domainYEnd + cullingTolerance - 1
+            return i >= domainYStart - cullingDistance && i < domainYEnd + cullingDistance - 1
         }) : self.data;
 
         var elementsDataGetter = self.options.cullingX ?
@@ -728,12 +728,12 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
         var domainYStart = domainY[0];
         var domainYEnd = domainY[domainY.length - 1];
 
-        var cullingTolerance = self.options.cullingTolerance;
+        var cullingDistance = self.options.cullingDistance;
         var cullingX = self.options.cullingX;
         var cullingY = self.options.cullingY;
 
         var data = self.flattenedData.filter(function(d) {
-            return (!cullingY || (d.rowIndex >= domainYStart - cullingTolerance && d.rowIndex < domainYEnd + cullingTolerance - 1))
+            return (!cullingY || (d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1))
                 && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
         });
 

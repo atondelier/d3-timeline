@@ -92,7 +92,7 @@ dimensionsGui.add(timeline.options, 'yAxisWidth', 30, 100).step(1).name('Y axis 
 
 cullingGui.add(timeline.options, 'cullingX').name('X culling');
 cullingGui.add(timeline.options, 'cullingY').name('Y culling');
-cullingGui.add(timeline.options, 'cullingTolerance', -10, 10).step(1).name('Y culling distance');
+cullingGui.add(timeline.options, 'cullingDistance', -10, 10).step(1).name('Y culling distance');
 
 elementGui.add(timeline.options, 'alignLeft').name('Keep text visible');
 elementGui.add(timeline.options, 'alignOnTranslate').name('Keep text visible on translate');
