@@ -28,10 +28,10 @@ function D3Timeline(options) {
     this.data = [];
 
     this.margin = {
-        top: this.options.xAxisHeight,
-        right: 50,
-        bottom: 50,
-        left: this.options.yAxisWidth
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0
     };
 
     /** @type {Number} */
@@ -154,7 +154,8 @@ D3Timeline.prototype.defaults = {
     },
     xAxis2TicksFormatter: function(d) {
         return '';
-    }
+    },
+    padding: 10
 };
 
 D3Timeline.instancesCount = 0;
@@ -218,10 +219,10 @@ D3Timeline.prototype.initialize = function() {
 D3Timeline.prototype.updateMargins = function(updateDimensions) {
 
     this.margin = {
-        top: this.options.xAxisHeight,
-        right: 50,
-        bottom: 50,
-        left: this.options.yAxisWidth
+        top: this.options.xAxisHeight + this.options.padding,
+        right: this.options.padding,
+        bottom: this.options.padding,
+        left: this.options.yAxisWidth + this.options.padding
     };
 
     this.dimensions.width = this._lastAvailableWidth - this.margin.left - this.margin.right;
