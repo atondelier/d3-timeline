@@ -693,7 +693,7 @@ D3Timeline.prototype.drawGroupedElements = function(transitionDuration) {
             var sg = g.selectAll('g.timeline-element')
                 .data(elementsDataGetter, self._getter('id'));
 
-            sg.exit().remove();
+            sg.exit().call(self.elementExit.bind(self)).remove();
 
             var enteringSG = sg.enter()
                 .append('g')
@@ -747,7 +747,7 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
         var g = self.elements.innerContainer.selectAll('g.timeline-element')
             .data(data, self._getter('id'));
 
-        g.exit().remove();
+        g.exit().call(self.elementExit.bind(self)).remove();
 
         g.enter().append('g')
             .attr('class', 'timeline-element');
@@ -909,6 +909,8 @@ D3Timeline.prototype.stopElementTransition = function() {
 D3Timeline.prototype.elementEnter = function(selection) { return selection; };
 
 D3Timeline.prototype.elementUpdate = function(selection) { return selection; };
+
+D3Timeline.prototype.elementExit = function(selection) { return selection; };
 
 D3Timeline.prototype._wrapWithAnimation = function(selection, transitionDuration) {
     if (transitionDuration > 0) {

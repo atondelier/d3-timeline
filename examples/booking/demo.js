@@ -49,6 +49,9 @@ timeline.elementContentUpdate = function(selection) {
 
 };
 
+timeline.on('elementClick', function a(d, selection) {
+    console.log('click on element', selection, 'with data', d);
+});
 
 var debugOptions = {
     outlineGroups: false

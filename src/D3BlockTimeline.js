@@ -38,6 +38,8 @@ D3BlockTimeline.prototype.generateClipRectId = function(d) {
 
 D3BlockTimeline.prototype.elementEnter = function(selection) {
 
+    var self = this;
+
     var elementHeight = this.options.rowHeight - this.options.rowPadding * 2;
 
     var rect = selection
@@ -74,6 +76,10 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
             .attr('xlink:href', this.generateClipRectLink.bind(this));
     }
 
+    selection.on('click', function(d) {
+        self.emit('elementClick', d, selection);
+    });
+
 };
 
 D3BlockTimeline.prototype.elementUpdate = function(selection) {
@@ -88,6 +94,12 @@ D3BlockTimeline.prototype.elementUpdate = function(selection) {
                 return self.scales.x(d.end) - self.scales.x(d.start)
             }
         });
+
+};
+
+D3BlockTimeline.prototype.elementExit = function(selection) {
+
+    selection.on('click', null);
 
 };
 

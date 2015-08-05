@@ -477,6 +477,8 @@ D3BlockTimeline.prototype.generateClipRectId = function (d) {
 
 D3BlockTimeline.prototype.elementEnter = function (selection) {
 
+    var self = this;
+
     var elementHeight = this.options.rowHeight - this.options.rowPadding * 2;
 
     var rect = selection.append('rect').attr('class', 'timeline-elementBackground').attr('height', elementHeight);
@@ -501,6 +503,10 @@ D3BlockTimeline.prototype.elementEnter = function (selection) {
 
         selection.append('clipPath').property('id', this.generateClipPathId.bind(this)).append('use').attr('xlink:href', this.generateClipRectLink.bind(this));
     }
+
+    selection.on('click', function (d) {
+        self.emit('elementClick', d, selection);
+    });
 };
 
 D3BlockTimeline.prototype.elementUpdate = function (selection) {
@@ -513,6 +519,11 @@ D3BlockTimeline.prototype.elementUpdate = function (selection) {
             return self.scales.x(d.end) - self.scales.x(d.start);
         }
     });
+};
+
+D3BlockTimeline.prototype.elementExit = function (selection) {
+
+    selection.on('click', null);
 };
 
 exports['default'] = D3BlockTimeline;
@@ -1221,7 +1232,7 @@ D3Timeline.prototype.drawGroupedElements = function (transitionDuration) {
 
             var sg = g.selectAll('g.timeline-element').data(elementsDataGetter, self._getter('id'));
 
-            sg.exit().remove();
+            sg.exit().call(self.elementExit.bind(self)).remove();
 
             var enteringSG = sg.enter().append('g').classed('timeline-element', true);
 
@@ -1266,7 +1277,7 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
 
         var g = self.elements.innerContainer.selectAll('g.timeline-element').data(data, self._getter('id'));
 
-        g.exit().remove();
+        g.exit().call(self.elementExit.bind(self)).remove();
 
         g.enter().append('g').attr('class', 'timeline-element');
 
@@ -1413,6 +1424,10 @@ D3Timeline.prototype.elementEnter = function (selection) {
 };
 
 D3Timeline.prototype.elementUpdate = function (selection) {
+    return selection;
+};
+
+D3Timeline.prototype.elementExit = function (selection) {
     return selection;
 };
 
