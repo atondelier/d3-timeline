@@ -4,6 +4,8 @@
 
 import extend from 'extend';
 import d3 from 'd3';
+import inherits from 'inherits';
+import EventEmitter from 'events/events';
 
 /**
  * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
@@ -15,6 +17,8 @@ import d3 from 'd3';
  * @constructor
  */
 function D3Timeline(options) {
+
+    EventEmitter.call(this);
 
     D3Timeline.instancesCount += 1;
 
@@ -114,6 +118,9 @@ function D3Timeline(options) {
     this._nextAnimationFrameHandlers = [];
     this._currentElementsGroupTranslate = [0.0, 0.0];
 }
+
+inherits(D3Timeline, EventEmitter);
+
 
 /**
  * Default options
