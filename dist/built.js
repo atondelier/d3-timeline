@@ -1275,7 +1275,9 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
             return (!cullingY || d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1) && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
         });
 
-        var g = self.elements.innerContainer.selectAll('g.timeline-element').data(data, self._getter('id'));
+        var g = self.elements.innerContainer.selectAll('g.timeline-element').data(data, function (d) {
+            return d.rowIndex + '_' + d.id;
+        });
 
         g.exit().call(self.elementExit.bind(self)).remove();
 

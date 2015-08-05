@@ -745,7 +745,9 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
         });
 
         var g = self.elements.innerContainer.selectAll('g.timeline-element')
-            .data(data, self._getter('id'));
+            .data(data, function(d) {
+                return d.rowIndex + '_' + d.id;
+            });
 
         g.exit().call(self.elementExit.bind(self)).remove();
 
