@@ -61,18 +61,14 @@ function D3Timeline(options) {
         x: d3.svg.axis()
             .scale(this.scales.x)
             .orient('top')
-            .tickFormat(function(d) {
-                return d.getMinutes() % 15 ? '' : d3.time.format('%H:%M')(d);
-            })
+            .tickFormat(this.options.xAxisTicksFormatter)
             .outerTickSize(0)
             .tickPadding(20),
 
         x2: d3.svg.axis()
             .scale(this.scales.x)
             .orient('top')
-            .tickFormat(function(d) {
-                return d.getMinutes() % 15 ? '' : '?/?';
-            })
+            .tickFormat(this.options.xAxis2TicksFormatter)
             .outerTickSize(0)
             .innerTickSize(0),
 
@@ -152,7 +148,13 @@ D3Timeline.prototype.defaults = {
     hideTicksOnZoom: false,
     hideTicksOnDrag: false,
     panYOnWheel: true,
-    wheelMultiplier: 1
+    wheelMultiplier: 1,
+    xAxisTicksFormatter: function(d) {
+        return d.getMinutes() % 15 ? '' : d3.time.format('%H:%M')(d);
+    },
+    xAxis2TicksFormatter: function(d) {
+        return d.getMinutes() % 15 ? '' : '?/?';
+    }
 };
 
 D3Timeline.instancesCount = 0;

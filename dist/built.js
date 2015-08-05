@@ -367,13 +367,9 @@ function D3Timeline(options) {
 
     this.axises = {
 
-        x: _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(function (d) {
-            return d.getMinutes() % 15 ? '' : _d32['default'].time.format('%H:%M')(d);
-        }).outerTickSize(0).tickPadding(20),
+        x: _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(this.options.xAxisTicksFormatter).outerTickSize(0).tickPadding(20),
 
-        x2: _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(function (d) {
-            return d.getMinutes() % 15 ? '' : '?/?';
-        }).outerTickSize(0).innerTickSize(0),
+        x2: _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(this.options.xAxis2TicksFormatter).outerTickSize(0).innerTickSize(0),
 
         y: _d32['default'].svg.axis().scale(this.scales.y).orient('left').tickFormat(function (d) {
             if (self._isRound(d)) {
@@ -433,7 +429,13 @@ D3Timeline.prototype.defaults = {
     hideTicksOnZoom: false,
     hideTicksOnDrag: false,
     panYOnWheel: true,
-    wheelMultiplier: 1
+    wheelMultiplier: 1,
+    xAxisTicksFormatter: function xAxisTicksFormatter(d) {
+        return d.getMinutes() % 15 ? '' : _d32['default'].time.format('%H:%M')(d);
+    },
+    xAxis2TicksFormatter: function xAxis2TicksFormatter(d) {
+        return d.getMinutes() % 15 ? '' : '?/?';
+    }
 };
 
 D3Timeline.instancesCount = 0;
@@ -1184,4 +1186,3 @@ module.exports = exports['default'];
 },{"extend":2}]},{},[1])
 (1)
 });
-;
