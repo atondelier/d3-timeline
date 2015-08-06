@@ -325,6 +325,8 @@ D3Timeline.prototype.handleZooming = function() {
     this._lastTranslate = updatedT;
     this._lastScale = this.behaviors.zoom.scale();
 
+    this.emit('move');
+
 };
 
 D3Timeline.prototype.handleZoomingEnd = function() {
@@ -379,6 +381,8 @@ D3Timeline.prototype.handleWheeling = function() {
 
     this._lastTranslate = updatedT;
 
+    this.emit('move');
+
 };
 
 D3Timeline.prototype.handleDragging = function() {
@@ -400,6 +404,8 @@ D3Timeline.prototype.handleDragging = function() {
     this.moveElements(false, false, !this.options.hideTicksOnDrag);
 
     this._lastTranslate = updatedT;
+
+    this.emit('move');
 };
 
 D3Timeline.prototype.toggleDrawing = function(active) {
@@ -491,6 +497,8 @@ D3Timeline.prototype.setAvailableWidth = function(availableWidth) {
             .drawElements()
     }
 
+    this.emit('resize');
+
     return this;
 };
 
@@ -510,6 +518,8 @@ D3Timeline.prototype.setAvailableHeight = function(availableHeight) {
             .drawYAxis()
             .drawElements()
     }
+
+    this.emit('resize');
 
     return this;
 };

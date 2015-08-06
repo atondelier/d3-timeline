@@ -44,3 +44,12 @@
     fill: #999;
     text-anchor: left;
 }
+
+.timelineMarker .timelineMarker-label {
+    text-anchor: middle;
+    fill: orange;
+}
+
+.timelineMarker .timelineMarker-line {
+    stroke: orange;
+}

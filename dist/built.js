@@ -4,8 +4,10 @@
 module.exports.D3Timeline = require('./src/D3Timeline.js');
 module.exports.D3BlockTimeline = require('./src/D3BlockTimeline.js');
 module.exports.D3EntityTimeline = require('./src/D3EntityTimeline.js');
+module.exports.D3TimelineMarker = require('./src/D3TimelineMarker.js');
+module.exports.D3TimelineTracker = require('./src/D3TimelineTracker.js');
 
-},{"./src/D3BlockTimeline.js":5,"./src/D3EntityTimeline.js":6,"./src/D3Timeline.js":7}],2:[function(require,module,exports){
+},{"./src/D3BlockTimeline.js":5,"./src/D3EntityTimeline.js":6,"./src/D3Timeline.js":7,"./src/D3TimelineMarker.js":8,"./src/D3TimelineTracker.js":9}],2:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -909,6 +911,8 @@ D3Timeline.prototype.handleZooming = function () {
 
     this._lastTranslate = updatedT;
     this._lastScale = this.behaviors.zoom.scale();
+
+    this.emit('move');
 };
 
 D3Timeline.prototype.handleZoomingEnd = function () {
@@ -961,6 +965,8 @@ D3Timeline.prototype.handleWheeling = function () {
     this.moveElements(false, true);
 
     this._lastTranslate = updatedT;
+
+    this.emit('move');
 };
 
 D3Timeline.prototype.handleDragging = function () {
@@ -982,6 +988,8 @@ D3Timeline.prototype.handleDragging = function () {
     this.moveElements(false, false, !this.options.hideTicksOnDrag);
 
     this._lastTranslate = updatedT;
+
+    this.emit('move');
 };
 
 D3Timeline.prototype.toggleDrawing = function (active) {
@@ -1058,6 +1066,8 @@ D3Timeline.prototype.setAvailableWidth = function (availableWidth) {
         this.updateX().updateXAxisInterval().drawXAxis().drawYAxis().drawElements();
     }
 
+    this.emit('resize');
+
     return this;
 };
 
@@ -1073,6 +1083,8 @@ D3Timeline.prototype.setAvailableHeight = function (availableHeight) {
     if (isAvailableHeightChanging || this._dimensionsChangeCount === 1) {
         this.updateY().drawXAxis().drawYAxis().drawElements();
     }
+
+    this.emit('resize');
 
     return this;
 };
@@ -1530,7 +1542,242 @@ D3Timeline.prototype._clampTranslationWithScale = function (translate, scale) {
 exports['default'] = D3Timeline;
 module.exports = exports['default'];
 
-},{"events/events":2,"extend":3,"inherits":4}]},{},[1])
+},{"events/events":2,"extend":3,"inherits":4}],8:[function(require,module,exports){
+var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};"use strict";
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _extend = require('extend');
+
+var _extend2 = _interopRequireDefault(_extend);
+
+var _d3 = (typeof window !== "undefined" ? window['d3'] : typeof global !== "undefined" ? global['d3'] : null);
+
+var _d32 = _interopRequireDefault(_d3);
+
+var _D3Timeline = require('./D3Timeline');
+
+var _D3Timeline2 = _interopRequireDefault(_D3Timeline);
+
+function D3TimelineMarker(options) {
+
+    this.options = (0, _extend2['default'])(true, {}, this.defaults, options);
+
+    /**
+     * @type {D3Timeline}
+     */
+    this.timeline = null;
+
+    this.container = null;
+
+    /**
+     * @type {Function}
+     * @private
+     */
+    this._timelineMoveListener = null;
+
+    /**
+     * @type {Function}
+     * @private
+     */
+    this._timelineResizeListener = null;
+
+    this._moveAF = null;
+
+    this.time = null;
+    this._lastTimeUpdated = null;
+}
+
+D3TimelineMarker.prototype.defaults = {
+    timeFormat: _d32['default'].time.format('%H:%M'),
+    outerTickSize: 10,
+    tickPadding: 10,
+    roundPosition: false
+};
+
+/**
+ *
+ * @param {D3Timeline} timeline
+ */
+D3TimelineMarker.prototype.setTimeline = function (timeline) {
+
+    var previousTimeline = this.timeline;
+
+    this.timeline = timeline && timeline instanceof _D3Timeline2['default'] ? timeline : null;
+
+    if (this.timeline && !previousTimeline) {
+        this.handleBoundTimeline();
+    } else if (!this.timeline && previousTimeline) {
+        this.handleUnboundTimeline();
+    }
+};
+
+D3TimelineMarker.prototype.timeComparator = function (timeA, timeB) {
+    return +timeA !== +timeB;
+};
+
+D3TimelineMarker.prototype.setTime = function (time) {
+
+    var previousTimeUpdated = this._lastTimeUpdated;
+
+    this.time = time;
+
+    if (this.timeComparator(previousTimeUpdated, this.time) && this.timeline && this.container) {
+
+        this._lastTimeUpdated = this.time;
+
+        this.container.datum({
+            time: time
+        });
+
+        this.move();
+    }
+};
+
+D3TimelineMarker.prototype.handleBoundTimeline = function () {
+
+    var self = this;
+
+    this.container = this.timeline.container.append('g').datum({
+        time: this.time
+    }).attr('class', 'timelineMarker');
+
+    this.container.append('line').attr('class', 'timelineMarker-line').attr({
+        y1: -this.options.outerTickSize,
+        y2: this.timeline.dimensions.height
+    });
+
+    this.container.append('text').attr('class', 'timelineMarker-label').attr('dy', -this.options.outerTickSize - this.options.tickPadding);
+
+    // on timeline move, move the marker
+    this._timelineMoveListener = this.move.bind(this);
+    this.timeline.on('move', this._timelineMoveListener);
+
+    // on timeline resize, resize the marker and move it
+    this._timelineResizeListener = function () {
+        self.resize();
+        self.move();
+    };
+    this.timeline.on('resize', this._timelineResizeListener);
+
+    this.move();
+};
+
+D3TimelineMarker.prototype.handleUnboundTimeline = function () {
+
+    this.timeline.removeListener('move', this._timelineMoveListener);
+    this.timeline.removeListener('resize', this._timelineResizeListener);
+
+    this.container.remove();
+
+    this.container = null;
+
+    this.timeline = null;
+};
+
+D3TimelineMarker.prototype.move = function () {
+
+    var self = this;
+
+    if (this._moveAF) {
+        this.timeline.cancelAnimationFrame(this._moveAF);
+    }
+
+    this._moveAF = this.timeline.requestAnimationFrame(function () {
+
+        self.container.each(function (d) {
+
+            var xScale = self.timeline.scales.x;
+            var xRange = xScale.range();
+            var left = self.timeline.scales.x(d.time);
+            var isInRange = left >= xRange[0] && left <= xRange[xRange.length - 1];
+
+            var g = _d32['default'].select(this);
+
+            if (isInRange) {
+
+                g.style('display', '');
+
+                g.attr('transform', 'translate(' + (self.timeline.margin.left + left >> 0) + ',' + self.timeline.margin.top + ')');
+
+                g.select('.timelineMarker-label').text(function (d) {
+                    return self.options.timeFormat(d.time);
+                });
+            } else {
+                g.style('display', 'none');
+            }
+        });
+    });
+};
+
+D3TimelineMarker.prototype.resize = function () {
+
+    this.container.select('.timelineMarker-line').attr({
+        y1: -this.options.outerTickSize,
+        y2: this.timeline.dimensions.height
+    });
+};
+
+module.exports = D3TimelineMarker;
+
+},{"./D3Timeline":7,"extend":3}],9:[function(require,module,exports){
+"use strict";
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _D3TimelineMarker = require('./D3TimelineMarker');
+
+var _D3TimelineMarker2 = _interopRequireDefault(_D3TimelineMarker);
+
+var _inherits = require('inherits');
+
+var _inherits2 = _interopRequireDefault(_inherits);
+
+var _extend = require('extend');
+
+/**
+ *
+ * @extends {D3TimelineMarker}
+ * @constructor
+ */
+
+var _extend2 = _interopRequireDefault(_extend);
+
+function D3TimelineTracker(options) {
+    _D3TimelineMarker2['default'].call(this, options);
+
+    this.enabled = false;
+}
+
+(0, _inherits2['default'])(D3TimelineTracker, _D3TimelineMarker2['default']);
+
+D3TimelineTracker.prototype.timeGetter = function () {
+
+    return new Date();
+};
+
+D3TimelineTracker.prototype.start = function () {
+
+    var self = this;
+
+    this.enabled = true;
+
+    d3.timer(function () {
+
+        self.setTime(self.timeGetter());
+
+        return !self.enabled;
+    });
+};
+
+D3TimelineTracker.prototype.stop = function () {
+
+    this.enabled = false;
+};
+
+module.exports = D3TimelineTracker;
+
+},{"./D3TimelineMarker":8,"extend":3,"inherits":4}]},{},[1])
 (1)
 });
 ;

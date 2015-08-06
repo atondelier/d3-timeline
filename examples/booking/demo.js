@@ -2,10 +2,16 @@
 
 import regeneratorRuntime from 'babel-runtime/regenerator';
 import D3EntityTimeline from '../../src/D3EntityTimeline';
+import D3TimelineTracker from '../../src/D3TimelineTracker';
 import Faker from 'Faker';
 import dat from 'dat-gui';
 
 var gdsData = [];
+
+var now = new Date();
+var year = now.getFullYear();
+var month = now.getMonth();
+var date = now.getDate();
 
 function randomizeEntries(rows, elements) {
     gdsData = _(0).range(rows,1).map(function(i) {
@@ -13,8 +19,8 @@ function randomizeEntries(rows, elements) {
         return { id: i, name: 'T'+(i+1), elements: _(0).range(elements,1).map(function(j) {
             return {
                 id: (i+1)*1e2+j,
-                start: new Date(2015,7,23,10, minutesDeltaByRow+j*60),
-                end: new Date(2015,7,23,10, minutesDeltaByRow+j*60+(20 + Math.random()*40 >>0)),
+                start: new Date(year,month,date,10, minutesDeltaByRow+j*60),
+                end: new Date(year,month,date,10, minutesDeltaByRow+j*60+(20 + Math.random()*40 >>0)),
                 card: Faker.Helpers.createCard()
             };
         }).value() };
@@ -112,7 +118,7 @@ timeline
     .initialize()
     .setAvailableWidth(innerWidth)
     .setAvailableHeight(innerHeight-5)
-    .setTimeRange(new Date(2015,7,23, 10), new Date(2015,7,23,16))
+    .setTimeRange(new Date(year,month,date, 10), new Date(year,month,date,16))
     .toggleDrawing(true)
     .setData(gdsData);
 
@@ -123,3 +129,18 @@ $(window).resize(_.debounce(function() {
 }, 100));
 
 global.timeline = timeline;
+
+var tracker = new D3TimelineTracker({});
+
+tracker.setTimeline(timeline);
+
+tracker.timeComparator = function(timeA, timeB) {
+    var oneMinute = 1e3;
+    return (+timeA/oneMinute>>0) !== (+timeB/oneMinute>>0);
+};
+
+tracker.start();
+
+global.tracker = tracker;
+
+
