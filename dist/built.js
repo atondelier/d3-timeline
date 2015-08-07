@@ -856,7 +856,7 @@ D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection)
     }, // a time getter
     function getYPosition() {
         var position = getPosition();
-        return self.scales.y.invert(position[1]);
+        return self.data[self.scales.y.invert(position[1]) >> 0];
     } // a row getter
     );
 };
@@ -1945,3 +1945,4 @@ module.exports = D3TimelineTimeTracker;
 },{"./D3TimelineMarker":8,"extend":3,"inherits":4}]},{},[1])
 (1)
 });
+;

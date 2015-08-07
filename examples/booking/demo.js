@@ -65,6 +65,8 @@ timeline.on('timeline:element:click', function (d, selection, d3Event) {
 
 timeline.on('timeline:click', function (timeline, selection, d3Event, getTime, getRow){
     console.log('click on timeline', arguments);
+    console.log('time:', getTime());
+    console.log('row:', getRow());
 });
 
 var debugOptions = {

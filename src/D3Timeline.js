@@ -264,7 +264,7 @@ D3Timeline.prototype.emitTimelineEvent = function(eventName, d3TargetSelection) 
         }, // a time getter
         function getYPosition() {
             var position = getPosition();
-            return self.scales.y.invert(position[1]);
+            return self.data[self.scales.y.invert(position[1]) >> 0];
         } // a row getter
     );
 };
