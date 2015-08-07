@@ -59,8 +59,10 @@ timeline.elementContentUpdate = function(selection) {
 
 };
 
-timeline.on('timeline:element:click', function (d, selection, d3Event) {
+timeline.on('timeline:element:click', function (d, timeline, selection, d3Event, getTime, getRow) {
     console.log('click on element', arguments);
+    console.log('time:', getTime());
+    console.log('row:', getRow());
 });
 
 timeline.on('timeline:click', function (timeline, selection, d3Event, getTime, getRow){

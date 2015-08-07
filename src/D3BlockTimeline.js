@@ -78,7 +78,7 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
 
     selection.on('click', function(d) {
         if (!d3.event.defaultPrevented) {
-            self.emit('timeline:element:click', d, selection, d3.event);
+            self.emitTimelineEvent('element:click', selection, [d]);
         }
     });
 

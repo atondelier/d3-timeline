@@ -509,7 +509,7 @@ D3BlockTimeline.prototype.elementEnter = function (selection) {
 
     selection.on('click', function (d) {
         if (!d3.event.defaultPrevented) {
-            self.emit('timeline:element:click', d, selection, d3.event);
+            self.emitTimelineEvent('element:click', selection, [d]);
         }
     });
 };
@@ -833,7 +833,7 @@ D3Timeline.prototype.initializeEventListeners = function () {
     });
 };
 
-D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection) {
+D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection, priorityArguments) {
 
     var self = this;
 
@@ -846,8 +846,7 @@ D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection)
         return position;
     };
 
-    this.emit('timeline:' + eventName, // the event name
-    this, // the timeline instance
+    var args = [this, // the timeline instance
     d3TargetSelection, // the d3 selection targeted
     _d32['default'].event, // the d3 event
     function getTime() {
@@ -858,7 +857,15 @@ D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection)
         var position = getPosition();
         return self.data[self.scales.y.invert(position[1]) >> 0];
     } // a row getter
-    );
+    ];
+
+    if (Array.isArray(priorityArguments)) {
+        args = priorityArguments.concat(args);
+    }
+
+    args.unshift('timeline:' + eventName); // the event name
+
+    this.emit.apply(this, args);
 };
 
 D3Timeline.prototype.updateMargins = function (updateDimensions) {
