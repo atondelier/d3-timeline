@@ -3,9 +3,9 @@
 "use strict";
 
 import extend from 'extend';
-import d3 from 'd3';
 import inherits from 'inherits';
 import EventEmitter from 'events/events';
+import d3 from 'd3';
 
 /**
  * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
@@ -162,7 +162,8 @@ D3Timeline.prototype.defaults = {
     xAxis2TicksFormatter: function(d) {
         return '';
     },
-    padding: 10
+    padding: 10,
+    trackedDOMEvents: ['click', 'mousemove', 'mouseenter', 'mouseleave'] // not dynamic
 };
 
 D3Timeline.instancesCount = 0;
@@ -170,8 +171,6 @@ D3Timeline.instancesCount = 0;
 D3Timeline.prototype.noop = function() {};
 
 D3Timeline.prototype.initialize = function() {
-
-    var self = this;
 
     // container
     this.container = d3.select(this.options.container).append('svg')
@@ -222,14 +221,52 @@ D3Timeline.prototype.initialize = function() {
     this.elements.body.call(this.behaviors.pan);
     this.elements.body.call(this.behaviors.zoom);
 
-    this.elements.body.on('click', function() {
-        // ensure default has not been prevented by the drag behavior and the target is the contact rect
-        if (!d3.event.defaultPrevented && d3.select(d3.event.target).classed('timeline-contactRect')) {
-            self.emit('timelineClick', self, self.elements.body, d3.event);
-        }
-    });
+    this.initializeEventListeners();
 
     return this;
+};
+
+D3Timeline.prototype.initializeEventListeners = function() {
+
+    var self = this;
+
+    this.options.trackedDOMEvents.forEach(function(eventName) {
+        self.elements.body.on(eventName, function() {
+            if (eventName !== 'click' || !d3.event.defaultPrevented && d3.select(d3.event.target).classed('timeline-contactRect')) {
+                self.emitTimelineEvent(eventName, self.elements.body);
+            }
+        });
+    });
+
+};
+
+D3Timeline.prototype.emitTimelineEvent = function(eventName, d3TargetSelection) {
+
+    var self = this;
+
+    var position;
+
+    var getPosition = function() {
+        if (!position) {
+            position = d3.mouse(self.elements.body.node());
+        }
+        return position;
+    };
+
+    this.emit(
+        'timeline:' + eventName, // the event name
+        this, // the timeline instance
+        d3TargetSelection, // the d3 selection targeted
+        d3.event, // the d3 event
+        function getTime() {
+            var position = getPosition();
+            return self.scales.x.invert(position[0]);
+        }, // a time getter
+        function getYPosition() {
+            var position = getPosition();
+            return self.scales.y.invert(position[1]);
+        } // a row getter
+    );
 };
 
 D3Timeline.prototype.updateMargins = function(updateDimensions) {
@@ -325,7 +362,7 @@ D3Timeline.prototype.handleZooming = function() {
     this._lastTranslate = updatedT;
     this._lastScale = this.behaviors.zoom.scale();
 
-    this.emit('move');
+    this.emit('timeline:move');
 
 };
 
@@ -381,7 +418,7 @@ D3Timeline.prototype.handleWheeling = function() {
 
     this._lastTranslate = updatedT;
 
-    this.emit('move');
+    this.emit('timeline:move');
 
 };
 
@@ -405,7 +442,7 @@ D3Timeline.prototype.handleDragging = function() {
 
     this._lastTranslate = updatedT;
 
-    this.emit('move');
+    this.emit('timeline:move');
 };
 
 D3Timeline.prototype.toggleDrawing = function(active) {
@@ -497,7 +534,7 @@ D3Timeline.prototype.setAvailableWidth = function(availableWidth) {
             .drawElements()
     }
 
-    this.emit('resize');
+    this.emit('timeline:resize');
 
     return this;
 };
@@ -519,7 +556,7 @@ D3Timeline.prototype.setAvailableHeight = function(availableHeight) {
             .drawElements()
     }
 
-    this.emit('resize');
+    this.emit('timeline:resize');
 
     return this;
 };

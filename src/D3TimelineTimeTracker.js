@@ -9,21 +9,25 @@ import extend from 'extend';
  * @extends {D3TimelineMarker}
  * @constructor
  */
-function D3TimelineTracker(options) {
+function D3TimelineTimeTracker(options) {
     D3TimelineMarker.call(this, options);
 
     this.enabled = false;
 }
 
-inherits(D3TimelineTracker, D3TimelineMarker);
+inherits(D3TimelineTimeTracker, D3TimelineMarker);
 
-D3TimelineTracker.prototype.timeGetter = function() {
+D3TimelineTimeTracker.prototype.defaults = extend(true, {}, D3TimelineMarker.prototype.defaults, {
+    className: 'timelineMarker--timeTracker'
+});
+
+D3TimelineTimeTracker.prototype.timeGetter = function() {
 
     return new Date();
 
 };
 
-D3TimelineTracker.prototype.start = function() {
+D3TimelineTimeTracker.prototype.start = function() {
 
     var self = this;
 
@@ -38,10 +42,10 @@ D3TimelineTracker.prototype.start = function() {
     });
 };
 
-D3TimelineTracker.prototype.stop = function() {
+D3TimelineTimeTracker.prototype.stop = function() {
 
     this.enabled = false;
 
 };
 
-module.exports = D3TimelineTracker;
+module.exports = D3TimelineTimeTracker;

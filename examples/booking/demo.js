@@ -2,7 +2,8 @@
 
 import regeneratorRuntime from 'babel-runtime/regenerator';
 import D3EntityTimeline from '../../src/D3EntityTimeline';
-import D3TimelineTracker from '../../src/D3TimelineTracker';
+import D3TimelineMouseTracker from '../../src/D3TimelineMouseTracker';
+import D3TimelineTimeTracker from '../../src/D3TimelineTimeTracker';
 import Faker from 'Faker';
 import dat from 'dat-gui';
 
@@ -47,6 +48,9 @@ var timeline = new D3EntityTimeline({
     }
 });
 
+var mouseTracker = new D3TimelineMouseTracker({});
+
+
 timeline.elementContentUpdate = function(selection) {
 
     selection
@@ -55,12 +59,12 @@ timeline.elementContentUpdate = function(selection) {
 
 };
 
-timeline.on('elementClick', function (d, selection) {
-    console.log('click on element', selection, 'with data', d);
+timeline.on('timeline:element:click', function (d, selection, d3Event) {
+    console.log('click on element', arguments);
 });
 
-timeline.on('timelineClick', function (timeline, selection){
-    console.log('click on timeline', selection, 'with instance', timeline);
+timeline.on('timeline:click', function (timeline, selection, d3Event, getTime, getRow){
+    console.log('click on timeline', arguments);
 });
 
 var debugOptions = {
@@ -122,6 +126,8 @@ timeline
     .toggleDrawing(true)
     .setData(gdsData);
 
+mouseTracker.setTimeline(timeline);
+
 $(window).resize(_.debounce(function() {
     timeline
         .setAvailableWidth(innerWidth)
@@ -130,17 +136,17 @@ $(window).resize(_.debounce(function() {
 
 global.timeline = timeline;
 
-var tracker = new D3TimelineTracker({});
+var timeTracker = new D3TimelineTimeTracker({});
 
-tracker.setTimeline(timeline);
+timeTracker.setTimeline(timeline);
 
-tracker.timeComparator = function(timeA, timeB) {
+timeTracker.timeComparator = function(timeA, timeB) {
     var oneMinute = 1e3;
     return (+timeA/oneMinute>>0) !== (+timeB/oneMinute>>0);
 };
 
-tracker.start();
+timeTracker.start();
 
-global.tracker = tracker;
+global.tracker = timeTracker;
 
 

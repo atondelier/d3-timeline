@@ -15,7 +15,7 @@ function D3EntityTimeline(options) {
 
 inherits(D3EntityTimeline, D3BlockTimeline);
 
-D3BlockTimeline.prototype.defaults = extend(true, {}, D3BlockTimeline.prototype.defaults, {
+D3EntityTimeline.prototype.defaults = extend(true, {}, D3BlockTimeline.prototype.defaults, {
     alignLeft: true,
     alignOnTranslate: true
 });

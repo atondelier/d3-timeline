@@ -1,10 +1,14 @@
 "use strict";
 
 import extend from 'extend';
+import inherits from 'inherits';
+import EventEmitter from 'events/events';
 import d3 from 'd3';
 import D3Timeline from './D3Timeline';
 
 function D3TimelineMarker(options) {
+
+    EventEmitter.call(this);
 
     this.options = extend(true, {}, this.defaults, options);
 
@@ -33,11 +37,14 @@ function D3TimelineMarker(options) {
     this._lastTimeUpdated = null;
 }
 
+inherits(D3TimelineMarker, EventEmitter);
+
 D3TimelineMarker.prototype.defaults = {
     timeFormat: d3.time.format('%H:%M'),
     outerTickSize: 10,
     tickPadding: 10,
-    roundPosition: false
+    roundPosition: false,
+    className: ''
 };
 
 /**
@@ -53,7 +60,7 @@ D3TimelineMarker.prototype.setTimeline = function(timeline) {
     if (this.timeline && !previousTimeline) {
         this.handleBoundTimeline();
     } else if (!this.timeline && previousTimeline) {
-        this.handleUnboundTimeline();
+        this.handleUnboundTimeline(previousTimeline);
     }
 
 };
@@ -91,11 +98,12 @@ D3TimelineMarker.prototype.handleBoundTimeline = function() {
         .datum({
             time: this.time
         })
-        .attr('class', 'timelineMarker');
+        .attr('class', 'timelineMarker ' + this.options.className);
 
     this.container
         .append('line')
         .attr('class', 'timelineMarker-line')
+        .style('pointer-events', 'none')
         .attr({
             y1: -this.options.outerTickSize,
             y2: this.timeline.dimensions.height
@@ -108,29 +116,37 @@ D3TimelineMarker.prototype.handleBoundTimeline = function() {
 
     // on timeline move, move the marker
     this._timelineMoveListener = this.move.bind(this);
-    this.timeline.on('move', this._timelineMoveListener);
+    this.timeline.on('timeline:move', this._timelineMoveListener);
 
     // on timeline resize, resize the marker and move it
     this._timelineResizeListener = function() {
         self.resize();
         self.move();
     };
-    this.timeline.on('resize', this._timelineResizeListener);
+    this.timeline.on('timeline:resize', this._timelineResizeListener);
+
+    this.emit('timeline:marker:bound');
 
     this.move();
 
 };
 
-D3TimelineMarker.prototype.handleUnboundTimeline = function() {
+D3TimelineMarker.prototype.handleUnboundTimeline = function(previousTimeline) {
 
-    this.timeline.removeListener('move', this._timelineMoveListener);
-    this.timeline.removeListener('resize', this._timelineResizeListener);
+    previousTimeline.removeListener('timeline:move', this._timelineMoveListener);
+    previousTimeline.removeListener('timeline:resize', this._timelineResizeListener);
 
     this.container.remove();
 
-    this.container = null;
+    if (this._moveAF) {
+        previousTimeline.cancelAnimationFrame(this._moveAF);
+        this._moveAF = null;
+    }
 
-    this.timeline = null;
+    this.container = null;
+    this._timelineMoveListener = null;
+
+    this.emit('timeline:marker:unbound', previousTimeline);
 };
 
 D3TimelineMarker.prototype.move = function() {
@@ -155,7 +171,7 @@ D3TimelineMarker.prototype.move = function() {
 
                 if (isInRange) {
 
-                    g.style('display', '');
+                    self.show();
 
                     g.attr('transform', 'translate('+(self.timeline.margin.left + left >> 0)+','+self.timeline.margin.top+')');
 
@@ -163,13 +179,21 @@ D3TimelineMarker.prototype.move = function() {
                         .text(d => self.options.timeFormat(d.time));
 
                 } else {
-                    g.style('display', 'none');
+                    self.hide();
                 }
 
             });
 
     });
 
+};
+
+D3TimelineMarker.prototype.show = function() {
+    this.container.style('display', '');
+};
+
+D3TimelineMarker.prototype.hide = function() {
+    this.container.style('display', 'none');
 };
 
 D3TimelineMarker.prototype.resize = function() {

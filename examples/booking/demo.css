@@ -53,3 +53,11 @@
 .timelineMarker .timelineMarker-line {
     stroke: orange;
 }
+
+.timelineMarker.timelineMarker--mouseTracker .timelineMarker-line {
+    stroke: #00d800;
+}
+
+.timelineMarker.timelineMarker--mouseTracker .timelineMarker-label {
+    fill: #00d800;
+}
