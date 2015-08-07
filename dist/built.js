@@ -509,9 +509,147 @@ D3BlockTimeline.prototype.elementEnter = function (selection) {
 
     selection.on('click', function (d) {
         if (!d3.event.defaultPrevented) {
-            self.emitTimelineEvent('element:click', selection, [d]);
+            self.emitTimelineEvent('element:click', selection, null, [d]);
         }
     });
+
+    this.bindDragAndDropOnSelection(selection);
+};
+
+// @todo clean up
+D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
+
+    var self = this;
+
+    var transform = null;
+    var tx = 0,
+        ty = 0;
+    var startX = 0,
+        startY = 0;
+    var marginDelta = 30;
+
+    var previousVerticalMove = 0;
+    var previousHorizontalMove = 0;
+    var verticalMove = 0;
+    var horizontalMove = 0;
+
+    var redrawOnMove = true;
+    var timerActive = false;
+
+    function storeStart(mousePosition) {
+        transform = d3.transform(selection.attr('transform'));
+        startX = transform.translate[0];
+        startY = transform.translate[1];
+        tx = mousePosition[0];
+        ty = mousePosition[1];
+    }
+
+    function updateFromMousePosition(mousePosition) {
+
+        var dx = mousePosition[0] - tx;
+        var dy = mousePosition[1] - ty;
+
+        if (redrawOnMove) {
+            storeStart(mousePosition);
+        }
+
+        transform.translate[0] = startX + dx;
+        transform.translate[1] = startY + dy;
+
+        selection.attr('transform', transform.toString());
+    }
+
+    var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now.bind(Date);
+
+    var drag = d3.behavior.drag().on('dragstart', function () {
+
+        if (d3.event.sourceEvent) {
+            d3.event.sourceEvent.stopPropagation();
+        }
+
+        var mousePosition = d3.mouse(self.elements.body.node());
+
+        storeStart(mousePosition);
+    }).on('drag', function () {
+
+        var mousePosition = d3.mouse(self.elements.body.node());
+
+        previousHorizontalMove = horizontalMove;
+        previousVerticalMove = verticalMove;
+
+        horizontalMove = mousePosition[0] > self.dimensions.width - marginDelta ? -1 : mousePosition[0] < marginDelta ? 1 : 0;
+        verticalMove = mousePosition[1] > self.dimensions.height - marginDelta ? -1 : mousePosition[1] < marginDelta ? 1 : 0;
+
+        var hasChangedState = previousHorizontalMove !== horizontalMove || previousVerticalMove !== verticalMove;
+
+        if ((horizontalMove || verticalMove) && !timerActive && hasChangedState) {
+
+            var s = getPreciseTime();
+
+            d3.timer(function () {
+
+                var n = getPreciseTime();
+                var d = n - s;
+                var m = d * 1e-2;
+
+                var r = self.move(horizontalMove * m, verticalMove * m, redrawOnMove, false, true);
+
+                if (r[2] || r[3]) {
+                    updateFromMousePosition(mousePosition, true);
+                }
+
+                if (r[2] === 0) {
+                    horizontalMove = 0;
+                } else {
+                    startX -= horizontalMove * m;
+                }
+
+                if (r[3] === 0) {
+                    verticalMove = 0;
+                } else {
+                    startY -= verticalMove * m;
+                }
+
+                return !verticalMove && !horizontalMove;
+            });
+        }
+
+        if (!verticalMove && !horizontalMove || !hasChangedState) {
+
+            if (self._dragAF) {
+                self.cancelAnimationFrame(self._dragAF);
+            }
+
+            var d = selection.datum();
+            d._defaultPrevented = true;
+
+            self._dragAF = self.requestAnimationFrame(function () {
+
+                updateFromMousePosition(mousePosition);
+            });
+        }
+    }).on('dragend', function () {
+
+        self.cancelAnimationFrame(self._dragAF);
+        horizontalMove = 0;
+        verticalMove = 0;
+
+        var d = selection.datum();
+
+        d._defaultPrevented = false;
+
+        d3.timer.flush();
+
+        var deltaFromTopLeftCorner = d3.mouse(selection.node());
+        var halfHeight = self.options.rowHeight / 2;
+        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
+
+        self.elements.innerContainer.attr('transform', null);
+
+        self.updateY().updateX().updateXAxisInterval().drawXAxis().drawYAxis().drawElements();
+    });
+
+    selection.call(drag);
 };
 
 D3BlockTimeline.prototype.elementUpdate = function (selection) {
@@ -586,7 +724,7 @@ D3EntityTimeline.prototype.elementUpdate = function (selection) {
 
     this.constructor.super_.prototype.elementUpdate.call(this, selection);
 
-    if (this.options.alignLeft) {
+    if (this.options.alignLeft && !selection.datum()._defaultPrevented) {
 
         selection.select('.timeline-elementContent > text').attr('dx', function (d) {
             return Math.max(-_this.scales.x(d.start), 2);
@@ -833,7 +971,7 @@ D3Timeline.prototype.initializeEventListeners = function () {
     });
 };
 
-D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection, priorityArguments) {
+D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection, delta, priorityArguments) {
 
     var self = this;
 
@@ -842,6 +980,10 @@ D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection,
     var getPosition = function getPosition() {
         if (!position) {
             position = _d32['default'].mouse(self.elements.body.node());
+            if (Array.isArray(delta)) {
+                position[0] += delta[0];
+                position[1] += delta[1];
+            }
         }
         return position;
     };
@@ -853,7 +995,7 @@ D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection,
         var position = getPosition();
         return self.scales.x.invert(position[0]);
     }, // a time getter
-    function getYPosition() {
+    function getRow() {
         var position = getPosition();
         return self.data[self.scales.y.invert(position[1]) >> 0];
     } // a row getter
@@ -923,6 +1065,27 @@ D3Timeline.prototype.restoreZoom = function () {
     this.behaviors.zoom.scale(this._lastScale);
 };
 
+D3Timeline.prototype.move = function (dx, dy, forceDraw, skipXAxis, forceTicks) {
+
+    var currentTranslate = this.behaviors.zoom.translate();
+    var updatedT = [currentTranslate[0] + dx, currentTranslate[1] + dy];
+
+    updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
+
+    this.behaviors.zoom.translate(updatedT);
+    this.behaviors.zoomX.translate(updatedT);
+    this.behaviors.zoomX.scale(this.behaviors.zoom.scale());
+    this.behaviors.zoomY.translate(updatedT);
+
+    this.moveElements(forceDraw, skipXAxis, forceTicks);
+
+    this._lastTranslate = updatedT;
+
+    this.emit('timeline:move');
+
+    return updatedT.concat([updatedT[0] - currentTranslate[0], updatedT[1] - currentTranslate[1]]);
+};
+
 /**
  * pan X/Y & zoom X handler (clamped pan Y when wheel is pressed without ctrl, zoom X and pan X/Y otherwise)
  */
@@ -977,7 +1140,6 @@ D3Timeline.prototype.handleZoomingEnd = function () {
 D3Timeline.prototype.handleWheeling = function () {
 
     var event = _d32['default'].event.sourceEvent;
-    var t = this.behaviors.zoom.translate();
 
     var dx = 0,
         dy = 0;
@@ -998,18 +1160,7 @@ D3Timeline.prototype.handleWheeling = function () {
         }
     }
 
-    var updatedT = [t[0] + dx, t[1] + dy];
-
-    updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
-
-    this.behaviors.zoom.translate(updatedT);
-    this.behaviors.zoomY.translate(updatedT);
-
-    this.moveElements(false, true);
-
-    this._lastTranslate = updatedT;
-
-    this.emit('timeline:move');
+    this.move(dx, dy, false, !movingX);
 };
 
 D3Timeline.prototype.handleDragging = function () {
@@ -1018,21 +1169,7 @@ D3Timeline.prototype.handleDragging = function () {
         return;
     }
 
-    var t = this.behaviors.zoom.translate();
-    var updatedT = [t[0] + _d32['default'].event.dx, t[1] + _d32['default'].event.dy];
-
-    updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
-
-    this.behaviors.zoom.translate(updatedT);
-    this.behaviors.zoomX.translate(updatedT);
-    this.behaviors.zoomX.scale(this.behaviors.zoom.scale());
-    this.behaviors.zoomY.translate(updatedT);
-
-    this.moveElements(false, false, !this.options.hideTicksOnDrag);
-
-    this._lastTranslate = updatedT;
-
-    this.emit('timeline:move');
+    this.move(_d32['default'].event.dx, _d32['default'].event.dy, false, false, !this.options.hideTicksOnDrag);
 };
 
 D3Timeline.prototype.toggleDrawing = function (active) {
@@ -1061,14 +1198,7 @@ D3Timeline.prototype.setData = function (data, transitionDuration) {
     }
 
     if (this.options.flattenRowElements) {
-        this.flattenedData = this.data.map(function (d, i) {
-            d.elements.forEach(function (e) {
-                e.rowIndex = i;
-            });
-            return d.elements;
-        }).reduce(function (result, elements) {
-            return result.concat(elements);
-        }, []);
+        this.generateFlattenedData();
     } else {
         this.flattenedData = [];
     }
@@ -1076,6 +1206,17 @@ D3Timeline.prototype.setData = function (data, transitionDuration) {
     this.drawElements(transitionDuration);
 
     return this;
+};
+
+D3Timeline.prototype.generateFlattenedData = function () {
+    this.flattenedData = this.data.map(function (d, i) {
+        d.elements.forEach(function (e) {
+            e.rowIndex = i;
+        });
+        return d.elements;
+    }).reduce(function (result, elements) {
+        return result.concat(elements);
+    }, []);
 };
 
 /**
@@ -1341,7 +1482,7 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
         var cullingY = self.options.cullingY;
 
         var data = self.flattenedData.filter(function (d) {
-            return (!cullingY || d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1) && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
+            return d._defaultPrevented || (!cullingY || d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1) && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
         });
 
         var g = self.elements.innerContainer.selectAll('g.timeline-element').data(data, function (d) {
@@ -1356,6 +1497,13 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
 
             var g = _d32['default'].select(this);
 
+            if (d._defaultPrevented) {
+
+                g.call(self.elementUpdate.bind(self));
+
+                return;
+            }
+
             var hasPreviousTransform = g.attr('transform') !== null;
 
             var updatingSG;
@@ -1364,10 +1512,12 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
                 g.call(self.elementEnter.bind(self));
             }
 
-            var newTransform = 'translate(' + self.scales.x(d.start) + ',' + self.scales.y(d.rowIndex) + ')';
+            var left = self.scales.x(d.start);
+            var top = self.scales.y(d.rowIndex);
+            var newTransform = 'translate(' + left + ',' + top + ')';
 
             if (transitionDuration > 0 && hasPreviousTransform) {
-                updatingSG = self._wrapWithAnimation(g, transitionDuration).attrTween("transform", function (interpolate) {
+                updatingSG = self._wrapWithAnimation(g, transitionDuration).attrTween("transform", function () {
                     var startTransform = _d32['default'].transform(g.attr('transform'));
                     startTransform.translate[1] = self.scales.y(d.rowIndex);
                     return _d32['default'].interpolateTransform(startTransform.toString(), newTransform);
@@ -1376,7 +1526,9 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
                 updatingSG = g.attr('transform', newTransform);
             }
 
-            updatingSG.call(self.elementUpdate.bind(self));
+            if (typeof updatingSG.datum === 'function') {
+                updatingSG.call(self.elementUpdate.bind(self));
+            }
         });
 
         self._currentElementsGroupTranslate = [0.0, 0.0];

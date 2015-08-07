@@ -29,7 +29,7 @@ function randomizeEntries(rows, elements) {
 }
 
 var randomDataRows = 50;
-var randomDataElementsPerRow = 3;
+var randomDataElementsPerRow = 1;
 
 randomizeEntries(randomDataRows, randomDataElementsPerRow);
 
@@ -69,6 +69,27 @@ timeline.on('timeline:click', function (timeline, selection, d3Event, getTime, g
     console.log('click on timeline', arguments);
     console.log('time:', getTime());
     console.log('row:', getRow());
+});
+
+timeline.on('timeline:element:dragend', function(timeline, selection, d3Event, getTime, getRow) {
+    console.log('draggend on timeline', arguments);
+    console.log('time:', getTime());
+    console.log('row:', getRow());
+    var d = selection.datum();
+
+    var previousDuration = +d.end - +d.start;
+
+    d.start = getTime();
+    d.end = new Date(+(getTime()) + previousDuration);
+    var currentRow = timeline.data[d.rowIndex];
+    var row = getRow();
+
+    currentRow.elements.splice(currentRow.elements.indexOf(d), 1);
+
+    row.elements.push(d);
+
+    timeline.generateFlattenedData();
+
 });
 
 var debugOptions = {

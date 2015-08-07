@@ -38,7 +38,7 @@ D3EntityTimeline.prototype.elementUpdate = function(selection) {
 
     this.constructor.super_.prototype.elementUpdate.call(this, selection);
 
-    if (this.options.alignLeft) {
+    if (this.options.alignLeft && !selection.datum()._defaultPrevented) {
 
         selection
             .select('.timeline-elementContent > text')

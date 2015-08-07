@@ -240,7 +240,7 @@ D3Timeline.prototype.initializeEventListeners = function() {
 
 };
 
-D3Timeline.prototype.emitTimelineEvent = function(eventName, d3TargetSelection, priorityArguments) {
+D3Timeline.prototype.emitTimelineEvent = function(eventName, d3TargetSelection, delta, priorityArguments) {
 
     var self = this;
 
@@ -249,6 +249,10 @@ D3Timeline.prototype.emitTimelineEvent = function(eventName, d3TargetSelection, 
     var getPosition = function() {
         if (!position) {
             position = d3.mouse(self.elements.body.node());
+            if (Array.isArray(delta)) {
+                position[0] += delta[0];
+                position[1] += delta[1];
+            }
         }
         return position;
     };
@@ -261,7 +265,7 @@ D3Timeline.prototype.emitTimelineEvent = function(eventName, d3TargetSelection, 
             var position = getPosition();
             return self.scales.x.invert(position[0]);
         }, // a time getter
-        function getYPosition() {
+        function getRow() {
             var position = getPosition();
             return self.data[self.scales.y.invert(position[1]) >> 0];
         } // a row getter
@@ -337,6 +341,27 @@ D3Timeline.prototype.restoreZoom = function() {
     this.behaviors.zoom.scale(this._lastScale);
 };
 
+D3Timeline.prototype.move = function(dx, dy, forceDraw, skipXAxis, forceTicks) {
+
+    var currentTranslate = this.behaviors.zoom.translate();
+    var updatedT = [currentTranslate[0] + dx, currentTranslate[1] + dy];
+
+    updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
+
+    this.behaviors.zoom.translate(updatedT);
+    this.behaviors.zoomX.translate(updatedT);
+    this.behaviors.zoomX.scale(this.behaviors.zoom.scale());
+    this.behaviors.zoomY.translate(updatedT);
+
+    this.moveElements(forceDraw, skipXAxis, forceTicks);
+
+    this._lastTranslate = updatedT;
+
+    this.emit('timeline:move');
+
+    return updatedT.concat([updatedT[0] - currentTranslate[0], updatedT[1] - currentTranslate[1]]);
+};
+
 /**
  * pan X/Y & zoom X handler (clamped pan Y when wheel is pressed without ctrl, zoom X and pan X/Y otherwise)
  */
@@ -392,7 +417,6 @@ D3Timeline.prototype.handleZoomingEnd = function() {
 D3Timeline.prototype.handleWheeling = function() {
 
     var event = d3.event.sourceEvent;
-    var t = this.behaviors.zoom.translate();
 
     var dx = 0, dy = 0;
 
@@ -414,18 +438,7 @@ D3Timeline.prototype.handleWheeling = function() {
 
     }
 
-    var updatedT = [t[0] + dx, t[1] + dy];
-
-    updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
-
-    this.behaviors.zoom.translate(updatedT);
-    this.behaviors.zoomY.translate(updatedT);
-
-    this.moveElements(false, true);
-
-    this._lastTranslate = updatedT;
-
-    this.emit('timeline:move');
+    this.move(dx, dy, false, !movingX);
 
 };
 
@@ -435,21 +448,7 @@ D3Timeline.prototype.handleDragging = function() {
         return;
     }
 
-    var t = this.behaviors.zoom.translate();
-    var updatedT = [t[0] + d3.event.dx, t[1] + d3.event.dy];
-
-    updatedT = this._clampTranslationWithScale(updatedT, [this.behaviors.zoom.scale(), this.behaviors.zoomY.scale()]);
-
-    this.behaviors.zoom.translate(updatedT);
-    this.behaviors.zoomX.translate(updatedT);
-    this.behaviors.zoomX.scale(this.behaviors.zoom.scale());
-    this.behaviors.zoomY.translate(updatedT);
-
-    this.moveElements(false, false, !this.options.hideTicksOnDrag);
-
-    this._lastTranslate = updatedT;
-
-    this.emit('timeline:move');
+    this.move(d3.event.dx, d3.event.dy, false, false, !this.options.hideTicksOnDrag);
 };
 
 D3Timeline.prototype.toggleDrawing = function(active) {
@@ -482,14 +481,7 @@ D3Timeline.prototype.setData = function(data, transitionDuration) {
     }
 
     if (this.options.flattenRowElements) {
-        this.flattenedData = this.data.map(function(d, i) {
-            d.elements.forEach(function(e) {
-                e.rowIndex = i;
-            });
-            return d.elements;
-        }).reduce(function(result, elements) {
-            return result.concat(elements);
-        }, []);
+        this.generateFlattenedData();
     } else {
         this.flattenedData = [];
     }
@@ -497,6 +489,17 @@ D3Timeline.prototype.setData = function(data, transitionDuration) {
     this.drawElements(transitionDuration);
 
     return this;
+};
+
+D3Timeline.prototype.generateFlattenedData = function() {
+    this.flattenedData = this.data.map(function(d, i) {
+        d.elements.forEach(function(e) {
+            e.rowIndex = i;
+        });
+        return d.elements;
+    }).reduce(function(result, elements) {
+        return result.concat(elements);
+    }, []);
 };
 
 /**
@@ -811,7 +814,7 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
         var cullingY = self.options.cullingY;
 
         var data = self.flattenedData.filter(function(d) {
-            return (!cullingY || (d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1))
+            return d._defaultPrevented || (!cullingY || (d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1))
                 && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
         });
 
@@ -829,6 +832,14 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
 
             var g = d3.select(this);
 
+            if (d._defaultPrevented) {
+
+                g
+                    .call(self.elementUpdate.bind(self));
+
+                return;
+            }
+
             var hasPreviousTransform = g.attr('transform') !== null;
 
             var updatingSG;
@@ -838,22 +849,28 @@ D3Timeline.prototype.drawFlattenedElements = function(transitionDuration) {
                     .call(self.elementEnter.bind(self));
             }
 
-            var newTransform = 'translate(' + self.scales.x(d.start) + ',' + self.scales.y(d.rowIndex) + ')';
+            var left = self.scales.x(d.start);
+            var top = self.scales.y(d.rowIndex);
+            var newTransform = 'translate(' + left + ',' + top + ')';
 
             if (transitionDuration > 0 && hasPreviousTransform) {
                 updatingSG = self._wrapWithAnimation(g, transitionDuration)
-                    .attrTween("transform", function(interpolate) {
+                    .attrTween("transform", function() {
                         var startTransform = d3.transform(g.attr('transform'));
                         startTransform.translate[1] = self.scales.y(d.rowIndex);
                         return d3.interpolateTransform(startTransform.toString(), newTransform);
                     });
-            } else {
+            }
+            else {
                 updatingSG = g
                     .attr('transform', newTransform);
             }
 
-            updatingSG
-                .call(self.elementUpdate.bind(self))
+            if (typeof updatingSG.datum === 'function') {
+                updatingSG
+                    .call(self.elementUpdate.bind(self));
+            }
+
         });
 
         self._currentElementsGroupTranslate = [0.0, 0.0];
