@@ -33,6 +33,8 @@
     ]
   },
   "browserify-shim": {
-    "d3": "global:d3"
+    "d3": "global:d3",
+    "jquery": "global:$",
+    "lodash": "global:_"
   }
 }

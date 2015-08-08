@@ -120,7 +120,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
         var dx = mousePosition[0] - tx;
         var dy = mousePosition[1] - ty;
 
-        if (self.options.renderOnAutomaticScrollIdle) {
+        if (self.options.renderOnAutomaticScrollIdle || !self.options.renderOnIdle) {
             storeStart(mousePosition);
         }
 
