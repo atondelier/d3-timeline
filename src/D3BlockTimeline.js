@@ -18,7 +18,10 @@ inherits(D3BlockTimeline, D3Timeline);
 D3BlockTimeline.prototype.defaults = extend(true, {}, D3Timeline.prototype.defaults, {
     clipElement: true,
     clipElementFilter: null,
-    renderOnAutomaticScrollIdle: false
+    renderOnAutomaticScrollIdle: true,
+    hideTicksOnAutomaticScroll: false,
+    automaticScrollSpeedMultiplier: 2e-4,
+    automaticScrollMarginDelta: 30
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function(d) {
@@ -92,67 +95,80 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
 D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
 
     var self = this;
+    var bodyNode = self.elements.body.node();
 
-    var transform = null;
-    var tx = 0, ty = 0;
-    var startX = 0, startY = 0;
-    var marginDelta = 30;
+    // positions
+    var currentTransform = null;
+    var dragStartX = 0, dragStartY = 0;
+    var elementStartX = 0, elementStartY = 0;
+    var dragPosition;
 
-    var previousVerticalMove = 0;
-    var previousHorizontalMove = 0;
+    // movements
     var verticalMove = 0;
     var horizontalMove = 0;
     var verticalSpeed = 0;
     var horizontalSpeed = 0;
-
     var timerActive = false;
+    var needTimerStop = false;
 
-    function storeStart(mousePosition) {
-        transform = d3.transform(selection.attr('transform'));
-        startX = transform.translate[0];
-        startY = transform.translate[1];
-        tx = mousePosition[0];
-        ty = mousePosition[1];
+    // reset start position: to call on drag start or when things are redrawn
+    function storeStart() {
+        currentTransform = d3.transform(selection.attr('transform'));
+        elementStartX = currentTransform.translate[0];
+        elementStartY = currentTransform.translate[1];
+        dragStartX = dragPosition[0];
+        dragStartY = dragPosition[1];
     }
 
-    function updateFromMousePosition(mousePosition) {
+    // handle new drag position and move the element
+    function updateTransform(forceDraw) {
 
-        var dx = mousePosition[0] - tx;
-        var dy = mousePosition[1] - ty;
+        var deltaX = dragPosition[0] - dragStartX;
+        var deltaY = dragPosition[1] - dragStartY;
 
-        if (self.options.renderOnAutomaticScrollIdle || !self.options.renderOnIdle) {
-            storeStart(mousePosition);
+        if (forceDraw || !self.options.renderOnIdle) {
+            storeStart(dragPosition);
         }
 
-        transform.translate[0] = startX + dx;
-        transform.translate[1] = startY + dy;
+        currentTransform.translate[0] = elementStartX + deltaX;
+        currentTransform.translate[1] = elementStartY + deltaY;
 
-        selection.attr('transform', transform.toString());
+        selection.attr('transform', currentTransform.toString());
 
     }
 
-    var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now.bind(Date);
+    // take micro seconds if possible
+    var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now ? function() {
+        return 1000 * Date.now();
+    } : function() {
+        return +(new Date());
+    };
 
-    function moveWithDeltaAndMousePosition(m, mousePosition) {
-        var dx = horizontalMove * horizontalSpeed * m;
-        var dy = verticalMove * verticalSpeed * m;
-        var r = self.move(dx, dy, self.options.renderOnAutomaticScrollIdle, false, true);
+    // handle automatic scroll arguments
+    function doAutomaticScroll(timeDelta, forceDraw) {
 
-        if (r[2] || r[3]) {
-            updateFromMousePosition(mousePosition);
+        // compute deltas based on direction, speed and time delta
+        var speedMultiplier = self.options.automaticScrollSpeedMultiplier;
+        var deltaX = horizontalMove * horizontalSpeed * timeDelta * speedMultiplier;
+        var deltaY = verticalMove * verticalSpeed * timeDelta * speedMultiplier;
+
+        // take group translate cancellation with forced redraw into account, so redefine start
+        if (forceDraw) {
+            var currentElementsGroupTranslate = self.currentElementsGroupTranslate.slice(0);
+            elementStartX += currentElementsGroupTranslate[0];
+            elementStartY += currentElementsGroupTranslate[1];
         }
 
-        if (r[2] === 0) {
-            horizontalMove = 0;
-        } else {
-            startX -= dx;
+        var realMove = self.move(deltaX, deltaY, forceDraw, false, !self.options.hideTicksOnAutomaticScroll);
+
+        if (realMove[2] || realMove[3]) {
+            updateTransform(forceDraw);
         }
 
-        if (r[3] === 0) {
-            verticalMove = 0;
-        } else {
-            startY -= dy;
-        }
+        elementStartX -= realMove[2];
+        elementStartY -= realMove[3];
+
+        needTimerStop = realMove[2] === 0 && realMove[3] === 0;
     }
 
     var drag = d3.behavior.drag()
@@ -162,26 +178,26 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
                 d3.event.sourceEvent.stopPropagation();
             }
 
-            var mousePosition = d3.mouse(self.elements.body.node());
+            dragPosition = d3.mouse(bodyNode);
 
-            storeStart(mousePosition);
+            storeStart();
 
         })
         .on('drag', function() {
 
-            var mousePosition = d3.mouse(self.elements.body.node());
+            dragPosition = d3.mouse(bodyNode);
 
-            previousHorizontalMove = horizontalMove;
-            previousVerticalMove = verticalMove;
+            var marginDelta = self.options.automaticScrollMarginDelta;
+            var dRight = marginDelta - (self.dimensions.width - dragPosition[0]);
+            var dLeft = marginDelta - dragPosition[0];
+            var dBottom = marginDelta - (self.dimensions.height - dragPosition[1]);
+            var dTop = marginDelta - dragPosition[1];
 
-            var dRight = marginDelta - (self.dimensions.width - mousePosition[0]);
-            var dLeft = marginDelta - mousePosition[0];
-            var dBottom = marginDelta - (self.dimensions.height - mousePosition[1]);
-            var dTop = marginDelta - mousePosition[1];
+            horizontalSpeed = Math.pow(Math.max(dRight, dLeft, marginDelta), 2);
+            verticalSpeed = Math.pow(Math.max(dBottom, dTop, marginDelta), 2);
 
-            horizontalSpeed = Math.pow(Math.max(dRight, dLeft), 2);
-            verticalSpeed = Math.pow(Math.max(dBottom, dTop), 2);
-
+            var previousHorizontalMove = horizontalMove;
+            var previousVerticalMove = verticalMove;
             horizontalMove = dRight > 0 ? -1 : dLeft > 0 ? 1 : 0;
             verticalMove = dBottom > 0 ? -1 : dTop > 0 ? 1 : 0;
 
@@ -189,48 +205,49 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
 
             if ((horizontalMove || verticalMove) && !timerActive && hasChangedState) {
 
-                var s = getPreciseTime();
+                var timerStartTime = getPreciseTime();
+
+                timerActive = true;
 
                 d3.timer(function() {
 
-                    var n = getPreciseTime();
-                    var d = n - s;
-                    var m = d * 2e-4;
+                    var currentTime = getPreciseTime();
+                    var timeDelta = currentTime - timerStartTime;
 
-                    moveWithDeltaAndMousePosition(m, mousePosition);
+                    var timerWillStop = !verticalMove && !horizontalMove || needTimerStop;
 
-                    s = n;
+                    doAutomaticScroll(timeDelta, self.options.renderOnAutomaticScrollIdle && timerWillStop);
 
-                    return !verticalMove && !horizontalMove;
+                    timerStartTime = currentTime;
+
+                    if (timerWillStop) {
+                        needTimerStop = false;
+                        timerActive = false;
+                    }
+
+                    return timerWillStop;
                 });
             }
 
-            if (!verticalMove && !horizontalMove || !hasChangedState) {
+            var data = selection.datum();
+            data._defaultPrevented = true;
 
-                if (self._dragAF) {
-                    self.cancelAnimationFrame(self._dragAF);
-                }
-
-                var d = selection.datum();
-                d._defaultPrevented = true;
-
-                self._dragAF = self.requestAnimationFrame(function() {
-
-                    updateFromMousePosition(mousePosition);
-
-                });
+            if (self._dragAF) {
+                self.cancelAnimationFrame(self._dragAF);
             }
+
+            self._dragAF = self.requestAnimationFrame(updateTransform);
 
         })
         .on('dragend', function() {
 
             self.cancelAnimationFrame(self._dragAF);
+            self._dragAF = null;
             horizontalMove = 0;
             verticalMove = 0;
 
-            var d = selection.datum();
-
-            d._defaultPrevented = false;
+            var data = selection.datum();
+            data._defaultPrevented = false;
 
             d3.timer.flush();
 

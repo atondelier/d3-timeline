@@ -41,6 +41,8 @@ function D3Timeline(options) {
 
     this.dimensions = { width: 0, height: 0 };
 
+    this.currentElementsGroupTranslate = [0.0, 0.0];
+
     this.container = null;
 
     this.elements = {
@@ -116,7 +118,6 @@ function D3Timeline(options) {
     this._lastAvailableHeight = 0;
     this._preventDrawing = false;
     this._nextAnimationFrameHandlers = [];
-    this._currentElementsGroupTranslate = [0.0, 0.0];
     this._maxBodyHeight = Infinity;
 }
 
@@ -835,7 +836,8 @@ D3Timeline.prototype.drawElements = function(transitionDuration) {
 
         });
 
-        self._currentElementsGroupTranslate = [0.0, 0.0];
+        self.currentElementsGroupTranslate = [0.0, 0.0];
+        self.elements.innerContainer.attr('transform', null);
 
     });
 
@@ -865,8 +867,8 @@ D3Timeline.prototype.translateElements = function(translate, previousTranslate) 
     var tx = translate[0] - previousTranslate[0];
     var ty = translate[1] - previousTranslate[1];
 
-    this._currentElementsGroupTranslate[0] = this._currentElementsGroupTranslate[0] + tx;
-    this._currentElementsGroupTranslate[1] = this._currentElementsGroupTranslate[1] + ty;
+    this.currentElementsGroupTranslate[0] = this.currentElementsGroupTranslate[0] + tx;
+    this.currentElementsGroupTranslate[1] = this.currentElementsGroupTranslate[1] + ty;
 
 
     if (this._eltsTranslateAF) {
@@ -876,7 +878,7 @@ D3Timeline.prototype.translateElements = function(translate, previousTranslate) 
     this._eltsTranslateAF = this.requestAnimationFrame(function() {
 
         self.elements.innerContainer.attr({
-            transform: 'translate(' + self._currentElementsGroupTranslate + ')'
+            transform: 'translate(' + self.currentElementsGroupTranslate + ')'
         });
 
         if (self.elementsTranslate !== self.noop) {
