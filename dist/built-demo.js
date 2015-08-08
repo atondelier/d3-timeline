@@ -27,51 +27,121 @@ var _datGui = require('dat-gui');
 
 var _datGui2 = _interopRequireDefault(_datGui);
 
-var gdsData = [];
+var _lodash = (typeof window !== "undefined" ? window['_'] : typeof global !== "undefined" ? global['_'] : null);
 
+/*
+Data random generation
+ */
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var gdsData = [];
+var bookings = [];
 var now = new Date();
 var year = now.getFullYear();
 var month = now.getMonth();
 var date = now.getDate();
+var hours = now.getHours();
+var minDate = new Date(year, month, date, hours - 2);
+var maxDate = new Date(year, month, date, hours + 4);
 
-function randomizeEntries(rows, elements) {
-    gdsData = _(0).range(rows, 1).map(function (i) {
-        var minutesDeltaByRow = 10 * (Math.random() * 15 >> 0);
-        return { id: i, name: 'T' + (i + 1), elements: _(0).range(elements, 1).map(function (j) {
-                return {
-                    id: (i + 1) * 1e2 + j,
-                    start: new Date(year, month, date, 10, minutesDeltaByRow + j * 60),
-                    end: new Date(year, month, date, 10, minutesDeltaByRow + j * 60 + (20 + Math.random() * 40 >> 0)),
-                    card: _Faker2['default'].Helpers.createCard()
-                };
-            }).value() };
+var randomizeMethodByMode = {
+    'tables': randomizeEntries,
+    'bookings': randomizeEntries2
+};
+
+function randomizeBookings(rows, elements) {
+    bookings = (0, _lodash2['default'])(0).range(elements, 1).map(function (i) {
+        var start = new Date(year, month, date, hours - 2, Math.random() * 60 * 4);
+        var end = new Date(+start + (20 + Math.random() * 10 >> 0) * 6e4);
+        var tables = (0, _lodash2['default'])(1).range(rows, 1).shuffle().slice(rows / 2 >> 0, (rows / 2 >> 0) + 2 + Math.random() * 3 >> 0).value();
+        return {
+            id: i,
+            uid: i,
+            start: start,
+            end: end,
+            card: _Faker2['default'].Helpers.createCard(),
+            parentId: tables[0],
+            tables: tables
+        };
     }).value();
 }
 
-var randomDataRows = 50;
-var randomDataElementsPerRow = 1;
+function makeBookingsInRows(bookings, rows) {
+    return (0, _lodash2['default'])(0).range(rows, 1).map(function (i) {
+        return {
+            uid: i,
+            name: 'T' + (i + 1),
+            elements: _lodash2['default'].cloneDeep((0, _lodash2['default'])(bookings).filter(function (b) {
+                var hasTable = b.tables.indexOf(i) !== -1;
+                if (hasTable) {
+                    b.parentId = i;
+                    b.uid = i + '_' + b.id;
+                }
+                return hasTable;
+            }).value())
+        };
+    }).value();
+}
 
-randomizeEntries(randomDataRows, randomDataElementsPerRow);
+function makeSortedBookings(bookings) {
+    return (0, _lodash2['default'])(bookings).sortBy(function (b) {
+        return b.start;
+    }).map(function (b) {
+        return {
+            uid: b.parentId + '_' + b.id,
+            name: b.uid,
+            elements: [_lodash2['default'].cloneDeep(b)]
+        };
+    }).value();
+}
+
+function randomizeEntries(rows, elements, keepExisting) {
+    if (!keepExisting) {
+        randomizeBookings(rows, elements);
+    }
+    gdsData = makeBookingsInRows(bookings, rows);
+}
+
+function randomizeEntries2(rows, elements, keepExisting) {
+    if (!keepExisting) {
+        randomizeBookings(rows, elements);
+    }
+    gdsData = makeSortedBookings(bookings);
+}
+
+var randomDataRows = 40;
+var randomDataElements = 40;
+
+function handleDistributionMode(mode, keepExisting, animate) {
+    randomizeMethodByMode[mode](randomDataRows, randomDataElements, keepExisting);
+
+    timeline.setData(gdsData, animate ? 400 : 0);
+
+    timeline.updateY().updateX().updateXAxisInterval().drawXAxis().drawYAxis();
+}
+
+/*
+Timeline instantiation and listeners
+ */
 
 /**
- *
  * @type {D3EntityTimeline}
  */
 var timeline = new _srcD3EntityTimeline2['default']({
     container: '#container',
     renderOnIdle: true,
-    flattenRowElements: true,
     hideTicksOnZoom: true,
     hideTicksOnDrag: true,
     clipElementFilter: function clipElementFilter(selection) {
         return selection.datum().card.name.length > 10;
-    }
+    },
+    enableYTransition: true,
+    cullingX: true,
+    cullingY: true
 });
 
-var mouseTracker = new _srcD3TimelineMouseTracker2['default']({});
-
 timeline.elementContentUpdate = function (selection) {
-
     selection.select('.timeline-elementContent > text').text(function (d) {
         return d.card.name;
     });
@@ -93,12 +163,16 @@ timeline.on('timeline:element:dragend', function (timeline, selection, d3Event, 
     console.log('draggend on timeline', arguments);
     console.log('time:', getTime());
     console.log('row:', getRow());
+});
+
+timeline.on('timeline:element:dragend', function (timeline, selection, d3Event, getTime, getRow) {
     var d = selection.datum();
+    var original = _lodash2['default'].findWhere(bookings, { uid: d.uid }) || _lodash2['default'].findWhere(bookings, { id: d.id });
 
     var previousDuration = +d.end - +d.start;
 
-    d.start = getTime();
-    d.end = new Date(+getTime() + previousDuration);
+    d.start = original.start = getTime();
+    d.end = original.end = new Date(+getTime() + previousDuration);
     var currentRow = timeline.data[d.rowIndex];
     var row = getRow();
 
@@ -106,11 +180,26 @@ timeline.on('timeline:element:dragend', function (timeline, selection, d3Event, 
 
     row.elements.push(d);
 
-    timeline.generateFlattenedData();
+    if (demoOptions.distributionMode === 'bookings') {
+        gdsData = makeSortedBookings(bookings);
+        timeline.setData(gdsData, 500);
+    } else if (demoOptions.distributionMode === 'tables') {
+        timeline.generateFlattenedData();
+        timeline.drawElements();
+    }
 });
 
-var debugOptions = {
-    outlineGroups: false
+timeline.options.yAxisFormatter = function (d) {
+    return demoOptions.distributionMode === 'bookings' ? d.elements[0].card.name : d.name;
+};
+
+/*
+GUI
+ */
+
+var demoOptions = {
+    outlineGroups: false,
+    distributionMode: 'tables'
 };
 
 var gui = new _datGui2['default'].GUI({
@@ -119,10 +208,13 @@ var gui = new _datGui2['default'].GUI({
 
 gui.close();
 
-var debugGui = gui.addFolder('Debug');
+var debugGui = gui.addFolder('External options');
 
-debugGui.add(debugOptions, 'outlineGroups').name('Outline groups').onChange(function () {
-    $(document.body).toggleClass('debug-outlineGroups', debugOptions.outlineGroups);
+debugGui.add(demoOptions, 'outlineGroups').name('Outline groups').onChange(function () {
+    $(document.body).toggleClass('debug-outlineGroups', demoOptions.outlineGroups);
+});
+debugGui.add(demoOptions, 'distributionMode', ['tables', 'bookings']).name('Distribution').onChange(function () {
+    handleDistributionMode(demoOptions.distributionMode, true, true);
 });
 
 var timelineGui = gui.addFolder('Rendering');
@@ -139,9 +231,9 @@ function forceFullRedraw() {
 }
 
 timelineGui.add(timeline.options, 'renderOnIdle').name('Render on idle');
+timelineGui.add(timeline.options, 'renderOnAutomaticScrollIdle').name('Render on automatic scroll');
 timelineGui.add(timeline.options, 'hideTicksOnDrag').name('Hide ticks on drag');
 timelineGui.add(timeline.options, 'hideTicksOnZoom').name('Hide ticks on zoom');
-timelineGui.add(timeline.options, 'flattenRowElements').name('Flat data tree').onChange(forceFullRedraw);
 timelineGui.add(timeline.options, 'clipElement').name('Clip blocks').onChange(forceFullRedraw);
 
 dimensionsGui.add(timeline.options, 'rowHeight', 10, 50).step(1).name('Row height').onChange(forceFullRedraw);
@@ -159,11 +251,24 @@ elementGui.add(timeline.options, 'alignOnTranslate').name('Keep text visible on 
 behaviorGui.add(timeline.options, 'panYOnWheel').name('Y pan on mouse wheel');
 behaviorGui.add(timeline.options, 'wheelMultiplier', 1, 5).step(1).name('Y pan rows per rotation');
 
-timeline.toggleDrawing(false).initialize().setAvailableWidth(innerWidth).setAvailableHeight(innerHeight - 5).setTimeRange(new Date(year, month, date, 10), new Date(year, month, date, 16)).toggleDrawing(true).setData(gdsData);
+/*
+ Timeline initialization
+ */
+
+timeline.toggleDrawing(false).initialize().setAvailableWidth(innerWidth).setAvailableHeight(innerHeight - 5).setTimeRange(minDate, maxDate).toggleDrawing(true);
+
+handleDistributionMode(demoOptions.distributionMode, false, false);
+
+/*
+ Markers
+ */
+
+var mouseTracker = new _srcD3TimelineMouseTracker2['default']({});
 
 mouseTracker.setTimeline(timeline);
 
-$(window).resize(_.debounce(function () {
+$(window).resize(_lodash2['default'].debounce(function () {
+    console.log('window size', innerWidth, innerHeight);
     timeline.setAvailableWidth(innerWidth).setAvailableHeight(innerHeight - 5);
 }, 100));
 
@@ -7384,11 +7489,12 @@ function D3BlockTimeline(options) {
 
 D3BlockTimeline.prototype.defaults = (0, _extend2['default'])(true, {}, _D3Timeline2['default'].prototype.defaults, {
     clipElement: true,
-    clipElementFilter: null
+    clipElementFilter: null,
+    renderOnAutomaticScrollIdle: false
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function (d) {
-    return 'timeline-elementClipPath_' + this.instanceNumber + '_' + d.id;
+    return 'timeline-elementClipPath_' + this.instanceNumber + '_' + d.uid;
 };
 
 D3BlockTimeline.prototype.generateClipRectLink = function (d) {
@@ -7400,7 +7506,7 @@ D3BlockTimeline.prototype.generateClipPathLink = function (d) {
 };
 
 D3BlockTimeline.prototype.generateClipRectId = function (d) {
-    return 'timeline-elementClipRect_' + this.instanceNumber + '_' + d.id;
+    return 'timeline-elementClipRect_' + this.instanceNumber + '_' + d.uid;
 };
 
 D3BlockTimeline.prototype.elementEnter = function (selection) {
@@ -7457,8 +7563,9 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
     var previousHorizontalMove = 0;
     var verticalMove = 0;
     var horizontalMove = 0;
+    var verticalSpeed = 0;
+    var horizontalSpeed = 0;
 
-    var redrawOnMove = true;
     var timerActive = false;
 
     function storeStart(mousePosition) {
@@ -7474,7 +7581,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
         var dx = mousePosition[0] - tx;
         var dy = mousePosition[1] - ty;
 
-        if (redrawOnMove) {
+        if (self.options.renderOnAutomaticScrollIdle || !self.options.renderOnIdle) {
             storeStart(mousePosition);
         }
 
@@ -7485,6 +7592,28 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
     }
 
     var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now.bind(Date);
+
+    function moveWithDeltaAndMousePosition(m, mousePosition) {
+        var dx = horizontalMove * horizontalSpeed * m;
+        var dy = verticalMove * verticalSpeed * m;
+        var r = self.move(dx, dy, self.options.renderOnAutomaticScrollIdle, false, true);
+
+        if (r[2] || r[3]) {
+            updateFromMousePosition(mousePosition);
+        }
+
+        if (r[2] === 0) {
+            horizontalMove = 0;
+        } else {
+            startX -= dx;
+        }
+
+        if (r[3] === 0) {
+            verticalMove = 0;
+        } else {
+            startY -= dy;
+        }
+    }
 
     var drag = d3.behavior.drag().on('dragstart', function () {
 
@@ -7502,8 +7631,16 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
         previousHorizontalMove = horizontalMove;
         previousVerticalMove = verticalMove;
 
-        horizontalMove = mousePosition[0] > self.dimensions.width - marginDelta ? -1 : mousePosition[0] < marginDelta ? 1 : 0;
-        verticalMove = mousePosition[1] > self.dimensions.height - marginDelta ? -1 : mousePosition[1] < marginDelta ? 1 : 0;
+        var dRight = marginDelta - (self.dimensions.width - mousePosition[0]);
+        var dLeft = marginDelta - mousePosition[0];
+        var dBottom = marginDelta - (self.dimensions.height - mousePosition[1]);
+        var dTop = marginDelta - mousePosition[1];
+
+        horizontalSpeed = Math.pow(Math.max(dRight, dLeft), 2);
+        verticalSpeed = Math.pow(Math.max(dBottom, dTop), 2);
+
+        horizontalMove = dRight > 0 ? -1 : dLeft > 0 ? 1 : 0;
+        verticalMove = dBottom > 0 ? -1 : dTop > 0 ? 1 : 0;
 
         var hasChangedState = previousHorizontalMove !== horizontalMove || previousVerticalMove !== verticalMove;
 
@@ -7515,25 +7652,11 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
 
                 var n = getPreciseTime();
                 var d = n - s;
-                var m = d * 1e-2;
+                var m = d * 2e-4;
 
-                var r = self.move(horizontalMove * m, verticalMove * m, redrawOnMove, false, true);
+                moveWithDeltaAndMousePosition(m, mousePosition);
 
-                if (r[2] || r[3]) {
-                    updateFromMousePosition(mousePosition, true);
-                }
-
-                if (r[2] === 0) {
-                    horizontalMove = 0;
-                } else {
-                    startX -= horizontalMove * m;
-                }
-
-                if (r[3] === 0) {
-                    verticalMove = 0;
-                } else {
-                    startY -= verticalMove * m;
-                }
+                s = n;
 
                 return !verticalMove && !horizontalMove;
             });
@@ -7567,21 +7690,21 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
 
         var deltaFromTopLeftCorner = d3.mouse(selection.node());
         var halfHeight = self.options.rowHeight / 2;
-        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
-
         self.elements.innerContainer.attr('transform', null);
 
-        self.updateY().updateX().updateXAxisInterval().drawXAxis().drawYAxis().drawElements();
+        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
+
+        self.updateY().drawYAxis();
     });
 
     selection.call(drag);
 };
 
-D3BlockTimeline.prototype.elementUpdate = function (selection) {
+D3BlockTimeline.prototype.elementUpdate = function (selection, d, transitionDuration) {
 
     var self = this;
 
-    selection.select('rect.timeline-elementBackground').attr({
+    this._wrapWithAnimation(selection.select('rect.timeline-elementBackground'), transitionDuration).attr({
         y: this.options.rowPadding,
         width: function width(d) {
             return self.scales.x(d.end) - self.scales.x(d.start);
@@ -7644,12 +7767,12 @@ D3EntityTimeline.prototype.elementEnter = function (selection) {
     selection.call(this.elementContentEnter.bind(this));
 };
 
-D3EntityTimeline.prototype.elementUpdate = function (selection) {
+D3EntityTimeline.prototype.elementUpdate = function (selection, d, transitionDuration) {
     var _this = this;
 
-    this.constructor.super_.prototype.elementUpdate.call(this, selection);
+    this.constructor.super_.prototype.elementUpdate.call(this, selection, d, transitionDuration);
 
-    if (this.options.alignLeft && !selection.datum()._defaultPrevented) {
+    if (this.options.alignLeft && !d._defaultPrevented) {
 
         selection.select('.timeline-elementContent > text').attr('dx', function (d) {
             return Math.max(-_this.scales.x(d.start), 2);
@@ -7727,6 +7850,7 @@ function D3Timeline(options) {
 
     /** @type {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} */
     this.data = [];
+    this.flattenedData = [];
 
     this.margin = {
         top: 0,
@@ -7734,9 +7858,6 @@ function D3Timeline(options) {
         bottom: 0,
         left: 0
     };
-
-    /** @type {Number} */
-    this.yScale = 0.0;
 
     this.dimensions = { width: 0, height: 0 };
 
@@ -7765,7 +7886,7 @@ function D3Timeline(options) {
 
         y: _d32['default'].svg.axis().scale(this.scales.y).orient('left').tickFormat(function (d) {
             if (self._isRound(d)) {
-                return self._entryNameGetter(self.data[d | 0]);
+                return self.options.yAxisFormatter(self.data[d | 0]);
             } else {
                 return '';
             }
@@ -7779,6 +7900,8 @@ function D3Timeline(options) {
         pan: _d32['default'].behavior.drag().on('drag', this.handleDragging.bind(this))
     };
 
+    this._yScale = 0.0;
+
     this._lastTranslate = this.behaviors.zoom.translate();
     this._lastScale = this.behaviors.zoom.scale();
 
@@ -7790,6 +7913,7 @@ function D3Timeline(options) {
     this._preventDrawing = false;
     this._nextAnimationFrameHandlers = [];
     this._currentElementsGroupTranslate = [0.0, 0.0];
+    this._maxBodyHeight = Infinity;
 }
 
 (0, _inherits2['default'])(D3Timeline, _eventsEvents2['default']);
@@ -7804,31 +7928,28 @@ D3Timeline.prototype.defaults = {
     yAxisWidth: 50,
     rowHeight: 30,
     rowPadding: 5,
-    axisConfigs: [{
-        threshold: 2,
-        minutes: 30
-    }, {
-        threshold: 4,
-        minutes: 15
-    }, {
-        threshold: 10,
-        minutes: 5
-    }],
+    axisConfigs: [{ threshold: 2, minutes: 30 }, { threshold: 4, minutes: 15 }, { threshold: 10, minutes: 5 }],
     container: 'body',
     cullingX: true,
     cullingY: true,
     cullingDistance: 1,
     renderOnIdle: true,
-    flattenRowElements: false, // @todo: make it dynamic
     hideTicksOnZoom: false,
     hideTicksOnDrag: false,
     panYOnWheel: true,
     wheelMultiplier: 1,
+    enableYTransition: true,
+    enableTransitionOnExit: true,
+    usePreviousDataForTransform: true,
+    transitionEasing: 'quad-in-out',
     xAxisTicksFormatter: function xAxisTicksFormatter(d) {
         return d.getMinutes() % 15 ? '' : _d32['default'].time.format('%H:%M')(d);
     },
     xAxis2TicksFormatter: function xAxis2TicksFormatter(d) {
         return '';
+    },
+    yAxisFormatter: function yAxisFormatter(d) {
+        return d && d.name || '';
     },
     padding: 10,
     trackedDOMEvents: ['click', 'mousemove', 'mouseenter', 'mouseleave'] // not dynamic
@@ -7944,9 +8065,6 @@ D3Timeline.prototype.updateMargins = function (updateDimensions) {
         left: this.options.yAxisWidth + this.options.padding
     };
 
-    this.dimensions.width = this._lastAvailableWidth - this.margin.left - this.margin.right;
-    this._maxBodyHeight = this._lastAvailableHeight - this.margin.top - this.margin.bottom;
-
     var contentPosition = { x: this.margin.left, y: this.margin.top };
     var contentTransform = 'translate(' + this.margin.left + ',' + this.margin.top + ')';
 
@@ -8009,6 +8127,10 @@ D3Timeline.prototype.move = function (dx, dy, forceDraw, skipXAxis, forceTicks) 
     this.emit('timeline:move');
 
     return updatedT.concat([updatedT[0] - currentTranslate[0], updatedT[1] - currentTranslate[1]]);
+};
+
+D3Timeline.prototype.ensureInDomains = function () {
+    return this.move(0, 0, false, false, true);
 };
 
 /**
@@ -8118,14 +8240,10 @@ D3Timeline.prototype.setData = function (data, transitionDuration) {
 
     this.data = data;
 
+    this.generateFlattenedData();
+
     if (isSizeChanging || this._dataChangeCount === 1) {
         this.updateXAxisInterval().updateY().drawXAxis().drawYAxis();
-    }
-
-    if (this.options.flattenRowElements) {
-        this.generateFlattenedData();
-    } else {
-        this.flattenedData = [];
     }
 
     this.drawElements(transitionDuration);
@@ -8134,14 +8252,22 @@ D3Timeline.prototype.setData = function (data, transitionDuration) {
 };
 
 D3Timeline.prototype.generateFlattenedData = function () {
-    this.flattenedData = this.data.map(function (d, i) {
+
+    var self = this;
+
+    if (this.options.usePreviousDataForTransform) {
+        this.previousFlattenedData = this.flattenedData.slice(0);
+    }
+
+    this.flattenedData.length = 0;
+
+    this.data.forEach(function (d, i) {
         d.elements.forEach(function (e) {
             e.rowIndex = i;
+            e.parentId = e.parentId !== undefined && e.parentId !== null ? e.parentId : d.id;
+            self.flattenedData.push(e);
         });
-        return d.elements;
-    }).reduce(function (result, elements) {
-        return result.concat(elements);
-    }, []);
+    });
 };
 
 /**
@@ -8308,20 +8434,17 @@ D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTick
     return this;
 };
 
+D3Timeline.prototype.getTransformFromData = function (d) {
+    return 'translate(' + this.scales.x(d.start) + ',' + this.scales.y(d.rowIndex) + ')';
+};
+
 D3Timeline.prototype.drawElements = function (transitionDuration) {
 
     if (this._preventDrawing) {
         return this;
     }
 
-    if (this.options.flattenRowElements) {
-        return this.drawFlattenedElements(transitionDuration);
-    } else {
-        return this.drawGroupedElements(transitionDuration);
-    }
-};
-
-D3Timeline.prototype.drawGroupedElements = function (transitionDuration) {
+    this.stopElementTransition();
 
     var self = this;
 
@@ -8329,68 +8452,7 @@ D3Timeline.prototype.drawGroupedElements = function (transitionDuration) {
         this.cancelAnimationFrame(this._elementsAF);
     }
 
-    this._elementsAF = this.requestAnimationFrame(function () {
-
-        var domainX = self.scales.x.domain();
-        var domainXStart = domainX[0];
-        var domainXEnd = domainX[domainX.length - 1];
-
-        var domainY = self.scales.y.domain();
-        var domainYStart = domainY[0];
-        var domainYEnd = domainY[domainY.length - 1];
-
-        var cullingDistance = self.options.cullingDistance;
-
-        var data = self.options.cullingY ? self.data.filter(function (row, i) {
-            return i >= domainYStart - cullingDistance && i < domainYEnd + cullingDistance - 1;
-        }) : self.data;
-
-        var elementsDataGetter = self.options.cullingX ? function (d) {
-            return d.elements.filter(function (element) {
-                return !(element.end < domainXStart || element.start > domainXEnd);
-            });
-        } : function (d) {
-            return d.elements;
-        };
-
-        var g = self.elements.innerContainer.selectAll('g.timeline-row').data(data, self._getter('id'));
-
-        g.exit().remove();
-
-        g.enter().append('g').classed('timeline-row', true).attr('transform', self.moveRow.bind(self));
-
-        g.each(function (d, i) {
-
-            var g = _d32['default'].select(this);
-
-            g.attr('transform', self.moveRow.bind(self));
-
-            var sg = g.selectAll('g.timeline-element').data(elementsDataGetter, self._getter('id'));
-
-            sg.exit().call(self.elementExit.bind(self)).remove();
-
-            var enteringSG = sg.enter().append('g').classed('timeline-element', true);
-
-            enteringSG.call(self.elementEnter.bind(self)).attr('transform', self.moveElement.bind(self));
-
-            var updatingSG = self._wrapWithAnimation(sg, transitionDuration).attr('transform', self.moveElement.bind(self));
-
-            updatingSG.call(self.elementUpdate.bind(self));
-        });
-
-        self._currentElementsGroupTranslate = [0.0, 0.0];
-    });
-
-    return this;
-};
-
-D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
-
-    var self = this;
-
-    if (this._elementsAF) {
-        this.cancelAnimationFrame(this._elementsAF);
-    }
+    var enableYTransition = this.options.enableYTransition;
 
     this._elementsAF = this.requestAnimationFrame(function () {
 
@@ -8406,17 +8468,49 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
         var cullingX = self.options.cullingX;
         var cullingY = self.options.cullingY;
 
+        var transformMap = {};
+
+        if (self.options.usePreviousDataForTransform && self.previousFlattenedData && transitionDuration > 0) {
+            self.previousFlattenedData.forEach(function (d) {
+                if (!transformMap[d.uid] || !transformMap[d.id]) {
+                    transformMap[d.id] = transformMap[d.uid] = self.getTransformFromData(d);
+                }
+            });
+        }
+
+        var transformMap2 = {};
+
+        if (self.options.usePreviousDataForTransform && self.flattenedData) {
+            self.flattenedData.forEach(function (d) {
+                if (!transformMap2[d.uid] || !transformMap2[d.id]) {
+                    transformMap2[d.id] = transformMap2[d.uid] = self.getTransformFromData(d);
+                }
+            });
+        }
+
         var data = self.flattenedData.filter(function (d) {
             return d._defaultPrevented || (!cullingY || d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1) && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
         });
 
         var g = self.elements.innerContainer.selectAll('g.timeline-element').data(data, function (d) {
-            return d.rowIndex + '_' + d.id;
+            return d.uid;
         });
 
-        g.exit().call(self.elementExit.bind(self)).remove();
+        var exiting = g.exit();
 
-        g.enter().append('g').attr('class', 'timeline-element');
+        if (self.options.enableTransitionOnExit && transitionDuration > 0) {
+            exiting.call(self.elementExit.bind(self));
+
+            self._wrapWithAnimation(exiting, transitionDuration).attr('transform', function (d) {
+                return transformMap2[d.uid] || transformMap2[d.id];
+            }).remove();
+        } else {
+            exiting.remove();
+        }
+
+        g.enter().append('g').attr('class', 'timeline-element').each(function () {
+            _d32['default'].select(this).call(self.elementEnter.bind(self));
+        });
 
         g.each(function (d) {
 
@@ -8424,36 +8518,39 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
 
             if (d._defaultPrevented) {
 
-                g.call(self.elementUpdate.bind(self));
+                self.elementUpdate(g, d, transitionDuration);
 
                 return;
             }
 
             var hasPreviousTransform = g.attr('transform') !== null;
 
-            var updatingSG;
-
             if (!hasPreviousTransform) {
-                g.call(self.elementEnter.bind(self));
+                g;
             }
 
-            var left = self.scales.x(d.start);
-            var top = self.scales.y(d.rowIndex);
-            var newTransform = 'translate(' + left + ',' + top + ')';
+            var newTransform = transformMap2[d.uid];
 
-            if (transitionDuration > 0 && hasPreviousTransform) {
-                updatingSG = self._wrapWithAnimation(g, transitionDuration).attrTween("transform", function () {
+            if (transitionDuration > 0) {
+                if (!hasPreviousTransform && self.options.usePreviousDataForTransform) {
+                    var originTransform = transformMap[d.uid] || transformMap[d.id];
+                    if (originTransform) {
+                        g.attr('transform', originTransform);
+                    }
+                }
+
+                self._wrapWithAnimation(g, transitionDuration).attrTween("transform", function () {
                     var startTransform = _d32['default'].transform(g.attr('transform'));
-                    startTransform.translate[1] = self.scales.y(d.rowIndex);
+                    if (!enableYTransition) {
+                        startTransform.translate[1] = self.scales.y(d.rowIndex);
+                    }
                     return _d32['default'].interpolateTransform(startTransform.toString(), newTransform);
                 });
             } else {
-                updatingSG = g.attr('transform', newTransform);
+                g.attr('transform', newTransform);
             }
 
-            if (typeof updatingSG.datum === 'function') {
-                updatingSG.call(self.elementUpdate.bind(self));
-            }
+            self.elementUpdate(g, d, transitionDuration);
         });
 
         self._currentElementsGroupTranslate = [0.0, 0.0];
@@ -8539,12 +8636,12 @@ D3Timeline.prototype.updateY = function () {
     this.dimensions.height = Math.min(this.data.length * 30, this._maxBodyHeight);
 
     // compute new Y scale
-    this.yScale = this.options.rowHeight / this.dimensions.height * elementAmount;
+    this._yScale = this.options.rowHeight / this.dimensions.height * elementAmount;
 
     // update Y scale, axis and zoom behavior
     this.scales.y.domain(elementsRange).range([0, this.dimensions.height]);
 
-    this.behaviors.zoomY.y(this.scales.y).translate(this._lastTranslate).scale(this.yScale);
+    this.behaviors.zoomY.y(this.scales.y).translate(this._lastTranslate).scale(this._yScale);
 
     // and update X axis ticks height
     this.axises.x.innerTickSize(-this.dimensions.height);
@@ -8564,7 +8661,7 @@ D3Timeline.prototype.updateY = function () {
 };
 
 D3Timeline.prototype.stopElementTransition = function () {
-    this.elements.innerContainer.selectAll('g.timeline-element').transition();
+    this.elements.innerContainer.selectAll('g.timeline-element').transition().style('opacity', '');
 };
 
 D3Timeline.prototype.elementEnter = function (selection) {
@@ -8581,7 +8678,7 @@ D3Timeline.prototype.elementExit = function (selection) {
 
 D3Timeline.prototype._wrapWithAnimation = function (selection, transitionDuration) {
     if (transitionDuration > 0) {
-        return selection.transition().duration(transitionDuration).ease('quad-out');
+        return selection.transition().duration(transitionDuration).ease(this.options.transitionEasing);
     } else {
         return selection;
     }
@@ -8591,10 +8688,6 @@ D3Timeline.prototype._getter = function (prop) {
     return function (d) {
         return d[prop];
     };
-};
-
-D3Timeline.prototype._entryNameGetter = function (entry) {
-    return entry && entry.name || '';
 };
 
 D3Timeline.prototype._isRound = function (v) {
