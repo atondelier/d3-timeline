@@ -1,0 +1,12 @@
+.debug-outlineGroups g {
+    outline: 1px solid red;
+}
+.debug-outlineGroups g g {
+    outline: 1px solid blue;
+}
+.debug-outlineGroups g g g  {
+    outline: 1px solid green;
+}
+.debug-outlineGroups g g g g {
+    outline: 1px solid yellow;
+}

@@ -1,0 +1,63 @@
+.timeline {
+    font: 12px Open Sans, sans-serif;
+    background: #555;
+}
+
+.timeline circle,
+.timeline line,
+.timeline path,
+.timeline rect, {
+    shape-rendering: optimizeSpeed;
+}
+
+.timeline .timeline-axis path,
+.timeline .timeline-axis line {
+    fill: none;
+    stroke: #111;
+}
+
+.timeline .timeline-axis.timeline-axis--y line {
+    stroke: #222;
+}
+
+.timeline .timeline-contactRect {
+    stroke-width: 0;
+    fill: transparent;
+}
+
+.timeline .timeline-boundingRect {
+    stroke: black;
+    fill: none;
+}
+
+.timeline .timeline-backgroundRect {
+    stroke: black;
+    fill: #333;
+}
+
+.timeline .timeline-element rect {
+    fill: #111;
+    stroke: #555;
+}
+
+.timeline .timeline-element text {
+    fill: #999;
+    text-anchor: left;
+}
+
+.timelineMarker .timelineMarker-label {
+    text-anchor: middle;
+    fill: orange;
+}
+
+.timelineMarker .timelineMarker-line {
+    stroke: orange;
+}
+
+.timelineMarker.timelineMarker--mouseTracker .timelineMarker-line {
+    stroke: #00d800;
+}
+
+.timelineMarker.timelineMarker--mouseTracker .timelineMarker-label {
+    fill: #00d800;
+}
