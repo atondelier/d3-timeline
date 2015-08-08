@@ -159,13 +159,13 @@ timeline.on('timeline:click', function (timeline, selection, d3Event, getTime, g
     console.log('row:', getRow());
 });
 
-timeline.on('timeline:element:dragend', function (timeline, selection, d3Event, getTime, getRow) {
+timeline.on('timeline:element:dragend', function (d, timeline, selection, d3Event, getTime, getRow) {
     console.log('draggend on timeline', arguments);
     console.log('time:', getTime());
     console.log('row:', getRow());
 });
 
-timeline.on('timeline:element:dragend', function (timeline, selection, d3Event, getTime, getRow) {
+timeline.on('timeline:element:dragend', function (d, timeline, selection, d3Event, getTime, getRow) {
     var d = selection.datum();
     var original = _lodash2['default'].findWhere(bookings, { uid: d.uid }) || _lodash2['default'].findWhere(bookings, { id: d.id });
 
@@ -190,7 +190,7 @@ timeline.on('timeline:element:dragend', function (timeline, selection, d3Event, 
 });
 
 timeline.options.yAxisFormatter = function (d) {
-    return demoOptions.distributionMode === 'bookings' ? d.elements[0].card.name : d.name;
+    return !d ? '' : demoOptions.distributionMode === 'bookings' ? d.elements[0].card.name : d.name;
 };
 
 /*
@@ -7490,7 +7490,10 @@ function D3BlockTimeline(options) {
 D3BlockTimeline.prototype.defaults = (0, _extend2['default'])(true, {}, _D3Timeline2['default'].prototype.defaults, {
     clipElement: true,
     clipElementFilter: null,
-    renderOnAutomaticScrollIdle: false
+    renderOnAutomaticScrollIdle: true,
+    hideTicksOnAutomaticScroll: false,
+    automaticScrollSpeedMultiplier: 2e-4,
+    automaticScrollMarginDelta: 30
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function (d) {
@@ -7551,68 +7554,81 @@ D3BlockTimeline.prototype.elementEnter = function (selection) {
 D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
 
     var self = this;
+    var bodyNode = self.elements.body.node();
 
-    var transform = null;
-    var tx = 0,
-        ty = 0;
-    var startX = 0,
-        startY = 0;
-    var marginDelta = 30;
+    // positions
+    var currentTransform = null;
+    var dragStartX = 0,
+        dragStartY = 0;
+    var elementStartX = 0,
+        elementStartY = 0;
+    var dragPosition;
 
-    var previousVerticalMove = 0;
-    var previousHorizontalMove = 0;
+    // movements
     var verticalMove = 0;
     var horizontalMove = 0;
     var verticalSpeed = 0;
     var horizontalSpeed = 0;
-
     var timerActive = false;
+    var needTimerStop = false;
 
-    function storeStart(mousePosition) {
-        transform = d3.transform(selection.attr('transform'));
-        startX = transform.translate[0];
-        startY = transform.translate[1];
-        tx = mousePosition[0];
-        ty = mousePosition[1];
+    // reset start position: to call on drag start or when things are redrawn
+    function storeStart() {
+        currentTransform = d3.transform(selection.attr('transform'));
+        elementStartX = currentTransform.translate[0];
+        elementStartY = currentTransform.translate[1];
+        dragStartX = dragPosition[0];
+        dragStartY = dragPosition[1];
     }
 
-    function updateFromMousePosition(mousePosition) {
+    // handle new drag position and move the element
+    function updateTransform(forceDraw) {
 
-        var dx = mousePosition[0] - tx;
-        var dy = mousePosition[1] - ty;
+        var deltaX = dragPosition[0] - dragStartX;
+        var deltaY = dragPosition[1] - dragStartY;
 
-        if (self.options.renderOnAutomaticScrollIdle || !self.options.renderOnIdle) {
-            storeStart(mousePosition);
+        if (forceDraw || !self.options.renderOnIdle) {
+            storeStart(dragPosition);
         }
 
-        transform.translate[0] = startX + dx;
-        transform.translate[1] = startY + dy;
+        currentTransform.translate[0] = elementStartX + deltaX;
+        currentTransform.translate[1] = elementStartY + deltaY;
 
-        selection.attr('transform', transform.toString());
+        selection.attr('transform', currentTransform.toString());
     }
 
-    var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now.bind(Date);
+    // take micro seconds if possible
+    var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now ? function () {
+        return 1000 * Date.now();
+    } : function () {
+        return +new Date();
+    };
 
-    function moveWithDeltaAndMousePosition(m, mousePosition) {
-        var dx = horizontalMove * horizontalSpeed * m;
-        var dy = verticalMove * verticalSpeed * m;
-        var r = self.move(dx, dy, self.options.renderOnAutomaticScrollIdle, false, true);
+    // handle automatic scroll arguments
+    function doAutomaticScroll(timeDelta, forceDraw) {
 
-        if (r[2] || r[3]) {
-            updateFromMousePosition(mousePosition);
+        // compute deltas based on direction, speed and time delta
+        var speedMultiplier = self.options.automaticScrollSpeedMultiplier;
+        var deltaX = horizontalMove * horizontalSpeed * timeDelta * speedMultiplier;
+        var deltaY = verticalMove * verticalSpeed * timeDelta * speedMultiplier;
+
+        // take group translate cancellation with forced redraw into account, so redefine start
+        if (forceDraw) {
+            var currentElementsGroupTranslate = self.currentElementsGroupTranslate.slice(0);
+            elementStartX += currentElementsGroupTranslate[0];
+            elementStartY += currentElementsGroupTranslate[1];
         }
 
-        if (r[2] === 0) {
-            horizontalMove = 0;
-        } else {
-            startX -= dx;
+        var realMove = self.move(deltaX, deltaY, forceDraw, false, !self.options.hideTicksOnAutomaticScroll);
+
+        if (realMove[2] || realMove[3]) {
+            updateTransform(forceDraw);
         }
 
-        if (r[3] === 0) {
-            verticalMove = 0;
-        } else {
-            startY -= dy;
-        }
+        elementStartX -= realMove[2];
+        elementStartY -= realMove[3];
+
+        needTimerStop = realMove[2] === 0 && realMove[3] === 0;
     }
 
     var drag = d3.behavior.drag().on('dragstart', function () {
@@ -7621,24 +7637,24 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
             d3.event.sourceEvent.stopPropagation();
         }
 
-        var mousePosition = d3.mouse(self.elements.body.node());
+        dragPosition = d3.mouse(bodyNode);
 
-        storeStart(mousePosition);
+        storeStart();
     }).on('drag', function () {
 
-        var mousePosition = d3.mouse(self.elements.body.node());
+        dragPosition = d3.mouse(bodyNode);
 
-        previousHorizontalMove = horizontalMove;
-        previousVerticalMove = verticalMove;
+        var marginDelta = self.options.automaticScrollMarginDelta;
+        var dRight = marginDelta - (self.dimensions.width - dragPosition[0]);
+        var dLeft = marginDelta - dragPosition[0];
+        var dBottom = marginDelta - (self.dimensions.height - dragPosition[1]);
+        var dTop = marginDelta - dragPosition[1];
 
-        var dRight = marginDelta - (self.dimensions.width - mousePosition[0]);
-        var dLeft = marginDelta - mousePosition[0];
-        var dBottom = marginDelta - (self.dimensions.height - mousePosition[1]);
-        var dTop = marginDelta - mousePosition[1];
+        horizontalSpeed = Math.pow(Math.max(dRight, dLeft, marginDelta), 2);
+        verticalSpeed = Math.pow(Math.max(dBottom, dTop, marginDelta), 2);
 
-        horizontalSpeed = Math.pow(Math.max(dRight, dLeft), 2);
-        verticalSpeed = Math.pow(Math.max(dBottom, dTop), 2);
-
+        var previousHorizontalMove = horizontalMove;
+        var previousVerticalMove = verticalMove;
         horizontalMove = dRight > 0 ? -1 : dLeft > 0 ? 1 : 0;
         verticalMove = dBottom > 0 ? -1 : dTop > 0 ? 1 : 0;
 
@@ -7646,45 +7662,47 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
 
         if ((horizontalMove || verticalMove) && !timerActive && hasChangedState) {
 
-            var s = getPreciseTime();
+            var timerStartTime = getPreciseTime();
+
+            timerActive = true;
 
             d3.timer(function () {
 
-                var n = getPreciseTime();
-                var d = n - s;
-                var m = d * 2e-4;
+                var currentTime = getPreciseTime();
+                var timeDelta = currentTime - timerStartTime;
 
-                moveWithDeltaAndMousePosition(m, mousePosition);
+                var timerWillStop = !verticalMove && !horizontalMove || needTimerStop;
 
-                s = n;
+                doAutomaticScroll(timeDelta, self.options.renderOnAutomaticScrollIdle && timerWillStop);
 
-                return !verticalMove && !horizontalMove;
+                timerStartTime = currentTime;
+
+                if (timerWillStop) {
+                    needTimerStop = false;
+                    timerActive = false;
+                }
+
+                return timerWillStop;
             });
         }
 
-        if (!verticalMove && !horizontalMove || !hasChangedState) {
+        var data = selection.datum();
+        data._defaultPrevented = true;
 
-            if (self._dragAF) {
-                self.cancelAnimationFrame(self._dragAF);
-            }
-
-            var d = selection.datum();
-            d._defaultPrevented = true;
-
-            self._dragAF = self.requestAnimationFrame(function () {
-
-                updateFromMousePosition(mousePosition);
-            });
+        if (self._dragAF) {
+            self.cancelAnimationFrame(self._dragAF);
         }
+
+        self._dragAF = self.requestAnimationFrame(updateTransform);
     }).on('dragend', function () {
 
         self.cancelAnimationFrame(self._dragAF);
+        self._dragAF = null;
         horizontalMove = 0;
         verticalMove = 0;
 
-        var d = selection.datum();
-
-        d._defaultPrevented = false;
+        var data = selection.datum();
+        data._defaultPrevented = false;
 
         d3.timer.flush();
 
@@ -7692,7 +7710,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
         var halfHeight = self.options.rowHeight / 2;
         self.elements.innerContainer.attr('transform', null);
 
-        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
+        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
 
         self.updateY().drawYAxis();
     });
@@ -7762,7 +7780,7 @@ D3EntityTimeline.prototype.elementEnter = function (selection) {
 
     this.constructor.super_.prototype.elementEnter.call(this, selection);
 
-    selection.select('.timeline-elementContent').append('text').classed('timeline-bookingLabel', true).attr('dy', this.options.rowHeight / 2 + 4);
+    selection.select('.timeline-elementContent').append('text').classed('timeline-entityLabel', true).attr('dy', this.options.rowHeight / 2 + 4);
 
     selection.call(this.elementContentEnter.bind(this));
 };
@@ -7774,7 +7792,7 @@ D3EntityTimeline.prototype.elementUpdate = function (selection, d, transitionDur
 
     if (this.options.alignLeft && !d._defaultPrevented) {
 
-        selection.select('.timeline-elementContent > text').attr('dx', function (d) {
+        selection.select('.timeline-entityLabel').attr('dx', function (d) {
             return Math.max(-_this.scales.x(d.start), 2);
         });
     }
@@ -7786,7 +7804,7 @@ D3EntityTimeline.prototype.elementsTranslate = function (selection) {
     var _this2 = this;
 
     if (this.options.alignLeft && this.options.alignOnTranslate) {
-        selection.select('.timeline-elementContent > text').attr('dx', function (d) {
+        selection.select('.timeline-entityLabel').attr('dx', function (d) {
             return Math.max(-_this2.scales.x(d.start), 2);
         });
     }
@@ -7861,6 +7879,8 @@ function D3Timeline(options) {
 
     this.dimensions = { width: 0, height: 0 };
 
+    this.currentElementsGroupTranslate = [0.0, 0.0];
+
     this.container = null;
 
     this.elements = {
@@ -7912,7 +7932,6 @@ function D3Timeline(options) {
     this._lastAvailableHeight = 0;
     this._preventDrawing = false;
     this._nextAnimationFrameHandlers = [];
-    this._currentElementsGroupTranslate = [0.0, 0.0];
     this._maxBodyHeight = Infinity;
 }
 
@@ -8553,7 +8572,8 @@ D3Timeline.prototype.drawElements = function (transitionDuration) {
             self.elementUpdate(g, d, transitionDuration);
         });
 
-        self._currentElementsGroupTranslate = [0.0, 0.0];
+        self.currentElementsGroupTranslate = [0.0, 0.0];
+        self.elements.innerContainer.attr('transform', null);
     });
 
     return this;
@@ -8582,8 +8602,8 @@ D3Timeline.prototype.translateElements = function (translate, previousTranslate)
     var tx = translate[0] - previousTranslate[0];
     var ty = translate[1] - previousTranslate[1];
 
-    this._currentElementsGroupTranslate[0] = this._currentElementsGroupTranslate[0] + tx;
-    this._currentElementsGroupTranslate[1] = this._currentElementsGroupTranslate[1] + ty;
+    this.currentElementsGroupTranslate[0] = this.currentElementsGroupTranslate[0] + tx;
+    this.currentElementsGroupTranslate[1] = this.currentElementsGroupTranslate[1] + ty;
 
     if (this._eltsTranslateAF) {
         this.cancelAnimationFrame(this._eltsTranslateAF);
@@ -8592,7 +8612,7 @@ D3Timeline.prototype.translateElements = function (translate, previousTranslate)
     this._eltsTranslateAF = this.requestAnimationFrame(function () {
 
         self.elements.innerContainer.attr({
-            transform: 'translate(' + self._currentElementsGroupTranslate + ')'
+            transform: 'translate(' + self.currentElementsGroupTranslate + ')'
         });
 
         if (self.elementsTranslate !== self.noop) {
