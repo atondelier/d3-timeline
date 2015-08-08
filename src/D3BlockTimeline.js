@@ -17,11 +17,12 @@ inherits(D3BlockTimeline, D3Timeline);
 
 D3BlockTimeline.prototype.defaults = extend(true, {}, D3Timeline.prototype.defaults, {
     clipElement: true,
-    clipElementFilter: null
+    clipElementFilter: null,
+    renderOnAutomaticScrollIdle: false
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function(d) {
-    return  'timeline-elementClipPath_' + this.instanceNumber + '_' + d.id;
+    return  'timeline-elementClipPath_' + this.instanceNumber + '_' + d.uid;
 };
 
 D3BlockTimeline.prototype.generateClipRectLink = function(d) {
@@ -33,7 +34,7 @@ D3BlockTimeline.prototype.generateClipPathLink = function(d) {
 };
 
 D3BlockTimeline.prototype.generateClipRectId = function(d) {
-    return  'timeline-elementClipRect_' + this.instanceNumber + '_' + d.id;
+    return  'timeline-elementClipRect_' + this.instanceNumber + '_' + d.uid;
 };
 
 D3BlockTimeline.prototype.elementEnter = function(selection) {
@@ -101,8 +102,9 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
     var previousHorizontalMove = 0;
     var verticalMove = 0;
     var horizontalMove = 0;
+    var verticalSpeed = 0;
+    var horizontalSpeed = 0;
 
-    var redrawOnMove = true;
     var timerActive = false;
 
     function storeStart(mousePosition) {
@@ -118,7 +120,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
         var dx = mousePosition[0] - tx;
         var dy = mousePosition[1] - ty;
 
-        if (redrawOnMove) {
+        if (self.options.renderOnAutomaticScrollIdle) {
             storeStart(mousePosition);
         }
 
@@ -130,6 +132,28 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
     }
 
     var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now.bind(Date);
+
+    function moveWithDeltaAndMousePosition(m, mousePosition) {
+        var dx = horizontalMove * horizontalSpeed * m;
+        var dy = verticalMove * verticalSpeed * m;
+        var r = self.move(dx, dy, self.options.renderOnAutomaticScrollIdle, false, true);
+
+        if (r[2] || r[3]) {
+            updateFromMousePosition(mousePosition);
+        }
+
+        if (r[2] === 0) {
+            horizontalMove = 0;
+        } else {
+            startX -= dx;
+        }
+
+        if (r[3] === 0) {
+            verticalMove = 0;
+        } else {
+            startY -= dy;
+        }
+    }
 
     var drag = d3.behavior.drag()
         .on('dragstart', function() {
@@ -150,8 +174,16 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
             previousHorizontalMove = horizontalMove;
             previousVerticalMove = verticalMove;
 
-            horizontalMove = mousePosition[0] > self.dimensions.width - marginDelta ? -1 : mousePosition[0] < marginDelta ? 1 : 0;
-            verticalMove = mousePosition[1] > self.dimensions.height - marginDelta ? -1 : mousePosition[1] < marginDelta ? 1 : 0;
+            var dRight = marginDelta - (self.dimensions.width - mousePosition[0]);
+            var dLeft = marginDelta - mousePosition[0];
+            var dBottom = marginDelta - (self.dimensions.height - mousePosition[1]);
+            var dTop = marginDelta - mousePosition[1];
+
+            horizontalSpeed = Math.pow(Math.max(dRight, dLeft), 2);
+            verticalSpeed = Math.pow(Math.max(dBottom, dTop), 2);
+
+            horizontalMove = dRight > 0 ? -1 : dLeft > 0 ? 1 : 0;
+            verticalMove = dBottom > 0 ? -1 : dTop > 0 ? 1 : 0;
 
             var hasChangedState = previousHorizontalMove !== horizontalMove || previousVerticalMove !== verticalMove;
 
@@ -163,25 +195,11 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
 
                     var n = getPreciseTime();
                     var d = n - s;
-                    var m = d * 1e-2;
+                    var m = d * 2e-4;
 
-                    var r = self.move(horizontalMove * m, verticalMove * m, redrawOnMove, false, true);
+                    moveWithDeltaAndMousePosition(m, mousePosition);
 
-                    if (r[2] || r[3]) {
-                        updateFromMousePosition(mousePosition, true);
-                    }
-
-                    if (r[2] === 0) {
-                        horizontalMove = 0;
-                    } else {
-                        startX -= horizontalMove * m;
-                    }
-
-                    if (r[3] === 0) {
-                        verticalMove = 0;
-                    } else {
-                        startY -= verticalMove * m;
-                    }
+                    s = n;
 
                     return !verticalMove && !horizontalMove;
                 });
@@ -218,29 +236,25 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
 
             var deltaFromTopLeftCorner = d3.mouse(selection.node());
             var halfHeight = self.options.rowHeight / 2;
-            self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
-
             self.elements.innerContainer.attr('transform', null);
+
+            self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
 
             self
                 .updateY()
-                .updateX()
-                .updateXAxisInterval()
-                .drawXAxis()
-                .drawYAxis()
-                .drawElements();
+                .drawYAxis();
         });
 
     selection.call(drag);
 
 };
 
-D3BlockTimeline.prototype.elementUpdate = function(selection) {
+
+D3BlockTimeline.prototype.elementUpdate = function(selection, d, transitionDuration) {
 
     var self = this;
 
-    selection
-        .select('rect.timeline-elementBackground')
+    this._wrapWithAnimation(selection.select('rect.timeline-elementBackground'), transitionDuration)
         .attr({
             y: this.options.rowPadding,
             width: function(d) {

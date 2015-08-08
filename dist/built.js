@@ -30,6 +30,8 @@ module.exports.D3TimelineTimeTracker = require('./src/D3TimelineTimeTracker.js')
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+'use strict';
+
 function EventEmitter() {
   this._events = this._events || {};
   this._maxListeners = this._maxListeners || undefined;
@@ -48,23 +50,20 @@ EventEmitter.defaultMaxListeners = 10;
 
 // Obviously not all Emitters should be limited to 10. This function allows
 // that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
+EventEmitter.prototype.setMaxListeners = function (n) {
+  if (!isNumber(n) || n < 0 || isNaN(n)) throw TypeError('n must be a positive number');
   this._maxListeners = n;
   return this;
 };
 
-EventEmitter.prototype.emit = function(type) {
+EventEmitter.prototype.emit = function (type) {
   var er, handler, len, args, i, listeners;
 
-  if (!this._events)
-    this._events = {};
+  if (!this._events) this._events = {};
 
   // If there is no 'error' event listener then throw.
   if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
+    if (!this._events.error || isObject(this._events.error) && !this._events.error.length) {
       er = arguments[1];
       if (er instanceof Error) {
         throw er; // Unhandled 'error' event
@@ -75,8 +74,7 @@ EventEmitter.prototype.emit = function(type) {
 
   handler = this._events[type];
 
-  if (isUndefined(handler))
-    return false;
+  if (isUndefined(handler)) return false;
 
   if (isFunction(handler)) {
     switch (arguments.length) {
@@ -94,48 +92,38 @@ EventEmitter.prototype.emit = function(type) {
       default:
         len = arguments.length;
         args = new Array(len - 1);
-        for (i = 1; i < len; i++)
-          args[i - 1] = arguments[i];
+        for (i = 1; i < len; i++) args[i - 1] = arguments[i];
         handler.apply(this, args);
     }
   } else if (isObject(handler)) {
     len = arguments.length;
     args = new Array(len - 1);
-    for (i = 1; i < len; i++)
-      args[i - 1] = arguments[i];
+    for (i = 1; i < len; i++) args[i - 1] = arguments[i];
 
     listeners = handler.slice();
     len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
+    for (i = 0; i < len; i++) listeners[i].apply(this, args);
   }
 
   return true;
 };
 
-EventEmitter.prototype.addListener = function(type, listener) {
+EventEmitter.prototype.addListener = function (type, listener) {
   var m;
 
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
 
-  if (!this._events)
-    this._events = {};
+  if (!this._events) this._events = {};
 
   // To avoid recursion in the case that type === "newListener"! Before
   // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
+  if (this._events.newListener) this.emit('newListener', type, isFunction(listener.listener) ? listener.listener : listener);
 
   if (!this._events[type])
     // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
+    this._events[type] = listener;else if (isObject(this._events[type]))
     // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
+    this._events[type].push(listener);else
     // Adding the second element, need to change to array.
     this._events[type] = [this._events[type], listener];
 
@@ -150,10 +138,7 @@ EventEmitter.prototype.addListener = function(type, listener) {
 
     if (m && m > 0 && this._events[type].length > m) {
       this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
+      console.error('(node) warning: possible EventEmitter memory ' + 'leak detected. %d listeners added. ' + 'Use emitter.setMaxListeners() to increase limit.', this._events[type].length);
       if (typeof console.trace === 'function') {
         // not supported in IE 10
         console.trace();
@@ -166,9 +151,8 @@ EventEmitter.prototype.addListener = function(type, listener) {
 
 EventEmitter.prototype.on = EventEmitter.prototype.addListener;
 
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
+EventEmitter.prototype.once = function (type, listener) {
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
 
   var fired = false;
 
@@ -188,36 +172,29 @@ EventEmitter.prototype.once = function(type, listener) {
 };
 
 // emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
+EventEmitter.prototype.removeListener = function (type, listener) {
   var list, position, length, i;
 
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
 
-  if (!this._events || !this._events[type])
-    return this;
+  if (!this._events || !this._events[type]) return this;
 
   list = this._events[type];
   length = list.length;
   position = -1;
 
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
+  if (list === listener || isFunction(list.listener) && list.listener === listener) {
     delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
+    if (this._events.removeListener) this.emit('removeListener', type, listener);
   } else if (isObject(list)) {
     for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
+      if (list[i] === listener || list[i].listener && list[i].listener === listener) {
         position = i;
         break;
       }
     }
 
-    if (position < 0)
-      return this;
+    if (position < 0) return this;
 
     if (list.length === 1) {
       list.length = 0;
@@ -226,25 +203,20 @@ EventEmitter.prototype.removeListener = function(type, listener) {
       list.splice(position, 1);
     }
 
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
+    if (this._events.removeListener) this.emit('removeListener', type, listener);
   }
 
   return this;
 };
 
-EventEmitter.prototype.removeAllListeners = function(type) {
+EventEmitter.prototype.removeAllListeners = function (type) {
   var key, listeners;
 
-  if (!this._events)
-    return this;
+  if (!this._events) return this;
 
   // not listening for removeListener, no need to emit
   if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
+    if (arguments.length === 0) this._events = {};else if (this._events[type]) delete this._events[type];
     return this;
   }
 
@@ -265,33 +237,22 @@ EventEmitter.prototype.removeAllListeners = function(type) {
     this.removeListener(type, listeners);
   } else {
     // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
+    while (listeners.length) this.removeListener(type, listeners[listeners.length - 1]);
   }
   delete this._events[type];
 
   return this;
 };
 
-EventEmitter.prototype.listeners = function(type) {
+EventEmitter.prototype.listeners = function (type) {
   var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
+  if (!this._events || !this._events[type]) ret = [];else if (isFunction(this._events[type])) ret = [this._events[type]];else ret = this._events[type].slice();
   return ret;
 };
 
-EventEmitter.listenerCount = function(emitter, type) {
+EventEmitter.listenerCount = function (emitter, type) {
   var ret;
-  if (!emitter._events || !emitter._events[type])
-    ret = 0;
-  else if (isFunction(emitter._events[type]))
-    ret = 1;
-  else
-    ret = emitter._events[type].length;
+  if (!emitter._events || !emitter._events[type]) ret = 0;else if (isFunction(emitter._events[type])) ret = 1;else ret = emitter._events[type].length;
   return ret;
 };
 
@@ -346,11 +307,16 @@ var isPlainObject = function isPlainObject(obj) {
 };
 
 module.exports = function extend() {
-	var options, name, src, copy, copyIsArray, clone,
-		target = arguments[0],
-		i = 1,
-		length = arguments.length,
-		deep = false;
+	var options,
+	    name,
+	    src,
+	    copy,
+	    copyIsArray,
+	    clone,
+	    target = arguments[0],
+	    i = 1,
+	    length = arguments.length,
+	    deep = false;
 
 	// Handle a deep copy situation
 	if (typeof target === 'boolean') {
@@ -358,7 +324,7 @@ module.exports = function extend() {
 		target = arguments[1] || {};
 		// skip the boolean and the target
 		i = 2;
-	} else if ((typeof target !== 'object' && typeof target !== 'function') || target == null) {
+	} else if (typeof target !== 'object' && typeof target !== 'function' || target == null) {
 		target = {};
 	}
 
@@ -385,10 +351,10 @@ module.exports = function extend() {
 						// Never move original objects, clone them
 						target[name] = extend(deep, clone, copy);
 
-					// Don't bring in undefined values
+						// Don't bring in undefined values
 					} else if (typeof copy !== 'undefined') {
-						target[name] = copy;
-					}
+							target[name] = copy;
+						}
 				}
 			}
 		}
@@ -398,12 +364,13 @@ module.exports = function extend() {
 	return target;
 };
 
-
 },{}],4:[function(require,module,exports){
+'use strict';
+
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
+    ctor.super_ = superCtor;
     ctor.prototype = Object.create(superCtor.prototype, {
       constructor: {
         value: ctor,
@@ -416,12 +383,12 @@ if (typeof Object.create === 'function') {
 } else {
   // old school shim for old browsers
   module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
+    ctor.super_ = superCtor;
+    var TempCtor = function TempCtor() {};
+    TempCtor.prototype = superCtor.prototype;
+    ctor.prototype = new TempCtor();
+    ctor.prototype.constructor = ctor;
+  };
 }
 
 },{}],5:[function(require,module,exports){
@@ -459,11 +426,12 @@ function D3BlockTimeline(options) {
 
 D3BlockTimeline.prototype.defaults = (0, _extend2['default'])(true, {}, _D3Timeline2['default'].prototype.defaults, {
     clipElement: true,
-    clipElementFilter: null
+    clipElementFilter: null,
+    renderOnAutomaticScrollIdle: false
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function (d) {
-    return 'timeline-elementClipPath_' + this.instanceNumber + '_' + d.id;
+    return 'timeline-elementClipPath_' + this.instanceNumber + '_' + d.uid;
 };
 
 D3BlockTimeline.prototype.generateClipRectLink = function (d) {
@@ -475,7 +443,7 @@ D3BlockTimeline.prototype.generateClipPathLink = function (d) {
 };
 
 D3BlockTimeline.prototype.generateClipRectId = function (d) {
-    return 'timeline-elementClipRect_' + this.instanceNumber + '_' + d.id;
+    return 'timeline-elementClipRect_' + this.instanceNumber + '_' + d.uid;
 };
 
 D3BlockTimeline.prototype.elementEnter = function (selection) {
@@ -532,8 +500,9 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
     var previousHorizontalMove = 0;
     var verticalMove = 0;
     var horizontalMove = 0;
+    var verticalSpeed = 0;
+    var horizontalSpeed = 0;
 
-    var redrawOnMove = true;
     var timerActive = false;
 
     function storeStart(mousePosition) {
@@ -549,7 +518,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
         var dx = mousePosition[0] - tx;
         var dy = mousePosition[1] - ty;
 
-        if (redrawOnMove) {
+        if (self.options.renderOnAutomaticScrollIdle) {
             storeStart(mousePosition);
         }
 
@@ -560,6 +529,28 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
     }
 
     var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now.bind(Date);
+
+    function moveWithDeltaAndMousePosition(m, mousePosition) {
+        var dx = horizontalMove * horizontalSpeed * m;
+        var dy = verticalMove * verticalSpeed * m;
+        var r = self.move(dx, dy, self.options.renderOnAutomaticScrollIdle, false, true);
+
+        if (r[2] || r[3]) {
+            updateFromMousePosition(mousePosition);
+        }
+
+        if (r[2] === 0) {
+            horizontalMove = 0;
+        } else {
+            startX -= dx;
+        }
+
+        if (r[3] === 0) {
+            verticalMove = 0;
+        } else {
+            startY -= dy;
+        }
+    }
 
     var drag = d3.behavior.drag().on('dragstart', function () {
 
@@ -577,8 +568,16 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
         previousHorizontalMove = horizontalMove;
         previousVerticalMove = verticalMove;
 
-        horizontalMove = mousePosition[0] > self.dimensions.width - marginDelta ? -1 : mousePosition[0] < marginDelta ? 1 : 0;
-        verticalMove = mousePosition[1] > self.dimensions.height - marginDelta ? -1 : mousePosition[1] < marginDelta ? 1 : 0;
+        var dRight = marginDelta - (self.dimensions.width - mousePosition[0]);
+        var dLeft = marginDelta - mousePosition[0];
+        var dBottom = marginDelta - (self.dimensions.height - mousePosition[1]);
+        var dTop = marginDelta - mousePosition[1];
+
+        horizontalSpeed = Math.pow(Math.max(dRight, dLeft), 2);
+        verticalSpeed = Math.pow(Math.max(dBottom, dTop), 2);
+
+        horizontalMove = dRight > 0 ? -1 : dLeft > 0 ? 1 : 0;
+        verticalMove = dBottom > 0 ? -1 : dTop > 0 ? 1 : 0;
 
         var hasChangedState = previousHorizontalMove !== horizontalMove || previousVerticalMove !== verticalMove;
 
@@ -590,25 +589,11 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
 
                 var n = getPreciseTime();
                 var d = n - s;
-                var m = d * 1e-2;
+                var m = d * 2e-4;
 
-                var r = self.move(horizontalMove * m, verticalMove * m, redrawOnMove, false, true);
+                moveWithDeltaAndMousePosition(m, mousePosition);
 
-                if (r[2] || r[3]) {
-                    updateFromMousePosition(mousePosition, true);
-                }
-
-                if (r[2] === 0) {
-                    horizontalMove = 0;
-                } else {
-                    startX -= horizontalMove * m;
-                }
-
-                if (r[3] === 0) {
-                    verticalMove = 0;
-                } else {
-                    startY -= verticalMove * m;
-                }
+                s = n;
 
                 return !verticalMove && !horizontalMove;
             });
@@ -642,21 +627,21 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
 
         var deltaFromTopLeftCorner = d3.mouse(selection.node());
         var halfHeight = self.options.rowHeight / 2;
-        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
-
         self.elements.innerContainer.attr('transform', null);
 
-        self.updateY().updateX().updateXAxisInterval().drawXAxis().drawYAxis().drawElements();
+        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
+
+        self.updateY().drawYAxis();
     });
 
     selection.call(drag);
 };
 
-D3BlockTimeline.prototype.elementUpdate = function (selection) {
+D3BlockTimeline.prototype.elementUpdate = function (selection, d, transitionDuration) {
 
     var self = this;
 
-    selection.select('rect.timeline-elementBackground').attr({
+    this._wrapWithAnimation(selection.select('rect.timeline-elementBackground'), transitionDuration).attr({
         y: this.options.rowPadding,
         width: function width(d) {
             return self.scales.x(d.end) - self.scales.x(d.start);
@@ -719,12 +704,12 @@ D3EntityTimeline.prototype.elementEnter = function (selection) {
     selection.call(this.elementContentEnter.bind(this));
 };
 
-D3EntityTimeline.prototype.elementUpdate = function (selection) {
+D3EntityTimeline.prototype.elementUpdate = function (selection, d, transitionDuration) {
     var _this = this;
 
-    this.constructor.super_.prototype.elementUpdate.call(this, selection);
+    this.constructor.super_.prototype.elementUpdate.call(this, selection, d, transitionDuration);
 
-    if (this.options.alignLeft && !selection.datum()._defaultPrevented) {
+    if (this.options.alignLeft && !d._defaultPrevented) {
 
         selection.select('.timeline-elementContent > text').attr('dx', function (d) {
             return Math.max(-_this.scales.x(d.start), 2);
@@ -802,6 +787,7 @@ function D3Timeline(options) {
 
     /** @type {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} */
     this.data = [];
+    this.flattenedData = [];
 
     this.margin = {
         top: 0,
@@ -809,9 +795,6 @@ function D3Timeline(options) {
         bottom: 0,
         left: 0
     };
-
-    /** @type {Number} */
-    this.yScale = 0.0;
 
     this.dimensions = { width: 0, height: 0 };
 
@@ -840,7 +823,7 @@ function D3Timeline(options) {
 
         y: _d32['default'].svg.axis().scale(this.scales.y).orient('left').tickFormat(function (d) {
             if (self._isRound(d)) {
-                return self._entryNameGetter(self.data[d | 0]);
+                return self.options.yAxisFormatter(self.data[d | 0]);
             } else {
                 return '';
             }
@@ -854,6 +837,8 @@ function D3Timeline(options) {
         pan: _d32['default'].behavior.drag().on('drag', this.handleDragging.bind(this))
     };
 
+    this._yScale = 0.0;
+
     this._lastTranslate = this.behaviors.zoom.translate();
     this._lastScale = this.behaviors.zoom.scale();
 
@@ -865,6 +850,7 @@ function D3Timeline(options) {
     this._preventDrawing = false;
     this._nextAnimationFrameHandlers = [];
     this._currentElementsGroupTranslate = [0.0, 0.0];
+    this._maxBodyHeight = Infinity;
 }
 
 (0, _inherits2['default'])(D3Timeline, _eventsEvents2['default']);
@@ -879,31 +865,28 @@ D3Timeline.prototype.defaults = {
     yAxisWidth: 50,
     rowHeight: 30,
     rowPadding: 5,
-    axisConfigs: [{
-        threshold: 2,
-        minutes: 30
-    }, {
-        threshold: 4,
-        minutes: 15
-    }, {
-        threshold: 10,
-        minutes: 5
-    }],
+    axisConfigs: [{ threshold: 2, minutes: 30 }, { threshold: 4, minutes: 15 }, { threshold: 10, minutes: 5 }],
     container: 'body',
     cullingX: true,
     cullingY: true,
     cullingDistance: 1,
     renderOnIdle: true,
-    flattenRowElements: false, // @todo: make it dynamic
     hideTicksOnZoom: false,
     hideTicksOnDrag: false,
     panYOnWheel: true,
     wheelMultiplier: 1,
+    enableYTransition: true,
+    enableTransitionOnExit: true,
+    usePreviousDataForTransform: true,
+    transitionEasing: 'quad-in-out',
     xAxisTicksFormatter: function xAxisTicksFormatter(d) {
         return d.getMinutes() % 15 ? '' : _d32['default'].time.format('%H:%M')(d);
     },
     xAxis2TicksFormatter: function xAxis2TicksFormatter(d) {
         return '';
+    },
+    yAxisFormatter: function yAxisFormatter(d) {
+        return d && d.name || '';
     },
     padding: 10,
     trackedDOMEvents: ['click', 'mousemove', 'mouseenter', 'mouseleave'] // not dynamic
@@ -1019,9 +1002,6 @@ D3Timeline.prototype.updateMargins = function (updateDimensions) {
         left: this.options.yAxisWidth + this.options.padding
     };
 
-    this.dimensions.width = this._lastAvailableWidth - this.margin.left - this.margin.right;
-    this._maxBodyHeight = this._lastAvailableHeight - this.margin.top - this.margin.bottom;
-
     var contentPosition = { x: this.margin.left, y: this.margin.top };
     var contentTransform = 'translate(' + this.margin.left + ',' + this.margin.top + ')';
 
@@ -1084,6 +1064,10 @@ D3Timeline.prototype.move = function (dx, dy, forceDraw, skipXAxis, forceTicks) 
     this.emit('timeline:move');
 
     return updatedT.concat([updatedT[0] - currentTranslate[0], updatedT[1] - currentTranslate[1]]);
+};
+
+D3Timeline.prototype.ensureInDomains = function () {
+    return this.move(0, 0, false, false, true);
 };
 
 /**
@@ -1193,14 +1177,10 @@ D3Timeline.prototype.setData = function (data, transitionDuration) {
 
     this.data = data;
 
+    this.generateFlattenedData();
+
     if (isSizeChanging || this._dataChangeCount === 1) {
         this.updateXAxisInterval().updateY().drawXAxis().drawYAxis();
-    }
-
-    if (this.options.flattenRowElements) {
-        this.generateFlattenedData();
-    } else {
-        this.flattenedData = [];
     }
 
     this.drawElements(transitionDuration);
@@ -1209,14 +1189,22 @@ D3Timeline.prototype.setData = function (data, transitionDuration) {
 };
 
 D3Timeline.prototype.generateFlattenedData = function () {
-    this.flattenedData = this.data.map(function (d, i) {
+
+    var self = this;
+
+    if (this.options.usePreviousDataForTransform) {
+        this.previousFlattenedData = this.flattenedData.slice(0);
+    }
+
+    this.flattenedData.length = 0;
+
+    this.data.forEach(function (d, i) {
         d.elements.forEach(function (e) {
             e.rowIndex = i;
+            e.parentId = e.parentId !== undefined && e.parentId !== null ? e.parentId : d.id;
+            self.flattenedData.push(e);
         });
-        return d.elements;
-    }).reduce(function (result, elements) {
-        return result.concat(elements);
-    }, []);
+    });
 };
 
 /**
@@ -1383,20 +1371,17 @@ D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTick
     return this;
 };
 
+D3Timeline.prototype.getTransformFromData = function (d) {
+    return 'translate(' + this.scales.x(d.start) + ',' + this.scales.y(d.rowIndex) + ')';
+};
+
 D3Timeline.prototype.drawElements = function (transitionDuration) {
 
     if (this._preventDrawing) {
         return this;
     }
 
-    if (this.options.flattenRowElements) {
-        return this.drawFlattenedElements(transitionDuration);
-    } else {
-        return this.drawGroupedElements(transitionDuration);
-    }
-};
-
-D3Timeline.prototype.drawGroupedElements = function (transitionDuration) {
+    this.stopElementTransition();
 
     var self = this;
 
@@ -1404,68 +1389,7 @@ D3Timeline.prototype.drawGroupedElements = function (transitionDuration) {
         this.cancelAnimationFrame(this._elementsAF);
     }
 
-    this._elementsAF = this.requestAnimationFrame(function () {
-
-        var domainX = self.scales.x.domain();
-        var domainXStart = domainX[0];
-        var domainXEnd = domainX[domainX.length - 1];
-
-        var domainY = self.scales.y.domain();
-        var domainYStart = domainY[0];
-        var domainYEnd = domainY[domainY.length - 1];
-
-        var cullingDistance = self.options.cullingDistance;
-
-        var data = self.options.cullingY ? self.data.filter(function (row, i) {
-            return i >= domainYStart - cullingDistance && i < domainYEnd + cullingDistance - 1;
-        }) : self.data;
-
-        var elementsDataGetter = self.options.cullingX ? function (d) {
-            return d.elements.filter(function (element) {
-                return !(element.end < domainXStart || element.start > domainXEnd);
-            });
-        } : function (d) {
-            return d.elements;
-        };
-
-        var g = self.elements.innerContainer.selectAll('g.timeline-row').data(data, self._getter('id'));
-
-        g.exit().remove();
-
-        g.enter().append('g').classed('timeline-row', true).attr('transform', self.moveRow.bind(self));
-
-        g.each(function (d, i) {
-
-            var g = _d32['default'].select(this);
-
-            g.attr('transform', self.moveRow.bind(self));
-
-            var sg = g.selectAll('g.timeline-element').data(elementsDataGetter, self._getter('id'));
-
-            sg.exit().call(self.elementExit.bind(self)).remove();
-
-            var enteringSG = sg.enter().append('g').classed('timeline-element', true);
-
-            enteringSG.call(self.elementEnter.bind(self)).attr('transform', self.moveElement.bind(self));
-
-            var updatingSG = self._wrapWithAnimation(sg, transitionDuration).attr('transform', self.moveElement.bind(self));
-
-            updatingSG.call(self.elementUpdate.bind(self));
-        });
-
-        self._currentElementsGroupTranslate = [0.0, 0.0];
-    });
-
-    return this;
-};
-
-D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
-
-    var self = this;
-
-    if (this._elementsAF) {
-        this.cancelAnimationFrame(this._elementsAF);
-    }
+    var enableYTransition = this.options.enableYTransition;
 
     this._elementsAF = this.requestAnimationFrame(function () {
 
@@ -1481,17 +1405,49 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
         var cullingX = self.options.cullingX;
         var cullingY = self.options.cullingY;
 
+        var transformMap = {};
+
+        if (self.options.usePreviousDataForTransform && self.previousFlattenedData && transitionDuration > 0) {
+            self.previousFlattenedData.forEach(function (d) {
+                if (!transformMap[d.uid] || !transformMap[d.id]) {
+                    transformMap[d.id] = transformMap[d.uid] = self.getTransformFromData(d);
+                }
+            });
+        }
+
+        var transformMap2 = {};
+
+        if (self.options.usePreviousDataForTransform && self.flattenedData) {
+            self.flattenedData.forEach(function (d) {
+                if (!transformMap2[d.uid] || !transformMap2[d.id]) {
+                    transformMap2[d.id] = transformMap2[d.uid] = self.getTransformFromData(d);
+                }
+            });
+        }
+
         var data = self.flattenedData.filter(function (d) {
             return d._defaultPrevented || (!cullingY || d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1) && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
         });
 
         var g = self.elements.innerContainer.selectAll('g.timeline-element').data(data, function (d) {
-            return d.rowIndex + '_' + d.id;
+            return d.uid;
         });
 
-        g.exit().call(self.elementExit.bind(self)).remove();
+        var exiting = g.exit();
 
-        g.enter().append('g').attr('class', 'timeline-element');
+        if (self.options.enableTransitionOnExit && transitionDuration > 0) {
+            exiting.call(self.elementExit.bind(self));
+
+            self._wrapWithAnimation(exiting, transitionDuration).attr('transform', function (d) {
+                return transformMap2[d.uid] || transformMap2[d.id];
+            }).remove();
+        } else {
+            exiting.remove();
+        }
+
+        g.enter().append('g').attr('class', 'timeline-element').each(function () {
+            _d32['default'].select(this).call(self.elementEnter.bind(self));
+        });
 
         g.each(function (d) {
 
@@ -1499,36 +1455,39 @@ D3Timeline.prototype.drawFlattenedElements = function (transitionDuration) {
 
             if (d._defaultPrevented) {
 
-                g.call(self.elementUpdate.bind(self));
+                self.elementUpdate(g, d, transitionDuration);
 
                 return;
             }
 
             var hasPreviousTransform = g.attr('transform') !== null;
 
-            var updatingSG;
-
             if (!hasPreviousTransform) {
-                g.call(self.elementEnter.bind(self));
+                g;
             }
 
-            var left = self.scales.x(d.start);
-            var top = self.scales.y(d.rowIndex);
-            var newTransform = 'translate(' + left + ',' + top + ')';
+            var newTransform = transformMap2[d.uid];
 
-            if (transitionDuration > 0 && hasPreviousTransform) {
-                updatingSG = self._wrapWithAnimation(g, transitionDuration).attrTween("transform", function () {
+            if (transitionDuration > 0) {
+                if (!hasPreviousTransform && self.options.usePreviousDataForTransform) {
+                    var originTransform = transformMap[d.uid] || transformMap[d.id];
+                    if (originTransform) {
+                        g.attr('transform', originTransform);
+                    }
+                }
+
+                self._wrapWithAnimation(g, transitionDuration).attrTween("transform", function () {
                     var startTransform = _d32['default'].transform(g.attr('transform'));
-                    startTransform.translate[1] = self.scales.y(d.rowIndex);
+                    if (!enableYTransition) {
+                        startTransform.translate[1] = self.scales.y(d.rowIndex);
+                    }
                     return _d32['default'].interpolateTransform(startTransform.toString(), newTransform);
                 });
             } else {
-                updatingSG = g.attr('transform', newTransform);
+                g.attr('transform', newTransform);
             }
 
-            if (typeof updatingSG.datum === 'function') {
-                updatingSG.call(self.elementUpdate.bind(self));
-            }
+            self.elementUpdate(g, d, transitionDuration);
         });
 
         self._currentElementsGroupTranslate = [0.0, 0.0];
@@ -1614,12 +1573,12 @@ D3Timeline.prototype.updateY = function () {
     this.dimensions.height = Math.min(this.data.length * 30, this._maxBodyHeight);
 
     // compute new Y scale
-    this.yScale = this.options.rowHeight / this.dimensions.height * elementAmount;
+    this._yScale = this.options.rowHeight / this.dimensions.height * elementAmount;
 
     // update Y scale, axis and zoom behavior
     this.scales.y.domain(elementsRange).range([0, this.dimensions.height]);
 
-    this.behaviors.zoomY.y(this.scales.y).translate(this._lastTranslate).scale(this.yScale);
+    this.behaviors.zoomY.y(this.scales.y).translate(this._lastTranslate).scale(this._yScale);
 
     // and update X axis ticks height
     this.axises.x.innerTickSize(-this.dimensions.height);
@@ -1639,7 +1598,7 @@ D3Timeline.prototype.updateY = function () {
 };
 
 D3Timeline.prototype.stopElementTransition = function () {
-    this.elements.innerContainer.selectAll('g.timeline-element').transition();
+    this.elements.innerContainer.selectAll('g.timeline-element').transition().style('opacity', '');
 };
 
 D3Timeline.prototype.elementEnter = function (selection) {
@@ -1656,7 +1615,7 @@ D3Timeline.prototype.elementExit = function (selection) {
 
 D3Timeline.prototype._wrapWithAnimation = function (selection, transitionDuration) {
     if (transitionDuration > 0) {
-        return selection.transition().duration(transitionDuration).ease('quad-out');
+        return selection.transition().duration(transitionDuration).ease(this.options.transitionEasing);
     } else {
         return selection;
     }
@@ -1666,10 +1625,6 @@ D3Timeline.prototype._getter = function (prop) {
     return function (d) {
         return d[prop];
     };
-};
-
-D3Timeline.prototype._entryNameGetter = function (entry) {
-    return entry && entry.name || '';
 };
 
 D3Timeline.prototype._isRound = function (v) {

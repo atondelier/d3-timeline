@@ -34,11 +34,11 @@ D3EntityTimeline.prototype.elementEnter = function(selection) {
 
 };
 
-D3EntityTimeline.prototype.elementUpdate = function(selection) {
+D3EntityTimeline.prototype.elementUpdate = function(selection, d, transitionDuration) {
 
-    this.constructor.super_.prototype.elementUpdate.call(this, selection);
+    this.constructor.super_.prototype.elementUpdate.call(this, selection, d, transitionDuration);
 
-    if (this.options.alignLeft && !selection.datum()._defaultPrevented) {
+    if (this.options.alignLeft && !d._defaultPrevented) {
 
         selection
             .select('.timeline-elementContent > text')
