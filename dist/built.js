@@ -647,7 +647,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
         var halfHeight = self.options.rowHeight / 2;
         self.elements.innerContainer.attr('transform', null);
 
-        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
+        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
 
         self.updateY().drawYAxis();
     });
@@ -2076,7 +2076,4 @@ D3TimelineTimeTracker.prototype.stop = function () {
 
 module.exports = D3TimelineTimeTracker;
 
-},{"./D3TimelineMarker":8,"extend":3,"inherits":4}]},{},[1])
-(1)
-});
-;
+},{"./D3TimelineMarker":8,"extend":3,"inherits":4}]

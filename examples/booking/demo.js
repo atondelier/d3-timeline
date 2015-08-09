@@ -143,13 +143,13 @@ timeline.on('timeline:click', function (timeline, selection, d3Event, getTime, g
     console.log('row:', getRow());
 });
 
-timeline.on('timeline:element:dragend', function(timeline, selection, d3Event, getTime, getRow) {
+timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event, getTime, getRow) {
     console.log('draggend on timeline', arguments);
     console.log('time:', getTime());
     console.log('row:', getRow());
 });
 
-timeline.on('timeline:element:dragend', function(timeline, selection, d3Event, getTime, getRow) {
+timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event, getTime, getRow) {
     var d = selection.datum();
     var original = _.findWhere(bookings, { uid: d.uid }) || _.findWhere(bookings, { id: d.id });
 

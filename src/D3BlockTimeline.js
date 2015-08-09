@@ -255,7 +255,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
             var halfHeight = self.options.rowHeight / 2;
             self.elements.innerContainer.attr('transform', null);
 
-            self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight]);
+            self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
 
             self
                 .updateY()
