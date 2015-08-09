@@ -27,7 +27,7 @@ D3EntityTimeline.prototype.elementEnter = function(selection) {
     selection
         .select('.timeline-elementContent')
         .append('text')
-        .classed('timeline-bookingLabel', true)
+        .classed('timeline-entityLabel', true)
         .attr('dy', this.options.rowHeight/2 + 4);
 
     selection.call(this.elementContentEnter.bind(this));
@@ -41,7 +41,7 @@ D3EntityTimeline.prototype.elementUpdate = function(selection, d, transitionDura
     if (this.options.alignLeft && !d._defaultPrevented) {
 
         selection
-            .select('.timeline-elementContent > text')
+            .select('.timeline-entityLabel')
             .attr('dx', d => Math.max(-this.scales.x(d.start), 2))
     }
 
@@ -53,7 +53,7 @@ D3EntityTimeline.prototype.elementsTranslate = function(selection) {
 
     if (this.options.alignLeft && this.options.alignOnTranslate) {
         selection
-            .select('.timeline-elementContent > text')
+            .select('.timeline-entityLabel')
             .attr('dx', d => Math.max(-this.scales.x(d.start), 2));
     }
 
