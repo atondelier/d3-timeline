@@ -717,7 +717,7 @@ D3EntityTimeline.prototype.elementEnter = function (selection) {
 
     this.constructor.super_.prototype.elementEnter.call(this, selection);
 
-    selection.select('.timeline-elementContent').append('text').classed('timeline-bookingLabel', true).attr('dy', this.options.rowHeight / 2 + 4);
+    selection.select('.timeline-elementContent').append('text').classed('timeline-entityLabel', true).attr('dy', this.options.rowHeight / 2 + 4);
 
     selection.call(this.elementContentEnter.bind(this));
 };
@@ -729,7 +729,7 @@ D3EntityTimeline.prototype.elementUpdate = function (selection, d, transitionDur
 
     if (this.options.alignLeft && !d._defaultPrevented) {
 
-        selection.select('.timeline-elementContent > text').attr('dx', function (d) {
+        selection.select('.timeline-entityLabel').attr('dx', function (d) {
             return Math.max(-_this.scales.x(d.start), 2);
         });
     }
@@ -741,7 +741,7 @@ D3EntityTimeline.prototype.elementsTranslate = function (selection) {
     var _this2 = this;
 
     if (this.options.alignLeft && this.options.alignOnTranslate) {
-        selection.select('.timeline-elementContent > text').attr('dx', function (d) {
+        selection.select('.timeline-entityLabel').attr('dx', function (d) {
             return Math.max(-_this2.scales.x(d.start), 2);
         });
     }
@@ -2076,4 +2076,7 @@ D3TimelineTimeTracker.prototype.stop = function () {
 
 module.exports = D3TimelineTimeTracker;
 
-},{"./D3TimelineMarker":8,"extend":3,"inherits":4}]
+},{"./D3TimelineMarker":8,"extend":3,"inherits":4}]},{},[1])
+(1)
+});
+;

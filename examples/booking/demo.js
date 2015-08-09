@@ -174,7 +174,7 @@ timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event
 });
 
 timeline.options.yAxisFormatter = function(d) {
-    return demoOptions.distributionMode === 'bookings' ? d.elements[0].card.name : d.name;
+    return !d ? '' : demoOptions.distributionMode === 'bookings' ? d.elements[0].card.name : d.name;
 };
 
 
