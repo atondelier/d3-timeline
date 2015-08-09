@@ -257,6 +257,7 @@ handleDistributionMode(demoOptions.distributionMode, false, false);
  Markers
  */
 
+/*
 var mouseTracker = new D3TimelineMouseTracker({});
 
 mouseTracker.setTimeline(timeline);
@@ -282,3 +283,4 @@ timeTracker.timeComparator = function(timeA, timeB) {
 timeTracker.start();
 
 global.tracker = timeTracker;
+*/

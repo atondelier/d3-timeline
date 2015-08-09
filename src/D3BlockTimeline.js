@@ -25,19 +25,19 @@ D3BlockTimeline.prototype.defaults = extend(true, {}, D3Timeline.prototype.defau
 });
 
 D3BlockTimeline.prototype.generateClipPathId = function(d) {
-    return  'timeline-elementClipPath_' + this.instanceNumber + '_' + d.uid;
+    return this.blockName + '-elementClipPath_' + this.instanceNumber + '_' + d.uid;
 };
 
 D3BlockTimeline.prototype.generateClipRectLink = function(d) {
-    return  '#' + this.generateClipRectId(d);
+    return '#' + this.generateClipRectId(d);
 };
 
 D3BlockTimeline.prototype.generateClipPathLink = function(d) {
-    return  'url(#' + this.generateClipPathId(d) + ')';
+    return 'url(#' + this.generateClipPathId(d) + ')';
 };
 
 D3BlockTimeline.prototype.generateClipRectId = function(d) {
-    return  'timeline-elementClipRect_' + this.instanceNumber + '_' + d.uid;
+    return this.blockName + '-elementClipRect_' + this.instanceNumber + '_' + d.uid;
 };
 
 D3BlockTimeline.prototype.elementEnter = function(selection) {
@@ -48,12 +48,12 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
 
     var rect = selection
         .append('rect')
-        .attr('class', 'timeline-elementBackground')
+        .attr('class', this.blockName + '-elementBackground')
         .attr('height', elementHeight);
 
     var g = selection
         .append('g')
-        .attr('class', 'timeline-elementContent');
+        .attr('class', this.blockName + '-elementContent');
 
 
     var clipElement = false;
@@ -82,7 +82,7 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
 
     selection.on('click', function(d) {
         if (!d3.event.defaultPrevented) {
-            self.emitTimelineEvent('element:click', selection, null, [d]);
+            self.emitDetailedEvent('element:click', selection, null, [d]);
         }
     });
 
@@ -255,7 +255,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
             var halfHeight = self.options.rowHeight / 2;
             self.elements.innerContainer.attr('transform', null);
 
-            self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
+            self.emitDetailedEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
 
             self
                 .updateY()
@@ -271,11 +271,11 @@ D3BlockTimeline.prototype.elementUpdate = function(selection, d, transitionDurat
 
     var self = this;
 
-    this._wrapWithAnimation(selection.select('rect.timeline-elementBackground'), transitionDuration)
+    this._wrapWithAnimation(selection.select('.' + this.blockName + '-elementBackground'), transitionDuration)
         .attr({
             y: this.options.rowPadding,
             width: function(d) {
-                return self.scales.x(d.end) - self.scales.x(d.start)
+                return self.scales.x(self.getDataEnd(d)) - self.scales.x(self.getDataStart(d))
             }
         });
 
