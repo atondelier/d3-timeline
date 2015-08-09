@@ -87,9 +87,11 @@ Because you may change the dimension used for elements distribution in timeline 
 
 For this to be generically interpreted by the timeline, you have to provide an `id` which can exist several times, and a `uid` which can exist only once and that will be used by d3 to match with existing data.
 
+The `id` would be sufficient if each entity was going to be represented once. But if you choose a distribution based on another entity with a n:m relation with the former, your entity is likely to be represented several times, and with the same `id`.
+
 For example:
- - injection: a distribution change may make a single element becoming several; the entering elements (with not matched `uid`) will find the transform transition start on being appended with its `id` since a single element with this `id` was existing in the previous data set distribution.
- - surjection: conversely, a distribution change may make several elements becoming one; the exiting (with not matched `uid`) will find the transform transition end before removal with its `id` since a single element with this `id` is existing in the new data set distribution.
+ - injection: a distribution change may make a single element becoming several; an entering element (with not matched `uid`) will find its transform transition start (on being appended) with its `id` since a single element with this `id` was existing in the previous data set distribution.
+ - surjection: conversely, a distribution change may make several elements becoming one; an exiting element (with not matched `uid`) will find the transform transition end (before removal) with its `id` since a single element with this `id` is entering in the new data set distribution.
 
 
 ## Dependencies
