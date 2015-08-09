@@ -1,51 +1,39 @@
 "use strict";
 
-import D3TimelineMarker from './D3TimelineMarker';
+import D3TableValueTracker from './D3TableValueTracker';
 import inherits from 'inherits';
 import extend from 'extend';
 
 /**
  *
- * @extends {D3TimelineMarker}
+ * @extends {D3TableValueTracker}
  * @constructor
  */
 function D3TimelineTimeTracker(options) {
-    D3TimelineMarker.call(this, options);
-
-    this.enabled = false;
+    D3TableValueTracker.call(this, options);
 }
 
-inherits(D3TimelineTimeTracker, D3TimelineMarker);
+inherits(D3TimelineTimeTracker, D3TableValueTracker);
 
-D3TimelineTimeTracker.prototype.defaults = extend(true, {}, D3TimelineMarker.prototype.defaults, {
-    className: 'timelineMarker--timeTracker'
+D3TimelineTimeTracker.prototype.defaults = extend(true, {}, D3TableValueTracker.prototype.defaults, {
+    bemBlockName: 'timelineMarker',
+    bemModifier: '--timeTracker'
 });
 
 D3TimelineTimeTracker.prototype.timeGetter = function() {
-
     return new Date();
-
 };
 
-D3TimelineTimeTracker.prototype.start = function() {
+D3TimelineTimeTracker.prototype.timeComparator = function(a,b) {
+    return this.valueComparator(a,b);
+}
 
-    var self = this;
-
-    this.enabled = true;
-
-    d3.timer(function() {
-
-        self.setTime(self.timeGetter());
-
-        return !self.enabled;
-
-    });
+D3TimelineTimeTracker.prototype.setTime = function(time) {
+    return this.setValue(time);
 };
 
-D3TimelineTimeTracker.prototype.stop = function() {
-
-    this.enabled = false;
-
+D3TimelineTimeTracker.prototype.valueGetter = function() {
+    return this.timeGetter();
 };
 
 module.exports = D3TimelineTimeTracker;

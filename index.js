@@ -1,8 +1,9 @@
 "use strict";
 
+module.exports.D3Table = require('./src/D3Table.js');
+module.exports.D3BlockTable = require('./src/D3BlockTable.js');
 module.exports.D3Timeline = require('./src/D3Timeline.js');
-module.exports.D3BlockTimeline = require('./src/D3BlockTimeline.js');
-module.exports.D3EntityTimeline = require('./src/D3EntityTimeline.js');
-module.exports.D3TimelineMarker = require('./src/D3TimelineMarker.js');
-module.exports.D3TimelineMouseTracker = require('./src/D3TimelineMouseTracker.js');
+module.exports.D3TableMarker = require('./src/D3TableMarker.js');
+module.exports.D3TableMouseTracker = require('./src/D3TableMouseTracker.js');
+module.exports.D3TableMouseTracker = require('./src/D3TableValueTracker.js');
 module.exports.D3TimelineTimeTracker = require('./src/D3TimelineTimeTracker.js');

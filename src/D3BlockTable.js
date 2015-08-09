@@ -1,46 +1,49 @@
 "use strict";
 
-import D3Timeline from './D3Timeline';
+import D3Table from './D3Table';
 import inherits from 'inherits';
 import extend from 'extend';
 
 /**
  *
- * @extends {D3Timeline}
+ * @extends {D3Table}
  * @constructor
  */
-function D3BlockTimeline(options) {
-    D3Timeline.call(this, options);
+function D3BlockTable(options) {
+    D3Table.call(this, options);
 }
 
-inherits(D3BlockTimeline, D3Timeline);
+inherits(D3BlockTable, D3Table);
 
-D3BlockTimeline.prototype.defaults = extend(true, {}, D3Timeline.prototype.defaults, {
+D3BlockTable.prototype.defaults = extend(true, {}, D3Table.prototype.defaults, {
     clipElement: true,
     clipElementFilter: null,
     renderOnAutomaticScrollIdle: true,
     hideTicksOnAutomaticScroll: false,
     automaticScrollSpeedMultiplier: 2e-4,
-    automaticScrollMarginDelta: 30
+    automaticScrollMarginDelta: 30,
+    appendText: true,
+    alignLeft: true,
+    alignOnTranslate: true
 });
 
-D3BlockTimeline.prototype.generateClipPathId = function(d) {
-    return this.blockName + '-elementClipPath_' + this.instanceNumber + '_' + d.uid;
+D3BlockTable.prototype.generateClipPathId = function(d) {
+    return this.options.bemBlockName + '-elementClipPath_' + this.instanceNumber + '_' + d.uid;
 };
 
-D3BlockTimeline.prototype.generateClipRectLink = function(d) {
+D3BlockTable.prototype.generateClipRectLink = function(d) {
     return '#' + this.generateClipRectId(d);
 };
 
-D3BlockTimeline.prototype.generateClipPathLink = function(d) {
+D3BlockTable.prototype.generateClipPathLink = function(d) {
     return 'url(#' + this.generateClipPathId(d) + ')';
 };
 
-D3BlockTimeline.prototype.generateClipRectId = function(d) {
-    return this.blockName + '-elementClipRect_' + this.instanceNumber + '_' + d.uid;
+D3BlockTable.prototype.generateClipRectId = function(d) {
+    return this.options.bemBlockName + '-elementClipRect_' + this.instanceNumber + '_' + d.uid;
 };
 
-D3BlockTimeline.prototype.elementEnter = function(selection) {
+D3BlockTable.prototype.elementEnter = function(selection) {
 
     var self = this;
 
@@ -48,12 +51,15 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
 
     var rect = selection
         .append('rect')
-        .attr('class', this.blockName + '-elementBackground')
+        .attr('class', this.options.bemBlockName + '-elementBackground')
         .attr('height', elementHeight);
 
     var g = selection
         .append('g')
-        .attr('class', this.blockName + '-elementContent');
+        .attr('class', this.options.bemBlockName + '-elementContent');
+
+    g.append('g')
+        .attr('class', this.options.bemBlockName + '-elementMovableContent');
 
 
     var clipElement = false;
@@ -86,13 +92,45 @@ D3BlockTimeline.prototype.elementEnter = function(selection) {
         }
     });
 
+    if (this.options.appendText) {
+        selection
+            .select('.timeline-elementMovableContent')
+            .append('text')
+            .classed('timeline-entityLabel', true)
+            .attr('dy', this.options.rowHeight/2 + 4);
+    }
+
+    selection.call(this.elementContentEnter.bind(this));
+
     this.bindDragAndDropOnSelection(selection);
 
 };
 
 
+D3BlockTable.prototype.elementsTranslate = function(selection) {
+
+    var self = this;
+
+    var d = selection.datum();
+
+    if (this.options.appendText && this.options.alignLeft && this.options.alignOnTranslate && !d._defaultPrevented) {
+
+        selection
+            .select('.' + this.options.bemBlockName + '-elementMovableContent')
+            .attr('transform', function(d) {
+                return 'translate(' + Math.max(-self.scales.x(self.getDataStart(d)), 2) + ',0)'
+            });
+    }
+
+};
+
+D3BlockTable.prototype.elementContentEnter = function() {};
+
+D3BlockTable.prototype.elementContentUpdate = function() {};
+
+
 // @todo clean up
-D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
+D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
 
     var self = this;
     var bodyNode = self.elements.body.node();
@@ -267,11 +305,11 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function(selection) {
 };
 
 
-D3BlockTimeline.prototype.elementUpdate = function(selection, d, transitionDuration) {
+D3BlockTable.prototype.elementUpdate = function(selection, d, transitionDuration) {
 
     var self = this;
 
-    this._wrapWithAnimation(selection.select('.' + this.blockName + '-elementBackground'), transitionDuration)
+    this._wrapWithAnimation(selection.select('.' + this.options.bemBlockName + '-elementBackground'), transitionDuration)
         .attr({
             y: this.options.rowPadding,
             width: function(d) {
@@ -279,12 +317,21 @@ D3BlockTimeline.prototype.elementUpdate = function(selection, d, transitionDurat
             }
         });
 
+    if (this.options.appendText && this.options.alignLeft && !d._defaultPrevented) {
+
+        selection
+            .select('.' + this.options.bemBlockName + '-elementMovableContent')
+            .attr('transform', d => 'translate(' + Math.max(-this.scales.x(this.getDataStart(d)), 2) + ',0)');
+    }
+
+    selection.call(this.elementContentUpdate.bind(this));
+
 };
 
-D3BlockTimeline.prototype.elementExit = function(selection) {
+D3BlockTable.prototype.elementExit = function(selection) {
 
     selection.on('click', null);
 
 };
 
-export default D3BlockTimeline;
+export default D3BlockTable;

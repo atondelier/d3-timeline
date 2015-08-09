@@ -1,14 +1,15 @@
 !function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.d3Timeline=e():"undefined"!=typeof global?global.d3Timeline=e():"undefined"!=typeof self&&(self.d3Timeline=e())}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
+module.exports.D3Table = require('./src/D3Table.js');
+module.exports.D3BlockTable = require('./src/D3BlockTable.js');
 module.exports.D3Timeline = require('./src/D3Timeline.js');
-module.exports.D3BlockTimeline = require('./src/D3BlockTimeline.js');
-module.exports.D3EntityTimeline = require('./src/D3EntityTimeline.js');
-module.exports.D3TimelineMarker = require('./src/D3TimelineMarker.js');
-module.exports.D3TimelineMouseTracker = require('./src/D3TimelineMouseTracker.js');
+module.exports.D3TableMarker = require('./src/D3TableMarker.js');
+module.exports.D3TableMouseTracker = require('./src/D3TableMouseTracker.js');
+module.exports.D3TableMouseTracker = require('./src/D3TableValueTracker.js');
 module.exports.D3TimelineTimeTracker = require('./src/D3TimelineTimeTracker.js');
 
-},{"./src/D3BlockTimeline.js":5,"./src/D3EntityTimeline.js":6,"./src/D3Timeline.js":7,"./src/D3TimelineMarker.js":8,"./src/D3TimelineMouseTracker.js":9,"./src/D3TimelineTimeTracker.js":10}],2:[function(require,module,exports){
+},{"./src/D3BlockTable.js":5,"./src/D3Table.js":6,"./src/D3TableMarker.js":7,"./src/D3TableMouseTracker.js":8,"./src/D3TableValueTracker.js":9,"./src/D3Timeline.js":10,"./src/D3TimelineTimeTracker.js":11}],2:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -400,9 +401,9 @@ Object.defineProperty(exports, '__esModule', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _D3Timeline = require('./D3Timeline');
+var _D3Table = require('./D3Table');
 
-var _D3Timeline2 = _interopRequireDefault(_D3Timeline);
+var _D3Table2 = _interopRequireDefault(_D3Table);
 
 var _inherits = require('inherits');
 
@@ -412,52 +413,57 @@ var _extend = require('extend');
 
 /**
  *
- * @extends {D3Timeline}
+ * @extends {D3Table}
  * @constructor
  */
 
 var _extend2 = _interopRequireDefault(_extend);
 
-function D3BlockTimeline(options) {
-    _D3Timeline2['default'].call(this, options);
+function D3BlockTable(options) {
+    _D3Table2['default'].call(this, options);
 }
 
-(0, _inherits2['default'])(D3BlockTimeline, _D3Timeline2['default']);
+(0, _inherits2['default'])(D3BlockTable, _D3Table2['default']);
 
-D3BlockTimeline.prototype.defaults = (0, _extend2['default'])(true, {}, _D3Timeline2['default'].prototype.defaults, {
+D3BlockTable.prototype.defaults = (0, _extend2['default'])(true, {}, _D3Table2['default'].prototype.defaults, {
     clipElement: true,
     clipElementFilter: null,
     renderOnAutomaticScrollIdle: true,
     hideTicksOnAutomaticScroll: false,
     automaticScrollSpeedMultiplier: 2e-4,
-    automaticScrollMarginDelta: 30
+    automaticScrollMarginDelta: 30,
+    appendText: true,
+    alignLeft: true,
+    alignOnTranslate: true
 });
 
-D3BlockTimeline.prototype.generateClipPathId = function (d) {
-    return 'timeline-elementClipPath_' + this.instanceNumber + '_' + d.uid;
+D3BlockTable.prototype.generateClipPathId = function (d) {
+    return this.options.bemBlockName + '-elementClipPath_' + this.instanceNumber + '_' + d.uid;
 };
 
-D3BlockTimeline.prototype.generateClipRectLink = function (d) {
+D3BlockTable.prototype.generateClipRectLink = function (d) {
     return '#' + this.generateClipRectId(d);
 };
 
-D3BlockTimeline.prototype.generateClipPathLink = function (d) {
+D3BlockTable.prototype.generateClipPathLink = function (d) {
     return 'url(#' + this.generateClipPathId(d) + ')';
 };
 
-D3BlockTimeline.prototype.generateClipRectId = function (d) {
-    return 'timeline-elementClipRect_' + this.instanceNumber + '_' + d.uid;
+D3BlockTable.prototype.generateClipRectId = function (d) {
+    return this.options.bemBlockName + '-elementClipRect_' + this.instanceNumber + '_' + d.uid;
 };
 
-D3BlockTimeline.prototype.elementEnter = function (selection) {
+D3BlockTable.prototype.elementEnter = function (selection) {
 
     var self = this;
 
     var elementHeight = this.options.rowHeight - this.options.rowPadding * 2;
 
-    var rect = selection.append('rect').attr('class', 'timeline-elementBackground').attr('height', elementHeight);
+    var rect = selection.append('rect').attr('class', this.options.bemBlockName + '-elementBackground').attr('height', elementHeight);
 
-    var g = selection.append('g').attr('class', 'timeline-elementContent');
+    var g = selection.append('g').attr('class', this.options.bemBlockName + '-elementContent');
+
+    g.append('g').attr('class', this.options.bemBlockName + '-elementMovableContent');
 
     var clipElement = false;
 
@@ -480,15 +486,39 @@ D3BlockTimeline.prototype.elementEnter = function (selection) {
 
     selection.on('click', function (d) {
         if (!d3.event.defaultPrevented) {
-            self.emitTimelineEvent('element:click', selection, null, [d]);
+            self.emitDetailedEvent('element:click', selection, null, [d]);
         }
     });
+
+    if (this.options.appendText) {
+        selection.select('.timeline-elementMovableContent').append('text').classed('timeline-entityLabel', true).attr('dy', this.options.rowHeight / 2 + 4);
+    }
+
+    selection.call(this.elementContentEnter.bind(this));
 
     this.bindDragAndDropOnSelection(selection);
 };
 
+D3BlockTable.prototype.elementsTranslate = function (selection) {
+
+    var self = this;
+
+    var d = selection.datum();
+
+    if (this.options.appendText && this.options.alignLeft && this.options.alignOnTranslate && !d._defaultPrevented) {
+
+        selection.select('.' + this.options.bemBlockName + '-elementMovableContent').attr('transform', function (d) {
+            return 'translate(' + Math.max(-self.scales.x(self.getDataStart(d)), 2) + ',0)';
+        });
+    }
+};
+
+D3BlockTable.prototype.elementContentEnter = function () {};
+
+D3BlockTable.prototype.elementContentUpdate = function () {};
+
 // @todo clean up
-D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
+D3BlockTable.prototype.bindDragAndDropOnSelection = function (selection) {
 
     var self = this;
     var bodyNode = self.elements.body.node();
@@ -647,7 +677,7 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
         var halfHeight = self.options.rowHeight / 2;
         self.elements.innerContainer.attr('transform', null);
 
-        self.emitTimelineEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
+        self.emitDetailedEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
 
         self.updateY().drawYAxis();
     });
@@ -655,106 +685,37 @@ D3BlockTimeline.prototype.bindDragAndDropOnSelection = function (selection) {
     selection.call(drag);
 };
 
-D3BlockTimeline.prototype.elementUpdate = function (selection, d, transitionDuration) {
+D3BlockTable.prototype.elementUpdate = function (selection, d, transitionDuration) {
+    var _this = this;
 
     var self = this;
 
-    this._wrapWithAnimation(selection.select('rect.timeline-elementBackground'), transitionDuration).attr({
+    this._wrapWithAnimation(selection.select('.' + this.options.bemBlockName + '-elementBackground'), transitionDuration).attr({
         y: this.options.rowPadding,
         width: function width(d) {
-            return self.scales.x(d.end) - self.scales.x(d.start);
+            return self.scales.x(self.getDataEnd(d)) - self.scales.x(self.getDataStart(d));
         }
     });
-};
 
-D3BlockTimeline.prototype.elementExit = function (selection) {
+    if (this.options.appendText && this.options.alignLeft && !d._defaultPrevented) {
 
-    selection.on('click', null);
-};
-
-exports['default'] = D3BlockTimeline;
-module.exports = exports['default'];
-
-},{"./D3Timeline":7,"extend":3,"inherits":4}],6:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, '__esModule', {
-    value: true
-});
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _D3BlockTimeline = require('./D3BlockTimeline');
-
-var _D3BlockTimeline2 = _interopRequireDefault(_D3BlockTimeline);
-
-var _inherits = require('inherits');
-
-var _inherits2 = _interopRequireDefault(_inherits);
-
-var _extend = require('extend');
-
-/**
- *
- * @extends {D3BlockTimeline}
- * @constructor
- */
-
-var _extend2 = _interopRequireDefault(_extend);
-
-function D3EntityTimeline(options) {
-    _D3BlockTimeline2['default'].call(this, options);
-}
-
-(0, _inherits2['default'])(D3EntityTimeline, _D3BlockTimeline2['default']);
-
-D3EntityTimeline.prototype.defaults = (0, _extend2['default'])(true, {}, _D3BlockTimeline2['default'].prototype.defaults, {
-    alignLeft: true,
-    alignOnTranslate: true
-});
-
-D3EntityTimeline.prototype.elementEnter = function (selection) {
-
-    this.constructor.super_.prototype.elementEnter.call(this, selection);
-
-    selection.select('.timeline-elementContent').append('text').classed('timeline-entityLabel', true).attr('dy', this.options.rowHeight / 2 + 4);
-
-    selection.call(this.elementContentEnter.bind(this));
-};
-
-D3EntityTimeline.prototype.elementUpdate = function (selection, d, transitionDuration) {
-    var _this = this;
-
-    this.constructor.super_.prototype.elementUpdate.call(this, selection, d, transitionDuration);
-
-    if (this.options.alignLeft && !d._defaultPrevented) {
-
-        selection.select('.timeline-entityLabel').attr('dx', function (d) {
-            return Math.max(-_this.scales.x(d.start), 2);
+        selection.select('.' + this.options.bemBlockName + '-elementMovableContent').attr('transform', function (d) {
+            return 'translate(' + Math.max(-_this.scales.x(_this.getDataStart(d)), 2) + ',0)';
         });
     }
 
     selection.call(this.elementContentUpdate.bind(this));
 };
 
-D3EntityTimeline.prototype.elementsTranslate = function (selection) {
-    var _this2 = this;
+D3BlockTable.prototype.elementExit = function (selection) {
 
-    if (this.options.alignLeft && this.options.alignOnTranslate) {
-        selection.select('.timeline-entityLabel').attr('dx', function (d) {
-            return Math.max(-_this2.scales.x(d.start), 2);
-        });
-    }
+    selection.on('click', null);
 };
 
-D3EntityTimeline.prototype.elementContentEnter = function () {};
-
-D3EntityTimeline.prototype.elementContentUpdate = function () {};
-
-exports['default'] = D3EntityTimeline;
+exports['default'] = D3BlockTable;
 module.exports = exports['default'];
 
-},{"./D3BlockTimeline":5,"extend":3,"inherits":4}],7:[function(require,module,exports){
+},{"./D3Table":6,"extend":3,"inherits":4}],6:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/* global cancelAnimationFrame, requestAnimationFrame */
 
 "use strict";
@@ -780,24 +741,20 @@ var _eventsEvents2 = _interopRequireDefault(_eventsEvents);
 var _d3 = (typeof window !== "undefined" ? window['d3'] : typeof global !== "undefined" ? global['d3'] : null);
 
 /**
- * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
- */
-
-/**
  *
- * @param {D3TimelineOptions} options
+ * @param {Object} options
  * @constructor
  */
 
 var _d32 = _interopRequireDefault(_d3);
 
-function D3Timeline(options) {
+function D3Table(options) {
 
     _eventsEvents2['default'].call(this);
 
-    D3Timeline.instancesCount += 1;
+    D3Table.instancesCount += 1;
 
-    this.instanceNumber = D3Timeline.instancesCount;
+    this.instanceNumber = D3Table.instancesCount;
 
     var self = this;
 
@@ -831,38 +788,27 @@ function D3Timeline(options) {
     };
 
     this.scales = {
-        x: _d32['default'].time.scale(),
-        y: _d32['default'].scale.linear()
+        x: null,
+        y: null
     };
 
     this.axises = {
-
-        x: _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(this.options.xAxisTicksFormatter).outerTickSize(0).tickPadding(20),
-
-        x2: _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(this.options.xAxis2TicksFormatter).outerTickSize(0).innerTickSize(0),
-
-        y: _d32['default'].svg.axis().scale(this.scales.y).orient('left').tickFormat(function (d) {
-            if (self._isRound(d)) {
-                return self.options.yAxisFormatter(self.data[d | 0]);
-            } else {
-                return '';
-            }
-        }).outerTickSize(0)
+        x: null,
+        x2: null,
+        y: null
     };
 
     this.behaviors = {
-        zoom: _d32['default'].behavior.zoom().scaleExtent([1, 10]).on('zoom', this.handleZooming.bind(this)).on('zoomend', this.handleZoomingEnd.bind(this)),
-        zoomX: _d32['default'].behavior.zoom().x(this.scales.x).scale(1).scaleExtent([1, 10]),
-        zoomY: _d32['default'].behavior.zoom().y(this.scales.y).scale(1).scaleExtent([1, 1]),
-        pan: _d32['default'].behavior.drag().on('drag', this.handleDragging.bind(this))
+        zoom: null,
+        zoomX: null,
+        zoomY: null,
+        pan: null
     };
 
+    this._lastTranslate = null;
+    this._lastScale = null;
+
     this._yScale = 0.0;
-
-    this._lastTranslate = this.behaviors.zoom.translate();
-    this._lastScale = this.behaviors.zoom.scale();
-
-    this._currentScaleConfig = null;
     this._dataChangeCount = 0;
     this._dimensionsChangeCount = 0;
     this._lastAvailableWidth = 0;
@@ -872,14 +818,16 @@ function D3Timeline(options) {
     this._maxBodyHeight = Infinity;
 }
 
-(0, _inherits2['default'])(D3Timeline, _eventsEvents2['default']);
+(0, _inherits2['default'])(D3Table, _eventsEvents2['default']);
 
 /**
  * Default options
  *
- * @type {D3TimelineOptions}
+ * @type {D3TableOptions}
  */
-D3Timeline.prototype.defaults = {
+D3Table.prototype.defaults = {
+    bemBlockName: 'table',
+    bemBlockModifier: '',
     xAxisHeight: 50,
     yAxisWidth: 50,
     rowHeight: 30,
@@ -899,7 +847,10 @@ D3Timeline.prototype.defaults = {
     usePreviousDataForTransform: true,
     transitionEasing: 'quad-in-out',
     xAxisTicksFormatter: function xAxisTicksFormatter(d) {
-        return d.getMinutes() % 15 ? '' : _d32['default'].time.format('%H:%M')(d);
+        return d;
+    },
+    xAxisStrokeWidth: function xAxisStrokeWidth(d) {
+        return d % 2 ? 1 : 2;
     },
     xAxis2TicksFormatter: function xAxis2TicksFormatter(d) {
         return '';
@@ -911,69 +862,111 @@ D3Timeline.prototype.defaults = {
     trackedDOMEvents: ['click', 'mousemove', 'mouseenter', 'mouseleave'] // not dynamic
 };
 
-D3Timeline.instancesCount = 0;
+D3Table.instancesCount = 0;
 
-D3Timeline.prototype.noop = function () {};
+D3Table.prototype.noop = function () {};
 
-D3Timeline.prototype.initialize = function () {
+D3Table.prototype.initialize = function () {
 
     // container
-    this.container = _d32['default'].select(this.options.container).append('svg').attr('class', 'timeline');
+    this.container = _d32['default'].select(this.options.container).append('svg').attr('class', this.options.bemBlockName + (this.options.bemBlockModifier ? ' ' + this.options.bemBlockName + this.options.bemBlockModifier : ''));
 
     // defs
     this.elements.defs = this.container.append('defs');
 
     // clip rect in defs
-    var clipId = 'timelineBodyClipPath_' + D3Timeline.instancesCount;
+    var clipId = this.options.bemBlockName + '-bodyClipPath--' + D3Table.instancesCount;
     this.elements.clip = this.elements.defs.append('clipPath').property('id', clipId);
     this.elements.clip.append('rect');
 
     // surrounding rect
-    this.container.append('rect').classed('timeline-backgroundRect', true);
+    this.container.append('rect').classed(this.options.bemBlockName + '-backgroundRect', true);
 
     // axises containers
-    this.elements.xAxisContainer = this.container.append('g').attr('class', 'timeline-axis timeline-axis--x');
+    this.elements.xAxisContainer = this.container.append('g').attr('class', this.options.bemBlockName + '-axis ' + this.options.bemBlockName + '-axis--x');
 
-    this.elements.x2AxisContainer = this.container.append('g').attr('class', 'timeline-axis timeline-axis--x timeline-axis--secondary');
+    this.elements.x2AxisContainer = this.container.append('g').attr('class', this.options.bemBlockName + '-axis ' + this.options.bemBlockName + '-axis--x ' + this.options.bemBlockName + '-axis--secondary');
 
-    this.elements.yAxisContainer = this.container.append('g').attr('class', 'timeline-axis timeline-axis--y');
+    this.elements.yAxisContainer = this.container.append('g').attr('class', this.options.bemBlockName + '-axis ' + this.options.bemBlockName + '-axis--y');
 
     // body container inner container and surrounding rect
     this.elements.body = this.container.append('g').attr('clip-path', 'url(#' + clipId + ')');
 
     // surrounding rect
-    this.elements.body.append('rect').classed('timeline-contactRect', true);
+    this.elements.body.append('rect').classed(this.options.bemBlockName + '-contactRect', true);
 
     // inner container
     this.elements.innerContainer = this.elements.body.append('g');
 
     // surrounding rect
-    this.elements.body.append('rect').classed('timeline-boundingRect', true);
+    this.elements.body.append('rect').classed(this.options.bemBlockName + '-boundingRect', true);
 
     this.updateMargins();
 
-    this.elements.body.call(this.behaviors.pan);
-    this.elements.body.call(this.behaviors.zoom);
+    this.initializeD3Instances();
 
     this.initializeEventListeners();
 
     return this;
 };
 
-D3Timeline.prototype.initializeEventListeners = function () {
+D3Table.prototype.xScaleFactory = function () {
+    return _d32['default'].scale.linear();
+};
+
+D3Table.prototype.yScaleFactory = function () {
+    return _d32['default'].scale.linear();
+};
+
+D3Table.prototype.initializeD3Instances = function () {
+
+    var self = this;
+
+    this.scales.x = this.xScaleFactory();
+
+    this.scales.y = this.yScaleFactory();
+
+    this.axises.x = _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(this.options.xAxisTicksFormatter.bind(this)).outerTickSize(0).tickPadding(20);
+
+    this.axises.x2 = _d32['default'].svg.axis().scale(this.scales.x).orient('top').tickFormat(this.options.xAxis2TicksFormatter.bind(this)).outerTickSize(0).innerTickSize(0);
+
+    this.axises.y = _d32['default'].svg.axis().scale(this.scales.y).orient('left').tickFormat(function (d) {
+        if (self._isRound(d)) {
+            return self.options.yAxisFormatter(self.data[d | 0]);
+        } else {
+            return '';
+        }
+    }).outerTickSize(0);
+
+    this.behaviors.zoom = _d32['default'].behavior.zoom().scaleExtent([1, 10]).on('zoom', this.handleZooming.bind(this)).on('zoomend', this.handleZoomingEnd.bind(this));
+
+    this.behaviors.zoomX = _d32['default'].behavior.zoom().x(this.scales.x).scale(1).scaleExtent([1, 10]);
+
+    this.behaviors.zoomY = _d32['default'].behavior.zoom().y(this.scales.y).scale(1).scaleExtent([1, 1]);
+
+    this.behaviors.pan = _d32['default'].behavior.drag().on('drag', this.handleDragging.bind(this));
+
+    this.elements.body.call(this.behaviors.pan);
+    this.elements.body.call(this.behaviors.zoom);
+
+    this._lastTranslate = this.behaviors.zoom.translate();
+    this._lastScale = this.behaviors.zoom.scale();
+};
+
+D3Table.prototype.initializeEventListeners = function () {
 
     var self = this;
 
     this.options.trackedDOMEvents.forEach(function (eventName) {
         self.elements.body.on(eventName, function () {
-            if (eventName !== 'click' || !_d32['default'].event.defaultPrevented && _d32['default'].select(_d32['default'].event.target).classed('timeline-contactRect')) {
-                self.emitTimelineEvent(eventName, self.elements.body);
+            if (eventName !== 'click' || !_d32['default'].event.defaultPrevented && _d32['default'].select(_d32['default'].event.target).classed(self.options.bemBlockName + '-contactRect')) {
+                self.emitDetailedEvent(eventName, self.elements.body);
             }
         });
     });
 };
 
-D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection, delta, priorityArguments) {
+D3Table.prototype.emitDetailedEvent = function (eventName, d3TargetSelection, delta, priorityArguments) {
 
     var self = this;
 
@@ -990,13 +983,13 @@ D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection,
         return position;
     };
 
-    var args = [this, // the timeline instance
+    var args = [this, // the table instance
     d3TargetSelection, // the d3 selection targeted
     _d32['default'].event, // the d3 event
-    function getTime() {
+    function getColumn() {
         var position = getPosition();
         return self.scales.x.invert(position[0]);
-    }, // a time getter
+    }, // a column getter
     function getRow() {
         var position = getPosition();
         return self.data[self.scales.y.invert(position[1]) >> 0];
@@ -1007,12 +1000,12 @@ D3Timeline.prototype.emitTimelineEvent = function (eventName, d3TargetSelection,
         args = priorityArguments.concat(args);
     }
 
-    args.unshift('timeline:' + eventName); // the event name
+    args.unshift(this.options.bemBlockName + ':' + eventName); // the event name
 
     this.emit.apply(this, args);
 };
 
-D3Timeline.prototype.updateMargins = function (updateDimensions) {
+D3Table.prototype.updateMargins = function (updateDimensions) {
 
     this.margin = {
         top: this.options.xAxisHeight + this.options.padding,
@@ -1024,7 +1017,7 @@ D3Timeline.prototype.updateMargins = function (updateDimensions) {
     var contentPosition = { x: this.margin.left, y: this.margin.top };
     var contentTransform = 'translate(' + this.margin.left + ',' + this.margin.top + ')';
 
-    this.container.select('rect.timeline-backgroundRect').attr(contentPosition);
+    this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr(contentPosition);
 
     this.elements.body.attr('transform', contentTransform);
 
@@ -1040,7 +1033,7 @@ D3Timeline.prototype.updateMargins = function (updateDimensions) {
     }
 };
 
-D3Timeline.prototype.destroy = function () {
+D3Table.prototype.destroy = function () {
 
     // remove behavior listeners
     this.behaviors.zoom.on('zoom', null);
@@ -1059,12 +1052,12 @@ D3Timeline.prototype.destroy = function () {
     this.flattenedData = null;
 };
 
-D3Timeline.prototype.restoreZoom = function () {
+D3Table.prototype.restoreZoom = function () {
     this.behaviors.zoom.translate(this._lastTranslate);
     this.behaviors.zoom.scale(this._lastScale);
 };
 
-D3Timeline.prototype.move = function (dx, dy, forceDraw, skipXAxis, forceTicks) {
+D3Table.prototype.move = function (dx, dy, forceDraw, skipXAxis, forceTicks) {
 
     var currentTranslate = this.behaviors.zoom.translate();
     var updatedT = [currentTranslate[0] + dx, currentTranslate[1] + dy];
@@ -1080,19 +1073,19 @@ D3Timeline.prototype.move = function (dx, dy, forceDraw, skipXAxis, forceTicks) 
 
     this._lastTranslate = updatedT;
 
-    this.emit('timeline:move');
+    this.emit(this.options.bemBlockName + ':move');
 
     return updatedT.concat([updatedT[0] - currentTranslate[0], updatedT[1] - currentTranslate[1]]);
 };
 
-D3Timeline.prototype.ensureInDomains = function () {
+D3Table.prototype.ensureInDomains = function () {
     return this.move(0, 0, false, false, true);
 };
 
 /**
  * pan X/Y & zoom X handler (clamped pan Y when wheel is pressed without ctrl, zoom X and pan X/Y otherwise)
  */
-D3Timeline.prototype.handleZooming = function () {
+D3Table.prototype.handleZooming = function () {
 
     if (_d32['default'].event.sourceEvent && !_d32['default'].event.sourceEvent.ctrlKey && !(_d32['default'].event.sourceEvent.changedTouches && _d32['default'].event.sourceEvent.changedTouches.length >= 2)) {
         if (_d32['default'].event.sourceEvent.type === 'wheel') {
@@ -1121,10 +1114,10 @@ D3Timeline.prototype.handleZooming = function () {
     this._lastTranslate = updatedT;
     this._lastScale = this.behaviors.zoom.scale();
 
-    this.emit('timeline:move');
+    this.emit(this.options.bemBlockName + ':move');
 };
 
-D3Timeline.prototype.handleZoomingEnd = function () {
+D3Table.prototype.handleZoomingEnd = function () {
 
     var self = this;
     this.requestAnimationFrame(function () {
@@ -1140,7 +1133,7 @@ D3Timeline.prototype.handleZoomingEnd = function () {
 /**
  * wheel handler (clamped pan Y)
  */
-D3Timeline.prototype.handleWheeling = function () {
+D3Table.prototype.handleWheeling = function () {
 
     var event = _d32['default'].event.sourceEvent;
 
@@ -1166,7 +1159,7 @@ D3Timeline.prototype.handleWheeling = function () {
     this.move(dx, dy, false, !movingX);
 };
 
-D3Timeline.prototype.handleDragging = function () {
+D3Table.prototype.handleDragging = function () {
 
     if (_d32['default'].event.sourceEvent.changedTouches && _d32['default'].event.sourceEvent.touches.length >= 2) {
         return;
@@ -1175,7 +1168,7 @@ D3Timeline.prototype.handleDragging = function () {
     this.move(_d32['default'].event.dx, _d32['default'].event.dy, false, false, !this.options.hideTicksOnDrag);
 };
 
-D3Timeline.prototype.toggleDrawing = function (active) {
+D3Table.prototype.toggleDrawing = function (active) {
 
     this._preventDrawing = typeof active === 'boolean' ? !active : !this._preventDrawing;
 
@@ -1186,9 +1179,9 @@ D3Timeline.prototype.toggleDrawing = function (active) {
  *
  * @param {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} data
  * @param {Number} [transitionDuration]
- * @returns {D3Timeline}
+ * @returns {D3Table}
  */
-D3Timeline.prototype.setData = function (data, transitionDuration) {
+D3Table.prototype.setData = function (data, transitionDuration) {
 
     this._dataChangeCount += 1;
 
@@ -1207,7 +1200,7 @@ D3Timeline.prototype.setData = function (data, transitionDuration) {
     return this;
 };
 
-D3Timeline.prototype.generateFlattenedData = function () {
+D3Table.prototype.generateFlattenedData = function () {
 
     var self = this;
 
@@ -1228,23 +1221,23 @@ D3Timeline.prototype.generateFlattenedData = function () {
 
 /**
  *
- * @param {Date} minDate
- * @param {Date} maxDate
- * @returns {D3Timeline}
+ * @param {Date} minX
+ * @param {Date} maxX
+ * @returns {D3Table}
  */
-D3Timeline.prototype.setTimeRange = function (minDate, maxDate) {
+D3Table.prototype.setXRange = function (minX, maxX) {
 
-    this.minDate = minDate;
-    this.maxDate = maxDate;
+    this.minX = minX;
+    this.maxX = maxX;
 
-    this.scales.x.domain([this.minDate, this.maxDate]);
+    this.scales.x.domain([this.minX, this.maxX]);
 
     this.updateX().updateXAxisInterval().drawXAxis().drawYAxis().drawElements();
 
     return this;
 };
 
-D3Timeline.prototype.setAvailableWidth = function (availableWidth) {
+D3Table.prototype.setAvailableWidth = function (availableWidth) {
 
     this._dimensionsChangeCount += 1;
 
@@ -1257,12 +1250,12 @@ D3Timeline.prototype.setAvailableWidth = function (availableWidth) {
         this.updateX().updateXAxisInterval().drawXAxis().drawYAxis().drawElements();
     }
 
-    this.emit('timeline:resize');
+    this.emit(this.options.bemBlockName + ':resize');
 
     return this;
 };
 
-D3Timeline.prototype.setAvailableHeight = function (availableHeight) {
+D3Table.prototype.setAvailableHeight = function (availableHeight) {
 
     this._dimensionsChangeCount += 1;
 
@@ -1275,30 +1268,30 @@ D3Timeline.prototype.setAvailableHeight = function (availableHeight) {
         this.updateY().drawXAxis().drawYAxis().drawElements();
     }
 
-    this.emit('timeline:resize');
+    this.emit(this.options.bemBlockName + ':resize');
 
     return this;
 };
 
-D3Timeline.prototype.updateX = function () {
+D3Table.prototype.updateX = function () {
 
     this.container.attr('width', this.dimensions.width + this.margin.left + this.margin.right);
 
-    this.scales.x.domain([this.minDate, this.maxDate]).range([0, this.dimensions.width]);
+    this.scales.x.domain([this.minX, this.maxX]).range([0, this.dimensions.width]);
 
     this.axises.y.innerTickSize(-this.dimensions.width);
 
     this.behaviors.zoomX.x(this.scales.x).translate(this.behaviors.zoom.translate()).scale(this.behaviors.zoom.scale());
 
-    this.elements.body.select('rect.timeline-boundingRect').attr('width', this.dimensions.width);
-    this.elements.body.select('rect.timeline-contactRect').attr('width', this.dimensions.width);
-    this.container.select('rect.timeline-backgroundRect').attr('width', this.dimensions.width);
+    this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect').attr('width', this.dimensions.width);
+    this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('width', this.dimensions.width);
+    this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('width', this.dimensions.width);
     this.elements.clip.select('rect').attr('width', this.dimensions.width);
 
     return this;
 };
 
-D3Timeline.prototype.requestAnimationFrame = function (f) {
+D3Table.prototype.requestAnimationFrame = function (f) {
 
     var self = this;
 
@@ -1314,7 +1307,7 @@ D3Timeline.prototype.requestAnimationFrame = function (f) {
     return f;
 };
 
-D3Timeline.prototype.cancelAnimationFrame = function (f) {
+D3Table.prototype.cancelAnimationFrame = function (f) {
 
     var index = this._nextAnimationFrameHandlers.length > 0 ? this._nextAnimationFrameHandlers.indexOf(f) : -1;
 
@@ -1323,7 +1316,7 @@ D3Timeline.prototype.cancelAnimationFrame = function (f) {
     }
 };
 
-D3Timeline.prototype.drawXAxis = function (transitionDuration, skipTicks) {
+D3Table.prototype.drawXAxis = function (transitionDuration, skipTicks) {
 
     if (this._preventDrawing) {
         return this;
@@ -1340,16 +1333,14 @@ D3Timeline.prototype.drawXAxis = function (transitionDuration, skipTicks) {
     this._xAxisAF = this.requestAnimationFrame(function () {
 
         self._wrapWithAnimation(self.elements.xAxisContainer, transitionDuration).call(self.axises.x).selectAll('line').style({
-            'stroke-width': function strokeWidth(d) {
-                return d.getMinutes() % 30 ? 1 : 2;
-            }
+            'stroke-width': self.options.xAxisStrokeWidth.bind(self)
         });
 
         self._wrapWithAnimation(self.elements.x2AxisContainer, transitionDuration).call(self.axises.x2).selectAll('text').attr({
-            x: (self.scales.x(new Date(0, 0, 0, 0, Math.max(15, self._currentScaleConfig.minutes, 0))) - self.scales.x(new Date(0, 0, 0, 0, 0, 0))) / 2
+            x: self.columnWidth / 2
         }).style({
             display: function display(d) {
-                return +d === +self.maxDate ? 'none' : '';
+                return +d === +self.maxX ? 'none' : '';
             }
         });
     });
@@ -1357,7 +1348,7 @@ D3Timeline.prototype.drawXAxis = function (transitionDuration, skipTicks) {
     return this;
 };
 
-D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTicks) {
+D3Table.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTicks) {
 
     if (this._preventDrawing) {
         return this;
@@ -1390,11 +1381,19 @@ D3Timeline.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTick
     return this;
 };
 
-D3Timeline.prototype.getTransformFromData = function (d) {
-    return 'translate(' + this.scales.x(d.start) + ',' + this.scales.y(d.rowIndex) + ')';
+D3Table.prototype.getTransformFromData = function (d) {
+    return 'translate(' + this.scales.x(this.getDataStart(d)) + ',' + this.scales.y(d.rowIndex) + ')';
 };
 
-D3Timeline.prototype.drawElements = function (transitionDuration) {
+D3Table.prototype.getDataStart = function (d) {
+    return +d.start;
+};
+
+D3Table.prototype.getDataEnd = function (d) {
+    return +d.end;
+};
+
+D3Table.prototype.drawElements = function (transitionDuration) {
 
     if (this._preventDrawing) {
         return this;
@@ -1445,10 +1444,10 @@ D3Timeline.prototype.drawElements = function (transitionDuration) {
         }
 
         var data = self.flattenedData.filter(function (d) {
-            return d._defaultPrevented || (!cullingY || d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1) && (!cullingX || !(d.end < domainXStart || d.start > domainXEnd));
+            return d._defaultPrevented || (!cullingY || d.rowIndex >= domainYStart - cullingDistance && d.rowIndex < domainYEnd + cullingDistance - 1) && (!cullingX || !(self.getDataEnd(d) < domainXStart || self.getDataStart(d) > domainXEnd));
         });
 
-        var g = self.elements.innerContainer.selectAll('g.timeline-element').data(data, function (d) {
+        var g = self.elements.innerContainer.selectAll('g.' + self.options.bemBlockName + '-element').data(data, function (d) {
             return d.uid;
         });
 
@@ -1464,7 +1463,7 @@ D3Timeline.prototype.drawElements = function (transitionDuration) {
             exiting.remove();
         }
 
-        g.enter().append('g').attr('class', 'timeline-element').each(function () {
+        g.enter().append('g').attr('class', self.options.bemBlockName + '-element').each(function () {
             _d32['default'].select(this).call(self.elementEnter.bind(self));
         });
 
@@ -1516,7 +1515,7 @@ D3Timeline.prototype.drawElements = function (transitionDuration) {
     return this;
 };
 
-D3Timeline.prototype.moveElements = function (forceDraw, skipXAxis, forceTicks) {
+D3Table.prototype.moveElements = function (forceDraw, skipXAxis, forceTicks) {
 
     if (!this.options.renderOnIdle || forceDraw) {
         this.drawElements();
@@ -1532,7 +1531,7 @@ D3Timeline.prototype.moveElements = function (forceDraw, skipXAxis, forceTicks) 
     }
 };
 
-D3Timeline.prototype.translateElements = function (translate, previousTranslate) {
+D3Table.prototype.translateElements = function (translate, previousTranslate) {
 
     var self = this;
 
@@ -1553,36 +1552,19 @@ D3Timeline.prototype.translateElements = function (translate, previousTranslate)
         });
 
         if (self.elementsTranslate !== self.noop) {
-            self.elements.innerContainer.selectAll('.timeline-element').call(self.elementsTranslate.bind(self));
+            self.elements.innerContainer.selectAll('.' + self.options.bemBlockName + '-element').call(self.elementsTranslate.bind(self));
         }
     });
 };
 
-D3Timeline.prototype.moveRow = function (d) {
-    return 'translate(0, ' + this.scales.y(this.data.indexOf(d)) + ')';
-};
+D3Table.prototype.updateXAxisInterval = function () {
 
-D3Timeline.prototype.moveElement = function (d) {
-    return 'translate(' + this.scales.x(d.start) + ',0)';
-};
-
-D3Timeline.prototype.updateXAxisInterval = function () {
-
-    var scale = this.behaviors.zoom.scale();
-
-    var conf = this._currentScaleConfig = this._find(this.options.axisConfigs, function (params) {
-        var threshold = params.threshold;
-        return scale <= threshold;
-    });
-
-    this.axises.x.ticks(_d32['default'].time.minutes, conf.minutes);
-
-    this.columnWidth = this.scales.x(new Date(0, 0, 0, 0, Math.max(15, this._currentScaleConfig.minutes, 0))) - this.scales.x(new Date(0, 0, 0, 0, 0, 0));
+    this.columnWidth = this.scales.x(1) - this.scales.x(0);
 
     return this;
 };
 
-D3Timeline.prototype.updateY = function () {
+D3Table.prototype.updateY = function () {
 
     var elementAmount = this.data.length;
 
@@ -1607,9 +1589,9 @@ D3Timeline.prototype.updateY = function () {
     this.container.attr('height', this.dimensions.height + this.margin.top + this.margin.bottom);
 
     // update inner rect height
-    this.elements.body.select('rect.timeline-boundingRect').attr('height', this.dimensions.height);
-    this.elements.body.select('rect.timeline-contactRect').attr('height', this.dimensions.height);
-    this.container.select('rect.timeline-backgroundRect').attr('height', this.dimensions.height);
+    this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect').attr('height', this.dimensions.height);
+    this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('height', this.dimensions.height);
+    this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('height', this.dimensions.height);
     this.elements.clip.select('rect').attr('height', this.dimensions.height);
 
     this.stopElementTransition();
@@ -1617,23 +1599,23 @@ D3Timeline.prototype.updateY = function () {
     return this;
 };
 
-D3Timeline.prototype.stopElementTransition = function () {
-    this.elements.innerContainer.selectAll('g.timeline-element').transition().style('opacity', '');
+D3Table.prototype.stopElementTransition = function () {
+    this.elements.innerContainer.selectAll('g.' + this.options.bemBlockName + '-element').transition().style('opacity', '');
 };
 
-D3Timeline.prototype.elementEnter = function (selection) {
+D3Table.prototype.elementEnter = function (selection) {
     return selection;
 };
 
-D3Timeline.prototype.elementUpdate = function (selection) {
+D3Table.prototype.elementUpdate = function (selection) {
     return selection;
 };
 
-D3Timeline.prototype.elementExit = function (selection) {
+D3Table.prototype.elementExit = function (selection) {
     return selection;
 };
 
-D3Timeline.prototype._wrapWithAnimation = function (selection, transitionDuration) {
+D3Table.prototype._wrapWithAnimation = function (selection, transitionDuration) {
     if (transitionDuration > 0) {
         return selection.transition().duration(transitionDuration).ease(this.options.transitionEasing);
     } else {
@@ -1641,18 +1623,18 @@ D3Timeline.prototype._wrapWithAnimation = function (selection, transitionDuratio
     }
 };
 
-D3Timeline.prototype._getter = function (prop) {
+D3Table.prototype._getter = function (prop) {
     return function (d) {
         return d[prop];
     };
 };
 
-D3Timeline.prototype._isRound = function (v) {
+D3Table.prototype._isRound = function (v) {
     var n = v | 0;
     return v > n - 1e-3 && v < n + 1e-3;
 };
 
-D3Timeline.prototype._range = function (start, end, inc) {
+D3Table.prototype._range = function (start, end, inc) {
     var res = [];
     while (start < end) {
         res.push(start);
@@ -1666,7 +1648,7 @@ D3Timeline.prototype._range = function (start, end, inc) {
  * @type {*|Function}
  * @private
  */
-D3Timeline.prototype._find = function (list, predicate) {
+D3Table.prototype._find = function (list, predicate) {
     var length = list.length >>> 0;
     var thisArg = list;
     var value;
@@ -1681,7 +1663,7 @@ D3Timeline.prototype._find = function (list, predicate) {
     return undefined;
 };
 
-D3Timeline.prototype._clampTranslationWithScale = function (translate, scale) {
+D3Table.prototype._clampTranslationWithScale = function (translate, scale) {
 
     scale = scale || [1, 1];
 
@@ -1709,10 +1691,10 @@ D3Timeline.prototype._clampTranslationWithScale = function (translate, scale) {
     return [tx, ty];
 };
 
-exports['default'] = D3Timeline;
+exports['default'] = D3Table;
 module.exports = exports['default'];
 
-},{"events/events":2,"extend":3,"inherits":4}],8:[function(require,module,exports){
+},{"events/events":2,"extend":3,"inherits":4}],7:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};"use strict";
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -1737,7 +1719,7 @@ var _D3Timeline = require('./D3Timeline');
 
 var _D3Timeline2 = _interopRequireDefault(_D3Timeline);
 
-function D3TimelineMarker(options) {
+function D3TableMarker(options) {
 
     _eventsEvents2['default'].call(this);
 
@@ -1764,25 +1746,28 @@ function D3TimelineMarker(options) {
 
     this._moveAF = null;
 
-    this.time = null;
+    this.value = null;
     this._lastTimeUpdated = null;
 }
 
-(0, _inherits2['default'])(D3TimelineMarker, _eventsEvents2['default']);
+(0, _inherits2['default'])(D3TableMarker, _eventsEvents2['default']);
 
-D3TimelineMarker.prototype.defaults = {
-    timeFormat: _d32['default'].time.format('%H:%M'),
+D3TableMarker.prototype.defaults = {
+    xFormatter: function xFormatter(d) {
+        return d;
+    },
     outerTickSize: 10,
     tickPadding: 10,
     roundPosition: false,
-    className: ''
+    bemBlockName: 'tableMarker',
+    bemModifier: ''
 };
 
 /**
  *
  * @param {D3Timeline} timeline
  */
-D3TimelineMarker.prototype.setTimeline = function (timeline) {
+D3TableMarker.prototype.setTimeline = function (timeline) {
 
     var previousTimeline = this.timeline;
 
@@ -1795,42 +1780,42 @@ D3TimelineMarker.prototype.setTimeline = function (timeline) {
     }
 };
 
-D3TimelineMarker.prototype.timeComparator = function (timeA, timeB) {
+D3TableMarker.prototype.valueComparator = function (timeA, timeB) {
     return +timeA !== +timeB;
 };
 
-D3TimelineMarker.prototype.setTime = function (time) {
+D3TableMarker.prototype.setValue = function (value) {
 
     var previousTimeUpdated = this._lastTimeUpdated;
 
-    this.time = time;
+    this.value = value;
 
-    if (this.timeComparator(previousTimeUpdated, this.time) && this.timeline && this.container) {
+    if (this.valueComparator(previousTimeUpdated, this.value) && this.timeline && this.container) {
 
-        this._lastTimeUpdated = this.time;
+        this._lastTimeUpdated = this.value;
 
         this.container.datum({
-            time: time
+            value: value
         });
 
         this.move();
     }
 };
 
-D3TimelineMarker.prototype.handleBoundTimeline = function () {
+D3TableMarker.prototype.handleBoundTimeline = function () {
 
     var self = this;
 
     this.container = this.timeline.container.append('g').datum({
-        time: this.time
-    }).attr('class', 'timelineMarker ' + this.options.className);
+        value: this.value
+    }).attr('class', this.options.bemBlockName + (this.options.bemModifier ? ' ' + this.options.bemBlockName + this.options.bemModifier : ''));
 
-    this.container.append('line').attr('class', 'timelineMarker-line').style('pointer-events', 'none').attr({
+    this.container.append('line').attr('class', this.options.bemBlockName + '-line').style('pointer-events', 'none').attr({
         y1: -this.options.outerTickSize,
         y2: this.timeline.dimensions.height
     });
 
-    this.container.append('text').attr('class', 'timelineMarker-label').attr('dy', -this.options.outerTickSize - this.options.tickPadding);
+    this.container.append('text').attr('class', this.options.bemBlockName + '-label').attr('dy', -this.options.outerTickSize - this.options.tickPadding);
 
     // on timeline move, move the marker
     this._timelineMoveListener = this.move.bind(this);
@@ -1843,12 +1828,12 @@ D3TimelineMarker.prototype.handleBoundTimeline = function () {
     };
     this.timeline.on('timeline:resize', this._timelineResizeListener);
 
-    this.emit('timeline:marker:bound');
+    this.emit('marker:bound');
 
     this.move();
 };
 
-D3TimelineMarker.prototype.handleUnboundTimeline = function (previousTimeline) {
+D3TableMarker.prototype.handleUnboundTimeline = function (previousTimeline) {
 
     previousTimeline.removeListener('timeline:move', this._timelineMoveListener);
     previousTimeline.removeListener('timeline:resize', this._timelineResizeListener);
@@ -1863,10 +1848,10 @@ D3TimelineMarker.prototype.handleUnboundTimeline = function (previousTimeline) {
     this.container = null;
     this._timelineMoveListener = null;
 
-    this.emit('timeline:marker:unbound', previousTimeline);
+    this.emit('marker:unbound', previousTimeline);
 };
 
-D3TimelineMarker.prototype.move = function () {
+D3TableMarker.prototype.move = function () {
 
     var self = this;
 
@@ -1880,7 +1865,7 @@ D3TimelineMarker.prototype.move = function () {
 
             var xScale = self.timeline.scales.x;
             var xRange = xScale.range();
-            var left = self.timeline.scales.x(d.time);
+            var left = self.timeline.scales.x(d.value);
             var isInRange = left >= xRange[0] && left <= xRange[xRange.length - 1];
 
             var g = _d32['default'].select(this);
@@ -1891,8 +1876,8 @@ D3TimelineMarker.prototype.move = function () {
 
                 g.attr('transform', 'translate(' + (self.timeline.margin.left + left >> 0) + ',' + self.timeline.margin.top + ')');
 
-                g.select('.timelineMarker-label').text(function (d) {
-                    return self.options.timeFormat(d.time);
+                g.select('.' + self.options.bemBlockName + '-label').text(function (d) {
+                    return self.options.xFormatter(d.value);
                 });
             } else {
                 self.hide();
@@ -1901,32 +1886,32 @@ D3TimelineMarker.prototype.move = function () {
     });
 };
 
-D3TimelineMarker.prototype.show = function () {
+D3TableMarker.prototype.show = function () {
     this.container.style('display', '');
 };
 
-D3TimelineMarker.prototype.hide = function () {
+D3TableMarker.prototype.hide = function () {
     this.container.style('display', 'none');
 };
 
-D3TimelineMarker.prototype.resize = function () {
+D3TableMarker.prototype.resize = function () {
 
-    this.container.select('.timelineMarker-line').attr({
+    this.container.select('.' + this.options.bemBlockName + '-line').attr({
         y1: -this.options.outerTickSize,
         y2: this.timeline.dimensions.height
     });
 };
 
-module.exports = D3TimelineMarker;
+module.exports = D3TableMarker;
 
-},{"./D3Timeline":7,"events/events":2,"extend":3,"inherits":4}],9:[function(require,module,exports){
+},{"./D3Timeline":10,"events/events":2,"extend":3,"inherits":4}],8:[function(require,module,exports){
 "use strict";
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _D3TimelineMarker = require('./D3TimelineMarker');
+var _D3TableMarker = require('./D3TableMarker');
 
-var _D3TimelineMarker2 = _interopRequireDefault(_D3TimelineMarker);
+var _D3TableMarker2 = _interopRequireDefault(_D3TableMarker);
 
 var _inherits = require('inherits');
 
@@ -1936,14 +1921,14 @@ var _extend = require('extend');
 
 /**
  *
- * @extends {D3TimelineMarker}
+ * @extends {D3TableMarker}
  * @constructor
  */
 
 var _extend2 = _interopRequireDefault(_extend);
 
-function D3TimelineMouseTracker(options) {
-    _D3TimelineMarker2['default'].call(this, options);
+function D3TableMouseTracker(options) {
+    _D3TableMarker2['default'].call(this, options);
 
     this._timelineMouseenterListener = null;
     this._timelineMousemoveListener = null;
@@ -1951,31 +1936,31 @@ function D3TimelineMouseTracker(options) {
 
     this._moveAF = null;
 
-    this.on('timeline:marker:bound', this.handleTimelineBound.bind(this));
-    this.on('timeline:marker:unbound', this.handleTimelineUnbound.bind(this));
+    this.on('marker:bound', this.handleTimelineBound.bind(this));
+    this.on('marker:unbound', this.handleTimelineUnbound.bind(this));
 }
 
-(0, _inherits2['default'])(D3TimelineMouseTracker, _D3TimelineMarker2['default']);
+(0, _inherits2['default'])(D3TableMouseTracker, _D3TableMarker2['default']);
 
-D3TimelineMouseTracker.prototype.defaults = (0, _extend2['default'])(true, {}, _D3TimelineMarker2['default'].prototype.defaults, {
-    className: 'timelineMarker--mouseTracker'
+D3TableMouseTracker.prototype.defaults = (0, _extend2['default'])(true, {}, _D3TableMarker2['default'].prototype.defaults, {
+    bemModifier: '--mouseTracker'
 });
 
-D3TimelineMouseTracker.prototype.handleTimelineBound = function () {
+D3TableMouseTracker.prototype.handleTimelineBound = function () {
 
     this.timeline.on('timeline:mouseenter', this._timelineMouseenterListener = this.handleMouseenter.bind(this));
     this.timeline.on('timeline:mousemove', this._timelineMousemoveListener = this.handleMousemove.bind(this));
     this.timeline.on('timeline:mouseleave', this._timelineMouseleaveListener = this.handleMouseleave.bind(this));
 };
 
-D3TimelineMouseTracker.prototype.handleTimelineUnbound = function (previousTimeline) {
+D3TableMouseTracker.prototype.handleTimelineUnbound = function (previousTimeline) {
 
     previousTimeline.removeListener('timeline:mouseenter', this._timelineMouseenterListener);
     previousTimeline.removeListener('timeline:mousemove', this._timelineMousemoveListener);
     previousTimeline.removeListener('timeline:mouseleave', this._timelineMouseleaveListener);
 };
 
-D3TimelineMouseTracker.prototype.handleMouseenter = function (timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMouseenter = function (timeline, selection, d3Event, getTime, getRow) {
 
     var self = this;
 
@@ -1983,11 +1968,11 @@ D3TimelineMouseTracker.prototype.handleMouseenter = function (timeline, selectio
 
     timeline.requestAnimationFrame(function () {
         self.show();
-        self.setTime(time);
+        self.setValue(time);
     });
 };
 
-D3TimelineMouseTracker.prototype.handleMousemove = function (timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMousemove = function (timeline, selection, d3Event, getTime, getRow) {
 
     var self = this;
     var time = getTime();
@@ -1997,11 +1982,11 @@ D3TimelineMouseTracker.prototype.handleMousemove = function (timeline, selection
     }
 
     this._moveAF = timeline.requestAnimationFrame(function () {
-        self.setTime(time);
+        self.setValue(time);
     });
 };
 
-D3TimelineMouseTracker.prototype.handleMouseleave = function (timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMouseleave = function (timeline, selection, d3Event, getTime, getRow) {
 
     if (this._moveAF) {
         timeline.cancelAnimationFrame(this._moveAF);
@@ -2013,16 +1998,16 @@ D3TimelineMouseTracker.prototype.handleMouseleave = function (timeline, selectio
     });
 };
 
-module.exports = D3TimelineMouseTracker;
+module.exports = D3TableMouseTracker;
 
-},{"./D3TimelineMarker":8,"extend":3,"inherits":4}],10:[function(require,module,exports){
+},{"./D3TableMarker":7,"extend":3,"inherits":4}],9:[function(require,module,exports){
 "use strict";
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _D3TimelineMarker = require('./D3TimelineMarker');
+var _D3TableMarker = require('./D3TableMarker');
 
-var _D3TimelineMarker2 = _interopRequireDefault(_D3TimelineMarker);
+var _D3TableMarker2 = _interopRequireDefault(_D3TableMarker);
 
 var _inherits = require('inherits');
 
@@ -2032,30 +2017,30 @@ var _extend = require('extend');
 
 /**
  *
- * @extends {D3TimelineMarker}
+ * @extends {D3TableMarker}
  * @constructor
  */
 
 var _extend2 = _interopRequireDefault(_extend);
 
-function D3TimelineTimeTracker(options) {
-    _D3TimelineMarker2['default'].call(this, options);
+function D3TableValueTracker(options) {
+    _D3TableMarker2['default'].call(this, options);
 
     this.enabled = false;
 }
 
-(0, _inherits2['default'])(D3TimelineTimeTracker, _D3TimelineMarker2['default']);
+(0, _inherits2['default'])(D3TableValueTracker, _D3TableMarker2['default']);
 
-D3TimelineTimeTracker.prototype.defaults = (0, _extend2['default'])(true, {}, _D3TimelineMarker2['default'].prototype.defaults, {
-    className: 'timelineMarker--timeTracker'
+D3TableValueTracker.prototype.defaults = (0, _extend2['default'])(true, {}, _D3TableMarker2['default'].prototype.defaults, {
+    bemModifier: '--valueTracker'
 });
 
-D3TimelineTimeTracker.prototype.timeGetter = function () {
+D3TableValueTracker.prototype.valueGetter = function () {
 
-    return new Date();
+    return 0;
 };
 
-D3TimelineTimeTracker.prototype.start = function () {
+D3TableValueTracker.prototype.start = function () {
 
     var self = this;
 
@@ -2063,20 +2048,164 @@ D3TimelineTimeTracker.prototype.start = function () {
 
     d3.timer(function () {
 
-        self.setTime(self.timeGetter());
+        self.setValue(self.timeGetter());
 
         return !self.enabled;
     });
 };
 
-D3TimelineTimeTracker.prototype.stop = function () {
+D3TableValueTracker.prototype.stop = function () {
 
     this.enabled = false;
 };
 
+module.exports = D3TableValueTracker;
+
+},{"./D3TableMarker":7,"extend":3,"inherits":4}],10:[function(require,module,exports){
+var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/* global cancelAnimationFrame, requestAnimationFrame */
+
+"use strict";
+
+Object.defineProperty(exports, '__esModule', {
+    value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _extend = require('extend');
+
+var _extend2 = _interopRequireDefault(_extend);
+
+var _inherits = require('inherits');
+
+var _inherits2 = _interopRequireDefault(_inherits);
+
+var _D3BlockTable = require('./D3BlockTable');
+
+var _D3BlockTable2 = _interopRequireDefault(_D3BlockTable);
+
+var _d3 = (typeof window !== "undefined" ? window['d3'] : typeof global !== "undefined" ? global['d3'] : null);
+
+/**
+ *
+ * @param {Object} options
+ * @constructor
+ */
+
+var _d32 = _interopRequireDefault(_d3);
+
+function D3Timeline(options) {
+
+    _D3BlockTable2['default'].call(this);
+
+    this._currentScaleConfig = null;
+}
+
+(0, _inherits2['default'])(D3Timeline, _D3BlockTable2['default']);
+
+D3Timeline.prototype.defaults = (0, _extend2['default'])(true, {}, _D3BlockTable2['default'].prototype.defaults, {
+    bemBlockName: 'timeline',
+    bemBlockModifier: '',
+    xAxisTicksFormatter: function xAxisTicksFormatter(d) {
+        return d.getMinutes() % 15 ? '' : _d32['default'].time.format('%H:%M')(d);
+    },
+    xAxisStrokeWidth: function xAxisStrokeWidth(d) {
+        return d.getMinutes() % 30 ? 1 : 2;
+    }
+});
+
+_D3BlockTable2['default'].prototype.xScaleFactory = function () {
+    return _d32['default'].time.scale();
+};
+
+_D3BlockTable2['default'].prototype.yScaleFactory = function () {
+    return _d32['default'].scale.linear();
+};
+
+_D3BlockTable2['default'].prototype.getDataStart = function (d) {
+    return d.start;
+};
+
+_D3BlockTable2['default'].prototype.getDataEnd = function (d) {
+    return d.end;
+};
+
+D3Timeline.prototype.updateXAxisInterval = function () {
+
+    var scale = this.behaviors.zoom.scale();
+
+    var conf = this._currentScaleConfig = this._find(this.options.axisConfigs, function (params) {
+        var threshold = params.threshold;
+        return scale <= threshold;
+    });
+
+    this.axises.x.ticks(_d32['default'].time.minutes, conf.minutes);
+
+    this.columnWidth = this.scales.x(new Date(0, 0, 0, 0, Math.max(15, this._currentScaleConfig.minutes, 0))) - this.scales.x(new Date(0, 0, 0, 0, 0, 0));
+
+    return this;
+};
+
+D3Timeline.prototype.setTimeRange = function (minDate, maxDate) {
+    return this.setXRange(minDate, maxDate);
+};
+
+exports['default'] = D3Timeline;
+module.exports = exports['default'];
+
+},{"./D3BlockTable":5,"extend":3,"inherits":4}],11:[function(require,module,exports){
+"use strict";
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _D3TableValueTracker = require('./D3TableValueTracker');
+
+var _D3TableValueTracker2 = _interopRequireDefault(_D3TableValueTracker);
+
+var _inherits = require('inherits');
+
+var _inherits2 = _interopRequireDefault(_inherits);
+
+var _extend = require('extend');
+
+/**
+ *
+ * @extends {D3TableValueTracker}
+ * @constructor
+ */
+
+var _extend2 = _interopRequireDefault(_extend);
+
+function D3TimelineTimeTracker(options) {
+    _D3TableValueTracker2['default'].call(this, options);
+}
+
+(0, _inherits2['default'])(D3TimelineTimeTracker, _D3TableValueTracker2['default']);
+
+D3TimelineTimeTracker.prototype.defaults = (0, _extend2['default'])(true, {}, _D3TableValueTracker2['default'].prototype.defaults, {
+    bemBlockName: 'timelineMarker',
+    bemModifier: '--timeTracker'
+});
+
+D3TimelineTimeTracker.prototype.timeGetter = function () {
+    return new Date();
+};
+
+D3TimelineTimeTracker.prototype.timeComparator = function (a, b) {
+    return this.valueComparator(a, b);
+};
+
+D3TimelineTimeTracker.prototype.setTime = function (time) {
+    return this.setValue(time);
+};
+
+D3TimelineTimeTracker.prototype.valueGetter = function () {
+    return this.timeGetter();
+};
+
 module.exports = D3TimelineTimeTracker;
 
-},{"./D3TimelineMarker":8,"extend":3,"inherits":4}]},{},[1])
+},{"./D3TableValueTracker":9,"extend":3,"inherits":4}]},{},[1])
 (1)
 });
 ;

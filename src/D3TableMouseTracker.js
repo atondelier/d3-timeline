@@ -1,16 +1,16 @@
 "use strict";
 
-import D3TimelineMarker from './D3TimelineMarker';
+import D3TableMarker from './D3TableMarker';
 import inherits from 'inherits';
 import extend from 'extend';
 
 /**
  *
- * @extends {D3TimelineMarker}
+ * @extends {D3TableMarker}
  * @constructor
  */
-function D3TimelineMouseTracker(options) {
-    D3TimelineMarker.call(this, options);
+function D3TableMouseTracker(options) {
+    D3TableMarker.call(this, options);
 
     this._timelineMouseenterListener = null;
     this._timelineMousemoveListener = null;
@@ -18,17 +18,17 @@ function D3TimelineMouseTracker(options) {
 
     this._moveAF = null;
 
-    this.on('timeline:marker:bound', this.handleTimelineBound.bind(this));
-    this.on('timeline:marker:unbound', this.handleTimelineUnbound.bind(this));
+    this.on('marker:bound', this.handleTimelineBound.bind(this));
+    this.on('marker:unbound', this.handleTimelineUnbound.bind(this));
 }
 
-inherits(D3TimelineMouseTracker, D3TimelineMarker);
+inherits(D3TableMouseTracker, D3TableMarker);
 
-D3TimelineMouseTracker.prototype.defaults = extend(true, {}, D3TimelineMarker.prototype.defaults, {
-    className: 'timelineMarker--mouseTracker'
+D3TableMouseTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototype.defaults, {
+    bemModifier: '--mouseTracker'
 });
 
-D3TimelineMouseTracker.prototype.handleTimelineBound = function() {
+D3TableMouseTracker.prototype.handleTimelineBound = function() {
 
     this.timeline.on('timeline:mouseenter', this._timelineMouseenterListener = this.handleMouseenter.bind(this));
     this.timeline.on('timeline:mousemove', this._timelineMousemoveListener = this.handleMousemove.bind(this));
@@ -36,7 +36,7 @@ D3TimelineMouseTracker.prototype.handleTimelineBound = function() {
 
 };
 
-D3TimelineMouseTracker.prototype.handleTimelineUnbound = function(previousTimeline) {
+D3TableMouseTracker.prototype.handleTimelineUnbound = function(previousTimeline) {
 
     previousTimeline.removeListener('timeline:mouseenter', this._timelineMouseenterListener);
     previousTimeline.removeListener('timeline:mousemove', this._timelineMousemoveListener);
@@ -44,7 +44,7 @@ D3TimelineMouseTracker.prototype.handleTimelineUnbound = function(previousTimeli
 
 };
 
-D3TimelineMouseTracker.prototype.handleMouseenter = function(timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMouseenter = function(timeline, selection, d3Event, getTime, getRow) {
 
     var self = this;
 
@@ -52,12 +52,12 @@ D3TimelineMouseTracker.prototype.handleMouseenter = function(timeline, selection
 
     timeline.requestAnimationFrame(function() {
         self.show();
-        self.setTime(time);
+        self.setValue(time);
     });
 
 };
 
-D3TimelineMouseTracker.prototype.handleMousemove = function(timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMousemove = function(timeline, selection, d3Event, getTime, getRow) {
 
     var self = this;
     var time = getTime();
@@ -67,12 +67,12 @@ D3TimelineMouseTracker.prototype.handleMousemove = function(timeline, selection,
     }
 
     this._moveAF = timeline.requestAnimationFrame(function() {
-        self.setTime(time);
+        self.setValue(time);
     });
 
 };
 
-D3TimelineMouseTracker.prototype.handleMouseleave = function(timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMouseleave = function(timeline, selection, d3Event, getTime, getRow) {
 
     if (this._moveAF) {
         timeline.cancelAnimationFrame(this._moveAF);
@@ -85,4 +85,4 @@ D3TimelineMouseTracker.prototype.handleMouseleave = function(timeline, selection
 
 };
 
-module.exports = D3TimelineMouseTracker;
+module.exports = D3TableMouseTracker;

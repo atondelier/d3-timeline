@@ -8,12 +8,8 @@ import EventEmitter from 'events/events';
 import d3 from 'd3';
 
 /**
- * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TableOptions
- */
-
-/**
  *
- * @param {D3TableOptions} options
+ * @param {Object} options
  * @constructor
  */
 function D3Table(options) {
@@ -95,6 +91,8 @@ inherits(D3Table, EventEmitter);
  * @type {D3TableOptions}
  */
 D3Table.prototype.defaults = {
+    bemBlockName: 'table',
+    bemBlockModifier: '',
     xAxisHeight: 50,
     yAxisWidth: 50,
     rowHeight: 30,
@@ -118,7 +116,10 @@ D3Table.prototype.defaults = {
     usePreviousDataForTransform: true,
     transitionEasing: 'quad-in-out',
     xAxisTicksFormatter: function(d) {
-        return self.getDataStart(d);
+        return d;
+    },
+    xAxisStrokeWidth: function(d) {
+        return d%2 ? 1 : 2;
     },
     xAxis2TicksFormatter: function(d) {
         return '';
@@ -132,40 +133,37 @@ D3Table.prototype.defaults = {
 
 D3Table.instancesCount = 0;
 
-D3Table.prototype.blockName = 'table';
-
 D3Table.prototype.noop = function() {};
 
 D3Table.prototype.initialize = function() {
 
     // container
     this.container = d3.select(this.options.container).append('svg')
-        .attr('class', this.blockName);
+        .attr('class', this.options.bemBlockName + (this.options.bemBlockModifier ? ' ' + this.options.bemBlockName + this.options.bemBlockModifier : ''));
 
     // defs
     this.elements.defs = this.container.append('defs');
 
     // clip rect in defs
-    var clipId = this.blockName + 'BodyClipPath_' + D3Table.instancesCount;
+    var clipId = this.options.bemBlockName + '-bodyClipPath--' + D3Table.instancesCount;
     this.elements.clip = this.elements.defs.append('clipPath')
         .property('id', clipId);
     this.elements.clip
         .append('rect');
 
-
     // surrounding rect
     this.container.append('rect')
-        .classed(this.blockName + '-backgroundRect', true);
+        .classed(this.options.bemBlockName + '-backgroundRect', true);
 
     // axises containers
     this.elements.xAxisContainer = this.container.append('g')
-        .attr('class', this.blockName + '-axis ' + this.blockName + '-axis--x');
+        .attr('class', this.options.bemBlockName + '-axis ' + this.options.bemBlockName + '-axis--x');
 
     this.elements.x2AxisContainer = this.container.append('g')
-        .attr('class', this.blockName + '-axis ' + this.blockName + '-axis--x ' + this.blockName + '-axis--secondary');
+        .attr('class', this.options.bemBlockName + '-axis ' + this.options.bemBlockName + '-axis--x ' + this.options.bemBlockName + '-axis--secondary');
 
     this.elements.yAxisContainer = this.container.append('g')
-        .attr('class', this.blockName + '-axis ' + this.blockName + '-axis--y');
+        .attr('class', this.options.bemBlockName + '-axis ' + this.options.bemBlockName + '-axis--y');
 
     // body container inner container and surrounding rect
     this.elements.body = this.container.append('g')
@@ -173,14 +171,14 @@ D3Table.prototype.initialize = function() {
 
     // surrounding rect
     this.elements.body.append('rect')
-        .classed(this.blockName + '-contactRect', true);
+        .classed(this.options.bemBlockName + '-contactRect', true);
 
     // inner container
     this.elements.innerContainer = this.elements.body.append('g');
 
     // surrounding rect
     this.elements.body.append('rect')
-        .classed(this.blockName + '-boundingRect', true);
+        .classed(this.options.bemBlockName + '-boundingRect', true);
 
     this.updateMargins();
 
@@ -210,14 +208,14 @@ D3Table.prototype.initializeD3Instances = function() {
     this.axises.x = d3.svg.axis()
         .scale(this.scales.x)
         .orient('top')
-        .tickFormat(this.options.xAxisTicksFormatter)
+        .tickFormat(this.options.xAxisTicksFormatter.bind(this))
         .outerTickSize(0)
         .tickPadding(20);
 
     this.axises.x2 = d3.svg.axis()
         .scale(this.scales.x)
         .orient('top')
-        .tickFormat(this.options.xAxis2TicksFormatter)
+        .tickFormat(this.options.xAxis2TicksFormatter.bind(this))
         .outerTickSize(0)
         .innerTickSize(0);
 
@@ -264,7 +262,7 @@ D3Table.prototype.initializeEventListeners = function() {
 
     this.options.trackedDOMEvents.forEach(function(eventName) {
         self.elements.body.on(eventName, function() {
-            if (eventName !== 'click' || !d3.event.defaultPrevented && d3.select(d3.event.target).classed(self.blockName + '-contactRect')) {
+            if (eventName !== 'click' || !d3.event.defaultPrevented && d3.select(d3.event.target).classed(self.options.bemBlockName + '-contactRect')) {
                 self.emitDetailedEvent(eventName, self.elements.body);
             }
         });
@@ -307,7 +305,7 @@ D3Table.prototype.emitDetailedEvent = function(eventName, d3TargetSelection, del
         args = priorityArguments.concat(args);
     }
 
-    args.unshift(this.blockName + ':' + eventName); // the event name
+    args.unshift(this.options.bemBlockName + ':' + eventName); // the event name
 
     this.emit.apply(this, args);
 };
@@ -324,7 +322,7 @@ D3Table.prototype.updateMargins = function(updateDimensions) {
     var contentPosition = { x: this.margin.left, y: this.margin.top };
     var contentTransform = 'translate(' + this.margin.left + ',' + this.margin.top + ')';
 
-    this.container.select('rect.' + this.blockName + '-backgroundRect')
+    this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect')
         .attr(contentPosition);
 
     this.elements.body
@@ -386,7 +384,7 @@ D3Table.prototype.move = function(dx, dy, forceDraw, skipXAxis, forceTicks) {
 
     this._lastTranslate = updatedT;
 
-    this.emit(this.blockName + ':move');
+    this.emit(this.options.bemBlockName + ':move');
 
     return updatedT.concat([updatedT[0] - currentTranslate[0], updatedT[1] - currentTranslate[1]]);
 };
@@ -427,7 +425,7 @@ D3Table.prototype.handleZooming = function() {
     this._lastTranslate = updatedT;
     this._lastScale = this.behaviors.zoom.scale();
 
-    this.emit(this.blockName + ':move');
+    this.emit(this.options.bemBlockName + ':move');
 
 };
 
@@ -541,17 +539,17 @@ D3Table.prototype.generateFlattenedData = function() {
 
 /**
  *
- * @param {Date} minDate
- * @param {Date} maxDate
+ * @param {Date} minX
+ * @param {Date} maxX
  * @returns {D3Table}
  */
-D3Table.prototype.setXRange = function(minDate, maxDate) {
+D3Table.prototype.setXRange = function(minX, maxX) {
 
-    this.minDate = minDate;
-    this.maxDate = maxDate;
+    this.minX = minX;
+    this.maxX = maxX;
 
     this.scales.x
-        .domain([this.minDate, this.maxDate]);
+        .domain([this.minX, this.maxX]);
 
     this
         .updateX()
@@ -581,7 +579,7 @@ D3Table.prototype.setAvailableWidth = function(availableWidth) {
             .drawElements()
     }
 
-    this.emit(this.blockName + ':resize');
+    this.emit(this.options.bemBlockName + ':resize');
 
     return this;
 };
@@ -603,7 +601,7 @@ D3Table.prototype.setAvailableHeight = function(availableHeight) {
             .drawElements()
     }
 
-    this.emit(this.blockName + ':resize');
+    this.emit(this.options.bemBlockName + ':resize');
 
     return this;
 };
@@ -613,7 +611,7 @@ D3Table.prototype.updateX = function() {
     this.container.attr('width', this.dimensions.width + this.margin.left + this.margin.right);
 
     this.scales.x
-        .domain([this.minDate, this.maxDate])
+        .domain([this.minX, this.maxX])
         .range([0, this.dimensions.width]);
 
     this.axises.y
@@ -624,9 +622,9 @@ D3Table.prototype.updateX = function() {
         .translate(this.behaviors.zoom.translate())
         .scale(this.behaviors.zoom.scale());
 
-    this.elements.body.select('rect.' + this.blockName + '-boundingRect').attr('width', this.dimensions.width);
-    this.elements.body.select('rect.' + this.blockName + '-contactRect').attr('width', this.dimensions.width);
-    this.container.select('rect.' + this.blockName + '-backgroundRect').attr('width', this.dimensions.width);
+    this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect').attr('width', this.dimensions.width);
+    this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('width', this.dimensions.width);
+    this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('width', this.dimensions.width);
     this.elements.clip.select('rect').attr('width', this.dimensions.width);
 
     return this;
@@ -678,9 +676,7 @@ D3Table.prototype.drawXAxis = function(transitionDuration, skipTicks) {
             .call(self.axises.x)
             .selectAll('line')
             .style({
-                'stroke-width': function(d) {
-                    return d.getMinutes() %30 ? 1 : 2;
-                }
+                'stroke-width': self.options.xAxisStrokeWidth.bind(self)
             });
 
         self._wrapWithAnimation(self.elements.x2AxisContainer, transitionDuration)
@@ -691,7 +687,7 @@ D3Table.prototype.drawXAxis = function(transitionDuration, skipTicks) {
             })
             .style({
                 display: function(d) {
-                    return +d === +self.maxDate ? 'none' : '';
+                    return +d === +self.maxX ? 'none' : '';
                 }
             });
     });
@@ -746,7 +742,7 @@ D3Table.prototype.getDataStart = function(d) {
 };
 
 D3Table.prototype.getDataEnd = function(d) {
-    return +d.start + 1;
+    return +d.end;
 };
 
 D3Table.prototype.drawElements = function(transitionDuration) {
@@ -806,7 +802,7 @@ D3Table.prototype.drawElements = function(transitionDuration) {
         });
 
 
-        var g = self.elements.innerContainer.selectAll('g.' + self.blockName + '-element')
+        var g = self.elements.innerContainer.selectAll('g.' + self.options.bemBlockName + '-element')
             .data(data, function(d) {
                 return d.uid;
             });
@@ -826,7 +822,7 @@ D3Table.prototype.drawElements = function(transitionDuration) {
         }
 
         g.enter().append('g')
-            .attr('class', self.blockName + '-element')
+            .attr('class', self.options.bemBlockName + '-element')
             .each(function() {
                 d3.select(this).call(self.elementEnter.bind(self));
             });
@@ -924,7 +920,7 @@ D3Table.prototype.translateElements = function(translate, previousTranslate) {
 
         if (self.elementsTranslate !== self.noop) {
             self.elements.innerContainer
-                .selectAll('.' + self.blockName + '-element')
+                .selectAll('.' + self.options.bemBlockName + '-element')
                 .call(self.elementsTranslate.bind(self));
         }
 
@@ -933,9 +929,6 @@ D3Table.prototype.translateElements = function(translate, previousTranslate) {
 };
 
 D3Table.prototype.updateXAxisInterval = function() {
-
-    // @todo: seriously ...
-    this.axises.x.ticks(5);
 
     this.columnWidth = this.scales.x(1) - this.scales.x(0);
 
@@ -950,7 +943,7 @@ D3Table.prototype.updateY = function() {
     var elementsRange = [0, elementAmount];
 
     // compute new height
-    this.dimensions.height = Math.min(this.data.length * 30, this._maxBodyHeight);
+    this.dimensions.height = Math.min(this.data.length * this.options.rowHeight, this._maxBodyHeight);
 
     // compute new Y scale
     this._yScale = this.options.rowHeight / this.dimensions.height * elementAmount;
@@ -973,9 +966,9 @@ D3Table.prototype.updateY = function() {
     this.container.attr('height',this.dimensions.height + this.margin.top + this.margin.bottom);
 
     // update inner rect height
-    this.elements.body.select('rect.' + this.blockName + '-boundingRect').attr('height', this.dimensions.height);
-    this.elements.body.select('rect.' + this.blockName + '-contactRect').attr('height', this.dimensions.height);
-    this.container.select('rect.' + this.blockName + '-backgroundRect').attr('height', this.dimensions.height);
+    this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect').attr('height', this.dimensions.height);
+    this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('height', this.dimensions.height);
+    this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('height', this.dimensions.height);
     this.elements.clip.select('rect').attr('height', this.dimensions.height);
 
     this.stopElementTransition();
@@ -984,7 +977,7 @@ D3Table.prototype.updateY = function() {
 };
 
 D3Table.prototype.stopElementTransition = function() {
-    this.elements.innerContainer.selectAll('g.' + this.blockName + '-element').transition()
+    this.elements.innerContainer.selectAll('g.' + this.options.bemBlockName + '-element').transition()
         .style('opacity', '');
 };
 

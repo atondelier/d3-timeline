@@ -54,10 +54,11 @@
     stroke: orange;
 }
 
-.timelineMarker.timelineMarker--mouseTracker .timelineMarker-line {
+.tableMarker.tableMarker--mouseTracker .tableMarker-line {
     stroke: #00d800;
 }
 
-.timelineMarker.timelineMarker--mouseTracker .timelineMarker-label {
+.tableMarker.tableMarker--mouseTracker .tableMarker-label {
+    text-anchor: middle;
     fill: #00d800;
 }

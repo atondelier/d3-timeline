@@ -4,52 +4,49 @@
 
 import extend from 'extend';
 import inherits from 'inherits';
-import D3Table from './D3Table';
+import D3BlockTable from './D3BlockTable';
 import d3 from 'd3';
 
 /**
- * @typedef {{xAxisHeight: number, yAxisWidth: number, rowHeight: number, rowPadding: number, axisConfigs: *[], container: string}} D3TimelineOptions
- */
-
-/**
  *
- * @param {D3TimelineOptions} options
+ * @param {Object} options
  * @constructor
  */
 function D3Timeline(options) {
 
-    D3Table.call(this);
+    D3BlockTable.call(this);
 
     this._currentScaleConfig = null;
 }
 
-inherits(D3Timeline, D3Table);
+inherits(D3Timeline, D3BlockTable);
 
-D3Timeline.prototype.blockName = 'timeline';
-
-D3Timeline.prototype.defaults = extend(true, {}, D3Table.prototype.defaults, {
+D3Timeline.prototype.defaults = extend(true, {}, D3BlockTable.prototype.defaults, {
+    bemBlockName: 'timeline',
+    bemBlockModifier: '',
     xAxisTicksFormatter: function(d) {
         return d.getMinutes() % 15 ? '' : d3.time.format('%H:%M')(d);
+    },
+    xAxisStrokeWidth: function(d) {
+        return d.getMinutes() %30 ? 1 : 2;
     }
 });
 
-/*D3Table.prototype.xScaleFactory = function() {
+D3BlockTable.prototype.xScaleFactory = function() {
     return d3.time.scale();
 };
 
-D3Table.prototype.yScaleFactory = function() {
+D3BlockTable.prototype.yScaleFactory = function() {
     return d3.scale.linear();
 };
 
-D3Table.prototype.getDataStart = function(d) {
+D3BlockTable.prototype.getDataStart = function(d) {
     return d.start;
 };
 
-D3Table.prototype.getDataEnd = function(d) {
+D3BlockTable.prototype.getDataEnd = function(d) {
     return d.end;
-};*/
-
-D3Timeline.prototype.setTimeRange = D3Table.prototype.setXRange;
+};
 
 D3Timeline.prototype.updateXAxisInterval = function() {
 
@@ -65,6 +62,10 @@ D3Timeline.prototype.updateXAxisInterval = function() {
     this.columnWidth = this.scales.x(new Date(0, 0, 0, 0, Math.max(15, this._currentScaleConfig.minutes, 0))) - this.scales.x(new Date(0, 0, 0, 0, 0, 0));
 
     return this;
+};
+
+D3Timeline.prototype.setTimeRange = function(minDate, maxDate) {
+    return this.setXRange(minDate, maxDate);
 };
 
 export default D3Timeline;

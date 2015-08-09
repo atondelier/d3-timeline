@@ -1,8 +1,8 @@
 "use strict";
 
 import regeneratorRuntime from 'babel-runtime/regenerator';
-import D3EntityTimeline from '../../src/D3EntityTimeline';
-import D3TimelineMouseTracker from '../../src/D3TimelineMouseTracker';
+import D3Timeline from '../../src/D3Timeline';
+import D3TableMouseTracker from '../../src/D3TableMouseTracker';
 import D3TimelineTimeTracker from '../../src/D3TimelineTimeTracker';
 import Faker from 'Faker';
 import dat from 'dat-gui';
@@ -109,9 +109,9 @@ Timeline instantiation and listeners
  */
 
 /**
- * @type {D3EntityTimeline}
+ * @type {D3Timeline}
  */
-var timeline = new D3EntityTimeline({
+var timeline = new D3Timeline({
     container: '#container',
     renderOnIdle: true,
     hideTicksOnZoom: true,
@@ -127,7 +127,7 @@ var timeline = new D3EntityTimeline({
 
 timeline.elementContentUpdate = function(selection) {
     selection
-        .select('.timeline-elementContent > text')
+        .select('.timeline-entityLabel')
         .text(d => d.card.name);
 };
 
@@ -153,10 +153,10 @@ timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event
     var d = selection.datum();
     var original = _.findWhere(bookings, { uid: d.uid }) || _.findWhere(bookings, { id: d.id });
 
-    var previousDuration = +d.end - +d.start;
+    var previousDuration = Math.floor(+timeline.getDataEnd(d) - +timeline.getDataStart(d));
 
-    d.start = original.start = getTime();
-    d.end = original.end = new Date(+(getTime()) + previousDuration);
+    d.start = original.start = Math.round(getTime());
+    d.end = original.end = new Date(+d.start + previousDuration);
     var currentRow = timeline.data[d.rowIndex];
     var row = getRow();
 
@@ -257,21 +257,17 @@ handleDistributionMode(demoOptions.distributionMode, false, false);
  Markers
  */
 
-/*
-var mouseTracker = new D3TimelineMouseTracker({});
+var mouseTracker = new D3TableMouseTracker({
+    xFormatter: d3.time.format('%H:%M')
+});
 
 mouseTracker.setTimeline(timeline);
 
-$(window).resize(_.debounce(function() {
-    console.log('window size', innerWidth, innerHeight);
-    timeline
-        .setAvailableWidth(innerWidth)
-        .setAvailableHeight(innerHeight-5)
-}, 100));
+global.mouseTracker = mouseTracker;
 
-global.timeline = timeline;
-
-var timeTracker = new D3TimelineTimeTracker({});
+var timeTracker = new D3TimelineTimeTracker({
+    xFormatter: d3.time.format('%H:%M')
+});
 
 timeTracker.setTimeline(timeline);
 
@@ -282,5 +278,13 @@ timeTracker.timeComparator = function(timeA, timeB) {
 
 timeTracker.start();
 
-global.tracker = timeTracker;
-*/
+global.timeTracker = timeTracker;
+
+$(window).resize(_.debounce(function() {
+    console.log('window size', innerWidth, innerHeight);
+    timeline
+        .setAvailableWidth(innerWidth)
+        .setAvailableHeight(innerHeight-5)
+}, 100));
+
+global.timeline = timeline;

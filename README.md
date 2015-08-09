@@ -11,22 +11,25 @@ The result is that you fully keep control how the elements are rendered, with a 
 
 ## Design
 
-### Timeline constructors
+### Timeline constructor
 
 Basically, it renders elements with x position based on its `start` time, `end` time and y position based on the row it belongs to in the provided data set. The whole is surrounded with a time axis (top) and a left axis not limited to any type of data.
 
-As of now, you have 3 levels of control:
+Before being a timeline and depending on time, an instance of `D3Timeline` is a `D3BlockTable` and by extension an instance of `D3Table`. This means the `D3BlockTable` constructor can be used in case you don't want to represent data over time.
 
- - using `D3Timeline` extending `EventEmitter`: 
+Some details:
+
+ - using `D3Table` extending `EventEmitter`:
    - you fully control how each element is rendered based on its data
    - since elements have positions, culling is implemented
- - using `D3BlockTimeline` extending `D3Timeline`:
-   - you have a sized rect based on start and end data properties but you still control its content
+ - using `D3BlockTable` extending `D3Table`:
+   - you have a sized rect based on data properties
    - since elements are blocks, clipping is implemented
    - since elements are blocks, dragging is implemented with automatic scroll on borders
- - using `D3EntityTimeline` extending `D3BlockTimeline`:
-   - a text element is created for you
-   - since a text is created, keeping text left alignment is implemented for handling the left part of the block being outside of the graph.
+   - a text element can be created for you, vertically aligned
+   - when a text is created, keeping text left alignment is implemented for handling the left part of the block being outside of the graph
+ - using `D3Timeline` extending `D3BlockTable`:
+   - the X dimension becomes the time
 
 The demo uses the latter based on some information generated with [Faker](https://www.npmjs.com/package/Faker).
 
@@ -53,11 +56,13 @@ These events are emitted with the following arguments provided to the listener:
 
 Markers are totally separate elements. You provide them the timeline instance and it internally knows how to behave when the timeline moves. You can dynamically set them with a new time, so that it moves in the timeline. It represents itself as a vertical line, taking the whole timeline body height, with an overridable formatter for the label at the top of the line.
 
-That being said, you have special types of markers using the `D3TimelineMarker` (extending `EventEmitter`):
- - using `D3TimelineTimeTracker` extending `D3TimelineMarker`:
-   - the marker will automatically follow the current time and disappear when it's outside
- - using `D3TimelineMouseTracker` extending `D3TimelineMarker`:
-   - the marker will automatically follow the mouse position and disappear when it's outside.
+That being said, you have special types of markers using the `D3TableMarker` (extending `EventEmitter`):
+ - using `D3TableMouseTracker` extending `D3TableMarker`:
+   - the marker will follow the mouse position and disappear when it's outside
+ - using `D3TableValueTracker` extending `D3TableMarker`:
+   - the started marker will automatically follow the given value and disappear when it's outside
+ - using `D3TimelineTimeTracker` extending `D3TableValueTracker`:
+   - the started tracker will automatically follow the current time and disappear when it's outside.
 
 
 ### Data structure

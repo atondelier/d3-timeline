@@ -6,7 +6,7 @@ import EventEmitter from 'events/events';
 import d3 from 'd3';
 import D3Timeline from './D3Timeline';
 
-function D3TimelineMarker(options) {
+function D3TableMarker(options) {
 
     EventEmitter.call(this);
 
@@ -33,25 +33,26 @@ function D3TimelineMarker(options) {
 
     this._moveAF = null;
 
-    this.time = null;
+    this.value = null;
     this._lastTimeUpdated = null;
 }
 
-inherits(D3TimelineMarker, EventEmitter);
+inherits(D3TableMarker, EventEmitter);
 
-D3TimelineMarker.prototype.defaults = {
-    timeFormat: d3.time.format('%H:%M'),
+D3TableMarker.prototype.defaults = {
+    xFormatter: function(d) { return d; },
     outerTickSize: 10,
     tickPadding: 10,
     roundPosition: false,
-    className: ''
+    bemBlockName: 'tableMarker',
+    bemModifier: ''
 };
 
 /**
  *
  * @param {D3Timeline} timeline
  */
-D3TimelineMarker.prototype.setTimeline = function(timeline) {
+D3TableMarker.prototype.setTimeline = function(timeline) {
 
     var previousTimeline = this.timeline;
 
@@ -65,23 +66,23 @@ D3TimelineMarker.prototype.setTimeline = function(timeline) {
 
 };
 
-D3TimelineMarker.prototype.timeComparator = function(timeA, timeB) {
+D3TableMarker.prototype.valueComparator = function(timeA, timeB) {
     return +timeA !== +timeB;
 };
 
-D3TimelineMarker.prototype.setTime = function(time) {
+D3TableMarker.prototype.setValue = function(value) {
 
     var previousTimeUpdated = this._lastTimeUpdated;
 
-    this.time = time;
+    this.value = value;
 
-    if (this.timeComparator(previousTimeUpdated, this.time) && this.timeline && this.container) {
+    if (this.valueComparator(previousTimeUpdated, this.value) && this.timeline && this.container) {
 
-        this._lastTimeUpdated = this.time;
+        this._lastTimeUpdated = this.value;
 
         this.container
             .datum({
-                time: time
+                value: value
             });
 
         this.move();
@@ -89,20 +90,20 @@ D3TimelineMarker.prototype.setTime = function(time) {
 
 };
 
-D3TimelineMarker.prototype.handleBoundTimeline = function() {
+D3TableMarker.prototype.handleBoundTimeline = function() {
 
     var self = this;
 
     this.container = this.timeline.container
         .append('g')
         .datum({
-            time: this.time
+            value: this.value
         })
-        .attr('class', 'timelineMarker ' + this.options.className);
+        .attr('class', this.options.bemBlockName + (this.options.bemModifier ? ' ' + this.options.bemBlockName + this.options.bemModifier : ''));
 
     this.container
         .append('line')
-        .attr('class', 'timelineMarker-line')
+        .attr('class', this.options.bemBlockName + '-line')
         .style('pointer-events', 'none')
         .attr({
             y1: -this.options.outerTickSize,
@@ -111,7 +112,7 @@ D3TimelineMarker.prototype.handleBoundTimeline = function() {
 
     this.container
         .append('text')
-        .attr('class', 'timelineMarker-label')
+        .attr('class', this.options.bemBlockName + '-label')
         .attr('dy', -this.options.outerTickSize-this.options.tickPadding);
 
     // on timeline move, move the marker
@@ -125,13 +126,13 @@ D3TimelineMarker.prototype.handleBoundTimeline = function() {
     };
     this.timeline.on('timeline:resize', this._timelineResizeListener);
 
-    this.emit('timeline:marker:bound');
+    this.emit('marker:bound');
 
     this.move();
 
 };
 
-D3TimelineMarker.prototype.handleUnboundTimeline = function(previousTimeline) {
+D3TableMarker.prototype.handleUnboundTimeline = function(previousTimeline) {
 
     previousTimeline.removeListener('timeline:move', this._timelineMoveListener);
     previousTimeline.removeListener('timeline:resize', this._timelineResizeListener);
@@ -146,10 +147,10 @@ D3TimelineMarker.prototype.handleUnboundTimeline = function(previousTimeline) {
     this.container = null;
     this._timelineMoveListener = null;
 
-    this.emit('timeline:marker:unbound', previousTimeline);
+    this.emit('marker:unbound', previousTimeline);
 };
 
-D3TimelineMarker.prototype.move = function() {
+D3TableMarker.prototype.move = function() {
 
     var self = this;
 
@@ -164,7 +165,7 @@ D3TimelineMarker.prototype.move = function() {
 
                 var xScale = self.timeline.scales.x;
                 var xRange = xScale.range();
-                var left = self.timeline.scales.x(d.time);
+                var left = self.timeline.scales.x(d.value);
                 var isInRange = left >= xRange[0] && left <= xRange[xRange.length - 1];
 
                 var g = d3.select(this);
@@ -175,8 +176,8 @@ D3TimelineMarker.prototype.move = function() {
 
                     g.attr('transform', 'translate('+(self.timeline.margin.left + left >> 0)+','+self.timeline.margin.top+')');
 
-                    g.select('.timelineMarker-label')
-                        .text(d => self.options.timeFormat(d.time));
+                    g.select('.' + self.options.bemBlockName + '-label')
+                        .text(d => self.options.xFormatter(d.value));
 
                 } else {
                     self.hide();
@@ -188,18 +189,18 @@ D3TimelineMarker.prototype.move = function() {
 
 };
 
-D3TimelineMarker.prototype.show = function() {
+D3TableMarker.prototype.show = function() {
     this.container.style('display', '');
 };
 
-D3TimelineMarker.prototype.hide = function() {
+D3TableMarker.prototype.hide = function() {
     this.container.style('display', 'none');
 };
 
-D3TimelineMarker.prototype.resize = function() {
+D3TableMarker.prototype.resize = function() {
 
     this.container
-        .select('.timelineMarker-line')
+        .select('.' + this.options.bemBlockName + '-line')
         .attr({
             y1: -this.options.outerTickSize,
             y2: this.timeline.dimensions.height
@@ -207,4 +208,4 @@ D3TimelineMarker.prototype.resize = function() {
 
 };
 
-module.exports = D3TimelineMarker;
+module.exports = D3TableMarker;
