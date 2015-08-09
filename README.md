@@ -6,7 +6,7 @@
 
 The aim is to provide a generic and customizable implementation of a timeline with [d3.js](http://d3js.org/). 
 
-The result is that you fully keep control how the elements are rendered, with a set of performance optimizations, advanced behaviors for an improved user experience, and an understandable representation of data injections and surjections.
+The result is that you fully keep control how the elements are rendered, with a set of performance optimizations, advanced behaviors for an improved user experience, and an understandable representation of data injections and surjections on distribution change.
 
 
 ## Design
