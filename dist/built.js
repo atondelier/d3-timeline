@@ -890,7 +890,7 @@ D3Table.prototype.defaults = {
         return d && d.name || '';
     },
     padding: 10,
-    trackedDOMEvents: ['click', 'mousemove', 'mouseenter', 'mouseleave'] // not dynamic
+    trackedDOMEvents: ['click', 'mousemove', 'touchmove', 'mouseenter', 'mouseleave'] // not dynamic
 };
 
 D3Table.instancesCount = 0;
@@ -1804,10 +1804,15 @@ D3TableMarker.prototype.setTimeline = function (timeline) {
 
     this.timeline = timeline && timeline instanceof _D3Timeline2['default'] ? timeline : null;
 
-    if (this.timeline && !previousTimeline) {
-        this.handleBoundTimeline();
+    if (this.timeline) {
+        if (previousTimeline !== this.timeline) {
+            if (previousTimeline) {
+                this.unbindTimeline(previousTimeline);
+            }
+            this.bindTimeline();
+        }
     } else if (!this.timeline && previousTimeline) {
-        this.handleUnboundTimeline(previousTimeline);
+        this.unbindTimeline(previousTimeline);
     }
 };
 
@@ -1833,7 +1838,7 @@ D3TableMarker.prototype.setValue = function (value) {
     }
 };
 
-D3TableMarker.prototype.handleBoundTimeline = function () {
+D3TableMarker.prototype.bindTimeline = function () {
 
     var self = this;
 
@@ -1864,7 +1869,7 @@ D3TableMarker.prototype.handleBoundTimeline = function () {
     this.move();
 };
 
-D3TableMarker.prototype.handleUnboundTimeline = function (previousTimeline) {
+D3TableMarker.prototype.unbindTimeline = function (previousTimeline) {
 
     previousTimeline.removeListener('timeline:move', this._timelineMoveListener);
     previousTimeline.removeListener('timeline:resize', this._timelineResizeListener);
@@ -1969,19 +1974,33 @@ function D3TableMouseTracker(options) {
 
     this.on('marker:bound', this.handleTimelineBound.bind(this));
     this.on('marker:unbound', this.handleTimelineUnbound.bind(this));
+
+    this._isListeningToTouchEvents = false;
 }
 
 (0, _inherits2['default'])(D3TableMouseTracker, _D3TableMarker2['default']);
 
 D3TableMouseTracker.prototype.defaults = (0, _extend2['default'])(true, {}, _D3TableMarker2['default'].prototype.defaults, {
-    bemModifier: '--mouseTracker'
+    bemModifier: '--mouseTracker',
+    listenToTouchEvents: true
 });
 
 D3TableMouseTracker.prototype.handleTimelineBound = function () {
 
-    this.timeline.on('timeline:mouseenter', this._timelineMouseenterListener = this.handleMouseenter.bind(this));
-    this.timeline.on('timeline:mousemove', this._timelineMousemoveListener = this.handleMousemove.bind(this));
-    this.timeline.on('timeline:mouseleave', this._timelineMouseleaveListener = this.handleMouseleave.bind(this));
+    this._timelineMouseenterListener = this.handleMouseenter.bind(this);
+    this._timelineMousemoveListener = this.handleMousemove.bind(this);
+    this._timelineMouseleaveListener = this.handleMouseleave.bind(this);
+
+    this.timeline.on('timeline:mouseenter', this._timelineMouseenterListener);
+    this.timeline.on('timeline:mousemove', this._timelineMousemoveListener);
+    this.timeline.on('timeline:mouseleave', this._timelineMouseleaveListener);
+
+    if (this.options.listenToTouchEvents) {
+        this._isListeningToTouchEvents = true;
+        this.timeline.on('timeline:touchmove', this._timelineMousemoveListener);
+    } else {
+        this._isListeningToTouchEvents = false;
+    }
 };
 
 D3TableMouseTracker.prototype.handleTimelineUnbound = function (previousTimeline) {
@@ -1989,6 +2008,10 @@ D3TableMouseTracker.prototype.handleTimelineUnbound = function (previousTimeline
     previousTimeline.removeListener('timeline:mouseenter', this._timelineMouseenterListener);
     previousTimeline.removeListener('timeline:mousemove', this._timelineMousemoveListener);
     previousTimeline.removeListener('timeline:mouseleave', this._timelineMouseleaveListener);
+
+    if (this._isListeningToTouchEvents) {
+        previousTimeline.removeListener('timeline:touchmove', this._timelineMousemoveListener);
+    }
 };
 
 D3TableMouseTracker.prototype.handleMouseenter = function (timeline, selection, d3Event, getTime, getRow) {
@@ -2127,7 +2150,7 @@ var _d32 = _interopRequireDefault(_d3);
 
 function D3Timeline(options) {
 
-    _D3BlockTable2['default'].call(this);
+    _D3BlockTable2['default'].call(this, options);
 
     this._currentScaleConfig = null;
 }
@@ -2145,19 +2168,19 @@ D3Timeline.prototype.defaults = (0, _extend2['default'])(true, {}, _D3BlockTable
     }
 });
 
-_D3BlockTable2['default'].prototype.xScaleFactory = function () {
+D3Timeline.prototype.xScaleFactory = function () {
     return _d32['default'].time.scale();
 };
 
-_D3BlockTable2['default'].prototype.yScaleFactory = function () {
+D3Timeline.prototype.yScaleFactory = function () {
     return _d32['default'].scale.linear();
 };
 
-_D3BlockTable2['default'].prototype.getDataStart = function (d) {
+D3Timeline.prototype.getDataStart = function (d) {
     return d.start;
 };
 
-_D3BlockTable2['default'].prototype.getDataEnd = function (d) {
+D3Timeline.prototype.getDataEnd = function (d) {
     return d.end;
 };
 

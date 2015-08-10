@@ -14,7 +14,7 @@ import d3 from 'd3';
  */
 function D3Timeline(options) {
 
-    D3BlockTable.call(this);
+    D3BlockTable.call(this, options);
 
     this._currentScaleConfig = null;
 }
@@ -32,19 +32,19 @@ D3Timeline.prototype.defaults = extend(true, {}, D3BlockTable.prototype.defaults
     }
 });
 
-D3BlockTable.prototype.xScaleFactory = function() {
+D3Timeline.prototype.xScaleFactory = function() {
     return d3.time.scale();
 };
 
-D3BlockTable.prototype.yScaleFactory = function() {
+D3Timeline.prototype.yScaleFactory = function() {
     return d3.scale.linear();
 };
 
-D3BlockTable.prototype.getDataStart = function(d) {
+D3Timeline.prototype.getDataStart = function(d) {
     return d.start;
 };
 
-D3BlockTable.prototype.getDataEnd = function(d) {
+D3Timeline.prototype.getDataEnd = function(d) {
     return d.end;
 };
 

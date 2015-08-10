@@ -58,10 +58,15 @@ D3TableMarker.prototype.setTimeline = function(timeline) {
 
     this.timeline = timeline && timeline instanceof D3Timeline ? timeline : null;
 
-    if (this.timeline && !previousTimeline) {
-        this.handleBoundTimeline();
+    if (this.timeline) {
+        if (previousTimeline !== this.timeline) {
+            if (previousTimeline) {
+                this.unbindTimeline(previousTimeline);
+            }
+            this.bindTimeline();
+        }
     } else if (!this.timeline && previousTimeline) {
-        this.handleUnboundTimeline(previousTimeline);
+        this.unbindTimeline(previousTimeline);
     }
 
 };
@@ -90,7 +95,7 @@ D3TableMarker.prototype.setValue = function(value) {
 
 };
 
-D3TableMarker.prototype.handleBoundTimeline = function() {
+D3TableMarker.prototype.bindTimeline = function() {
 
     var self = this;
 
@@ -132,7 +137,7 @@ D3TableMarker.prototype.handleBoundTimeline = function() {
 
 };
 
-D3TableMarker.prototype.handleUnboundTimeline = function(previousTimeline) {
+D3TableMarker.prototype.unbindTimeline = function(previousTimeline) {
 
     previousTimeline.removeListener('timeline:move', this._timelineMoveListener);
     previousTimeline.removeListener('timeline:resize', this._timelineResizeListener);

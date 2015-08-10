@@ -128,7 +128,7 @@ D3Table.prototype.defaults = {
         return d && d.name || '';
     },
     padding: 10,
-    trackedDOMEvents: ['click', 'mousemove', 'mouseenter', 'mouseleave'] // not dynamic
+    trackedDOMEvents: ['click', 'mousemove', 'touchmove', 'mouseenter', 'mouseleave'] // not dynamic
 };
 
 D3Table.instancesCount = 0;

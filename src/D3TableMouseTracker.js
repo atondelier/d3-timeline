@@ -20,20 +20,33 @@ function D3TableMouseTracker(options) {
 
     this.on('marker:bound', this.handleTimelineBound.bind(this));
     this.on('marker:unbound', this.handleTimelineUnbound.bind(this));
+
+    this._isListeningToTouchEvents = false;
 }
 
 inherits(D3TableMouseTracker, D3TableMarker);
 
 D3TableMouseTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototype.defaults, {
-    bemModifier: '--mouseTracker'
+    bemModifier: '--mouseTracker',
+    listenToTouchEvents: true
 });
 
 D3TableMouseTracker.prototype.handleTimelineBound = function() {
 
-    this.timeline.on('timeline:mouseenter', this._timelineMouseenterListener = this.handleMouseenter.bind(this));
-    this.timeline.on('timeline:mousemove', this._timelineMousemoveListener = this.handleMousemove.bind(this));
-    this.timeline.on('timeline:mouseleave', this._timelineMouseleaveListener = this.handleMouseleave.bind(this));
+    this._timelineMouseenterListener = this.handleMouseenter.bind(this);
+    this._timelineMousemoveListener = this.handleMousemove.bind(this);
+    this._timelineMouseleaveListener = this.handleMouseleave.bind(this);
 
+    this.timeline.on('timeline:mouseenter', this._timelineMouseenterListener);
+    this.timeline.on('timeline:mousemove', this._timelineMousemoveListener);
+    this.timeline.on('timeline:mouseleave', this._timelineMouseleaveListener);
+
+    if (this.options.listenToTouchEvents) {
+        this._isListeningToTouchEvents = true;
+        this.timeline.on('timeline:touchmove', this._timelineMousemoveListener);
+    } else {
+        this._isListeningToTouchEvents = false;
+    }
 };
 
 D3TableMouseTracker.prototype.handleTimelineUnbound = function(previousTimeline) {
@@ -41,6 +54,10 @@ D3TableMouseTracker.prototype.handleTimelineUnbound = function(previousTimeline)
     previousTimeline.removeListener('timeline:mouseenter', this._timelineMouseenterListener);
     previousTimeline.removeListener('timeline:mousemove', this._timelineMousemoveListener);
     previousTimeline.removeListener('timeline:mouseleave', this._timelineMouseleaveListener);
+
+    if (this._isListeningToTouchEvents) {
+        previousTimeline.removeListener('timeline:touchmove', this._timelineMousemoveListener);
+    }
 
 };
 
