@@ -7,8 +7,25 @@ import inherits from 'inherits';
 import EventEmitter from 'events/events';
 import d3 from 'd3';
 
+
 /**
- *
+ * @typedef {Object} D3TableRow
+ * @property {String|Number} id
+ * @property {String} name
+ * @property {Array<D3TableElement>} elements
+ */
+
+/**
+ * @typedef {Object} D3TableElement
+ * @property {String|Number} id
+ * @property {String|Number} uid
+ * @property {Number} start
+ * @property {Number} end
+ * @property {Number} [rowIndex]
+ */
+
+
+/**
  * @param {Object} options
  * @constructor
  */
@@ -20,13 +37,19 @@ function D3Table(options) {
 
     this.instanceNumber = D3Table.instancesCount;
 
-    var self = this;
-
     this.options = extend(true, {}, this.defaults, options);
 
-    /** @type {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} */
+
+    /**
+     * @type {Array<D3TableRow>}
+     */
     this.data = [];
+
+    /**
+     * @type {Array<D3TableElement>}
+     */
     this.flattenedData = [];
+
 
     this.margin = {
         top: 0,
@@ -84,12 +107,6 @@ function D3Table(options) {
 
 inherits(D3Table, EventEmitter);
 
-
-/**
- * Default options
- *
- * @type {D3TableOptions}
- */
 D3Table.prototype.defaults = {
     bemBlockName: 'table',
     bemBlockModifier: '',
@@ -97,11 +114,6 @@ D3Table.prototype.defaults = {
     yAxisWidth: 50,
     rowHeight: 30,
     rowPadding: 5,
-    axisConfigs: [
-        { threshold: 2, minutes: 30 },
-        { threshold: 4, minutes: 15 },
-        { threshold: 10, minutes: 5 }
-    ],
     container: 'body',
     cullingX: true,
     cullingY: true,
@@ -113,7 +125,7 @@ D3Table.prototype.defaults = {
     wheelMultiplier: 1,
     enableYTransition: true,
     enableTransitionOnExit: true,
-    usePreviousDataForTransform: true,
+    usePreviousDataForTransform: false,
     transitionEasing: 'quad-in-out',
     xAxisTicksFormatter: function(d) {
         return d;
@@ -491,7 +503,7 @@ D3Table.prototype.toggleDrawing = function(active) {
 
 /**
  *
- * @param {Array<{id: Number, name: String, elements: Array<{ id: Number, start: Date, end: Date}>}>} data
+ * @param {Array<D3TableRow>} data
  * @param {Number} [transitionDuration]
  * @returns {D3Table}
  */
@@ -518,12 +530,93 @@ D3Table.prototype.setData = function(data, transitionDuration) {
     return this;
 };
 
+/**
+ * This clone method does not clone the entities itself
+ * @returns {Array<D3TableRow>}
+ */
+D3Table.prototype.cloneData = function() {
+
+    var self = this;
+
+    return this.data.map(function(d) {
+
+        /**
+         * @type {D3TableRow}
+         */
+        var res = {};
+
+        for (var key in d) {
+            if (d.hasOwnProperty(key)) {
+                if (key !== 'elements') {
+                    res[key] = d[key];
+                } else {
+                    res[key] = d[key].map(self.cloneElement.bind(self));
+                }
+            }
+        }
+
+        return res;
+    });
+};
+
+/**
+ * This clone method does not clone the entities itself
+ * @returns {Array<D3TableElement>}
+ */
+D3Table.prototype.cloneFlattenedData = function() {
+    return this.flattenedData.map(function(e) {
+
+        /**
+         * @type {D3TableElement}
+         */
+        var res = {};
+
+        for (var key in e) {
+            if (e.hasOwnProperty(key)) {
+                res[key] = e[key];
+            }
+        }
+
+        return res;
+    });
+};
+
+/**
+ * This clone method does not clone the entities itself
+ * @returns {D3TableElement}
+ */
+D3Table.prototype.cloneElement = function(e) {
+
+    /**
+     * @type {D3TableElement}
+     */
+    var res = {};
+
+    for (var key in e) {
+        if (e.hasOwnProperty(key)) {
+            res[key] = e[key];
+        }
+    }
+
+    return res;
+};
+
+D3Table.prototype.getElementRow = function(d) {
+    return this._find(this.data, function(row) {
+        return row.elements.indexOf(d) !== -1;
+    });
+};
+
+D3Table.prototype.storeFlattenedData = function() {
+    this.previousFlattenedData = this.cloneFlattenedData();
+};
+
 D3Table.prototype.generateFlattenedData = function() {
 
     var self = this;
 
     if (this.options.usePreviousDataForTransform) {
-        this.previousFlattenedData = this.flattenedData.slice(0);
+        this.storeFlattenedData();
     }
 
     this.flattenedData.length = 0;
@@ -531,7 +624,6 @@ D3Table.prototype.generateFlattenedData = function() {
     this.data.forEach(function(d, i) {
         d.elements.forEach(function(e) {
             e.rowIndex = i;
-            e.parentId = e.parentId !== undefined && e.parentId !== null ? e.parentId : d.id;
             self.flattenedData.push(e);
         });
     });
@@ -579,8 +671,6 @@ D3Table.prototype.setAvailableWidth = function(availableWidth) {
             .drawElements()
     }
 
-    this.emit(this.options.bemBlockName + ':resize');
-
     return this;
 };
 
@@ -600,8 +690,6 @@ D3Table.prototype.setAvailableHeight = function(availableHeight) {
             .drawYAxis()
             .drawElements()
     }
-
-    this.emit(this.options.bemBlockName + ':resize');
 
     return this;
 };
@@ -626,6 +714,8 @@ D3Table.prototype.updateX = function() {
     this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('width', this.dimensions.width);
     this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('width', this.dimensions.width);
     this.elements.clip.select('rect').attr('width', this.dimensions.width);
+
+    this.emit(this.options.bemBlockName + ':resize');
 
     return this;
 };
@@ -776,24 +866,24 @@ D3Table.prototype.drawElements = function(transitionDuration) {
         var cullingY = self.options.cullingY;
 
 
-        var transformMap = {};
+        var startTransformMap = {};
+        var endTransformMap = {};
 
-        if (self.options.usePreviousDataForTransform && self.previousFlattenedData && transitionDuration > 0) {
-            self.previousFlattenedData.forEach(function(d) {
-                if (!transformMap[d.uid] || !transformMap[d.id]) {
-                    transformMap[d.id] = transformMap[d.uid] = self.getTransformFromData(d);
-                }
-            });
-        }
-
-        var transformMap2 = {};
-
-        if (self.options.usePreviousDataForTransform && self.flattenedData) {
-            self.flattenedData.forEach(function(d) {
-                if (!transformMap2[d.uid] || !transformMap2[d.id]) {
-                    transformMap2[d.id] = transformMap2[d.uid] = self.getTransformFromData(d);
-                }
-            });
+        if (self.options.usePreviousDataForTransform && transitionDuration > 0) {
+            if (self.previousFlattenedData) {
+                self.previousFlattenedData.forEach(function(d) {
+                    if (!startTransformMap[d.uid]) {
+                        startTransformMap[d.id] = startTransformMap[d.uid] = self.getTransformFromData(d);
+                    }
+                });
+            }
+            if (self.flattenedData) {
+                self.flattenedData.forEach(function(d) {
+                    if (!endTransformMap[d.uid]) {
+                        endTransformMap[d.id] = endTransformMap[d.uid] = self.getTransformFromData(d);
+                    }
+                });
+            }
         }
 
         var data = self.flattenedData.filter(function(d) {
@@ -813,9 +903,21 @@ D3Table.prototype.drawElements = function(transitionDuration) {
             exiting
                 .call(self.elementExit.bind(self));
 
-            self._wrapWithAnimation(exiting, transitionDuration)
-                .attr('transform', function(d) { return transformMap2[d.uid] || transformMap2[d.id]; })
-                .remove();
+            exiting.each(function(d) {
+
+                var g = d3.select(this);
+
+                var exitTransform = endTransformMap[d.uid] || endTransformMap[d.id];
+
+                if (exitTransform) {
+                    self._wrapWithAnimation(g, transitionDuration)
+                        .attr('transform', exitTransform)
+                        .remove();
+                } else {
+                    g.remove();
+                }
+
+            });
         } else {
             exiting
                 .remove();
@@ -840,28 +942,29 @@ D3Table.prototype.drawElements = function(transitionDuration) {
 
             var hasPreviousTransform = g.attr('transform') !== null;
 
-            if (!hasPreviousTransform) {
-                g
-                    ;
-            }
-
-            var newTransform = transformMap2[d.uid];
+            var newTransform = endTransformMap[d.uid] || endTransformMap[d.id] || self.getTransformFromData(d);
 
             if (transitionDuration > 0) {
+                var originTransform = startTransformMap[d.uid] || startTransformMap[d.id] || newTransform;
+                var modifiedOriginTransform;
                 if (!hasPreviousTransform && self.options.usePreviousDataForTransform) {
-                    var originTransform = transformMap[d.uid] || transformMap[d.id];
                     if (originTransform) {
+                        modifiedOriginTransform = originTransform;
                         g.attr('transform', originTransform);
                     }
                 }
 
                 self._wrapWithAnimation(g, transitionDuration)
                     .attrTween("transform", function() {
-                        var startTransform = d3.transform(g.attr('transform'));
-                        if (!enableYTransition) {
-                            startTransform.translate[1] = self.scales.y(d.rowIndex);
+                        var originTransform = modifiedOriginTransform || g.attr('transform');
+                        if (enableYTransition) {
+                            return d3.interpolateTransform(originTransform, newTransform);
+                        } else {
+                            var startTransform = d3.transform(originTransform);
+                            var endTransform = d3.transform(newTransform);
+                            startTransform.translate[1] = endTransform.translate[1];
+                            return d3.interpolateTransform(startTransform.toString(), endTransform.toString());
                         }
-                        return d3.interpolateTransform(startTransform.toString(), newTransform);
                     });
             }
             else {
@@ -921,7 +1024,9 @@ D3Table.prototype.translateElements = function(translate, previousTranslate) {
         if (self.elementsTranslate !== self.noop) {
             self.elements.innerContainer
                 .selectAll('.' + self.options.bemBlockName + '-element')
-                .call(self.elementsTranslate.bind(self));
+                .each(function(d) {
+                    self.elementsTranslate(d3.select(this), d);
+                });
         }
 
     });
@@ -972,6 +1077,8 @@ D3Table.prototype.updateY = function() {
     this.elements.clip.select('rect').attr('height', this.dimensions.height);
 
     this.stopElementTransition();
+
+    this.emit(this.options.bemBlockName + ':resize');
 
     return this;
 };

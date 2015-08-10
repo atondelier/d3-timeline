@@ -11,7 +11,8 @@ module.exports = function(grunt) {
                 callback: function(b) {
                     b.transform(babelify.configure({stage: 0}));
                     return b;
-                }
+                },
+                debug: true
             },
             example: {
                 src: './examples/booking/demo.js',

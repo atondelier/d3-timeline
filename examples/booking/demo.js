@@ -34,11 +34,10 @@ function randomizeBookings(rows, elements) {
         var tables = _(1).range(rows, 1).shuffle().slice(rows/2>>0,(rows/2>>0)+2+Math.random()*3>>0).value();
         return {
             id: i,
-            uid: i,
+            uid: tables[0].id + '_' + i,
             start: start,
             end: end,
             card: Faker.Helpers.createCard(),
-            parentId: tables[0],
             tables: tables
         };
     }).value();
@@ -47,16 +46,16 @@ function randomizeBookings(rows, elements) {
 function makeBookingsInRows(bookings, rows) {
     return _(0).range(rows,1).map(function(i) {
         return {
-            uid: i,
             name: 'T'+(i+1),
-            elements: _.cloneDeep(_(bookings).filter(function(b) {
+            elements: _(bookings).filter(function(b) {
                 var hasTable = b.tables.indexOf(i) !== -1;
                 if (hasTable) {
-                    b.parentId = i;
                     b.uid = i + '_' + b.id;
                 }
                 return hasTable;
-            }).value())
+            }).map(function(b) {
+                return timeline.cloneElement(b);
+            }).value()
         };
     }).value();
 }
@@ -66,9 +65,8 @@ function makeSortedBookings(bookings) {
         return b.start;
     }).map(function(b) {
         return {
-            uid: b.parentId + '_' + b.id,
             name: b.uid,
-            elements: [_.cloneDeep(b)]
+            elements: [timeline.cloneElement(b)]
         };
     }).value();
 }
@@ -121,7 +119,8 @@ var timeline = new D3Timeline({
     },
     enableYTransition: true,
     cullingX: true,
-    cullingY: true
+    cullingY: true,
+    usePreviousDataForTransform: true
 });
 
 
@@ -150,7 +149,6 @@ timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event
 });
 
 timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event, getTime, getRow) {
-    var d = selection.datum();
     var original = _.findWhere(bookings, { uid: d.uid }) || _.findWhere(bookings, { id: d.id });
 
     var previousDuration = Math.floor(+timeline.getDataEnd(d) - +timeline.getDataStart(d));

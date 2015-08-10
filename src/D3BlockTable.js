@@ -107,11 +107,9 @@ D3BlockTable.prototype.elementEnter = function(selection) {
 };
 
 
-D3BlockTable.prototype.elementsTranslate = function(selection) {
+D3BlockTable.prototype.elementsTranslate = function(selection, d) {
 
     var self = this;
-
-    var d = selection.datum();
 
     if (this.options.appendText && this.options.alignLeft && this.options.alignOnTranslate && !d._defaultPrevented) {
 

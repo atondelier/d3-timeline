@@ -29,7 +29,12 @@ D3Timeline.prototype.defaults = extend(true, {}, D3BlockTable.prototype.defaults
     },
     xAxisStrokeWidth: function(d) {
         return d.getMinutes() %30 ? 1 : 2;
-    }
+    },
+    axisConfigs: [
+        { threshold: 2, minutes: 30 },
+        { threshold: 4, minutes: 15 },
+        { threshold: 10, minutes: 5 }
+    ]
 });
 
 D3Timeline.prototype.xScaleFactory = function() {
@@ -58,6 +63,7 @@ D3Timeline.prototype.updateXAxisInterval = function() {
     });
 
     this.axises.x.ticks(d3.time.minutes, conf.minutes);
+    this.axises.x2.ticks(d3.time.minutes, conf.minutes);
 
     this.columnWidth = this.scales.x(new Date(0, 0, 0, 0, Math.max(15, this._currentScaleConfig.minutes, 0))) - this.scales.x(new Date(0, 0, 0, 0, 0, 0));
 
