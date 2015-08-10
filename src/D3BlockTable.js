@@ -176,11 +176,13 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
     }
 
     // take micro seconds if possible
-    var getPreciseTime = window.performance && typeof performance.now === 'function' ? performance.now.bind(performance) : Date.now ? function() {
-        return 1000 * Date.now();
-    } : function() {
-        return +(new Date());
-    };
+    var getPreciseTime = window.performance && typeof performance.now === 'function' ?
+        performance.now.bind(performance)
+        : typeof Date.now === 'function' ?
+            Date.now.bind(Date)
+            : function() {
+                return +(new Date());
+            };
 
     // handle automatic scroll arguments
     function doAutomaticScroll(timeDelta, forceDraw) {
