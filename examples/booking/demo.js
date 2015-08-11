@@ -243,9 +243,9 @@ behaviorGui.add(timeline.options, 'wheelMultiplier', 1, 5).step(1).name('Y pan r
 timeline
     .toggleDrawing(false)
     .initialize()
+    .setTimeRange(minDate, maxDate)
     .setAvailableWidth(innerWidth)
     .setAvailableHeight(innerHeight-5)
-    .setTimeRange(minDate, maxDate)
     .toggleDrawing(true);
 
 handleDistributionMode(demoOptions.distributionMode, false, false);

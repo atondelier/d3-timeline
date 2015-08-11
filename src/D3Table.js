@@ -773,7 +773,7 @@ D3Table.prototype.drawXAxis = function(transitionDuration, skipTicks) {
             .call(self.axises.x2)
             .selectAll('text')
             .attr({
-                x: self.columnWidth / 2,
+                x: self.columnWidth / 2
             })
             .style({
                 display: function(d) {
