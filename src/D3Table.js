@@ -505,9 +505,10 @@ D3Table.prototype.toggleDrawing = function(active) {
  *
  * @param {Array<D3TableRow>} data
  * @param {Number} [transitionDuration]
+ * @param {Boolean} [animateY]
  * @returns {D3Table}
  */
-D3Table.prototype.setData = function(data, transitionDuration) {
+D3Table.prototype.setData = function(data, transitionDuration, animateY) {
 
     this._dataChangeCount += 1;
 
@@ -520,7 +521,7 @@ D3Table.prototype.setData = function(data, transitionDuration) {
     if (isSizeChanging || this._dataChangeCount === 1) {
         this
             .updateXAxisInterval()
-            .updateY()
+            .updateY(animateY ? transitionDuration : undefined)
             .drawXAxis()
             .drawYAxis();
     }
@@ -694,7 +695,7 @@ D3Table.prototype.setAvailableHeight = function(availableHeight) {
     return this;
 };
 
-D3Table.prototype.updateX = function() {
+D3Table.prototype.updateX = function(transitionDuration) {
 
     this.container.attr('width', this.dimensions.width + this.margin.left + this.margin.right);
 
@@ -715,7 +716,7 @@ D3Table.prototype.updateX = function() {
     this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('width', this.dimensions.width);
     this.elements.clip.select('rect').attr('width', this.dimensions.width);
 
-    this.emit(this.options.bemBlockName + ':resize');
+    this.emit(this.options.bemBlockName + ':resize', this, this.container, transitionDuration);
 
     return this;
 };
@@ -1040,7 +1041,17 @@ D3Table.prototype.updateXAxisInterval = function() {
     return this;
 };
 
-D3Table.prototype.updateY = function() {
+D3Table.prototype.updateY = function (transitionDuration) {
+
+    var container = this.container;
+    var clip = this.elements.clip.select('rect');
+    var boundingRect = this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect');
+
+    if (transitionDuration) {
+        container = container.transition().duration(transitionDuration);
+        clip = clip.transition().duration(transitionDuration);
+        boundingRect = boundingRect.transition().duration(transitionDuration);
+    }
 
     var elementAmount = this.data.length;
 
@@ -1054,31 +1065,25 @@ D3Table.prototype.updateY = function() {
     this._yScale = this.options.rowHeight / this.dimensions.height * elementAmount;
 
     // update Y scale, axis and zoom behavior
-    this.scales.y
-        .domain(elementsRange)
-        .range([0, this.dimensions.height]);
+    this.scales.y.domain(elementsRange).range([0, this.dimensions.height]);
 
-    this.behaviors.zoomY
-        .y(this.scales.y)
-        .translate(this._lastTranslate)
-        .scale(this._yScale);
+    this.behaviors.zoomY.y(this.scales.y).translate(this._lastTranslate).scale(this._yScale);
 
     // and update X axis ticks height
-    this.axises.x
-        .innerTickSize(-this.dimensions.height);
+    this.axises.x.innerTickSize(-this.dimensions.height);
 
     // update svg height
-    this.container.attr('height',this.dimensions.height + this.margin.top + this.margin.bottom);
+    container.attr('height',this.dimensions.height + this.margin.top + this.margin.bottom);
 
     // update inner rect height
-    this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect').attr('height', this.dimensions.height);
     this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('height', this.dimensions.height);
-    this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('height', this.dimensions.height);
-    this.elements.clip.select('rect').attr('height', this.dimensions.height);
+    boundingRect.attr('height', this.dimensions.height);
+    container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('height', this.dimensions.height);
+    clip.attr('height', this.dimensions.height);
 
     this.stopElementTransition();
 
-    this.emit(this.options.bemBlockName + ':resize');
+    this.emit(this.options.bemBlockName + ':resize', this, this.container, transitionDuration);
 
     return this;
 };

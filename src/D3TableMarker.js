@@ -122,14 +122,14 @@ D3TableMarker.prototype.bindTimeline = function() {
 
     // on timeline move, move the marker
     this._timelineMoveListener = this.move.bind(this);
-    this.timeline.on('timeline:move', this._timelineMoveListener);
+    this.timeline.on(this.timeline.options.bemBlockName + ':move', this._timelineMoveListener);
 
     // on timeline resize, resize the marker and move it
-    this._timelineResizeListener = function() {
-        self.resize();
-        self.move();
+    this._timelineResizeListener = function(timeline, selection, transitionDuration) {
+        self.resize(transitionDuration);
+        self.move(transitionDuration);
     };
-    this.timeline.on('timeline:resize', this._timelineResizeListener);
+    this.timeline.on(this.timeline.options.bemBlockName + ':resize', this._timelineResizeListener);
 
     this.emit('marker:bound');
 
@@ -139,8 +139,8 @@ D3TableMarker.prototype.bindTimeline = function() {
 
 D3TableMarker.prototype.unbindTimeline = function(previousTimeline) {
 
-    previousTimeline.removeListener('timeline:move', this._timelineMoveListener);
-    previousTimeline.removeListener('timeline:resize', this._timelineResizeListener);
+    previousTimeline.removeListener(this.timeline.options.bemBlockName + ':move', this._timelineMoveListener);
+    previousTimeline.removeListener(this.timeline.options.bemBlockName + ':resize', this._timelineResizeListener);
 
     this.container.remove();
 
@@ -155,7 +155,7 @@ D3TableMarker.prototype.unbindTimeline = function(previousTimeline) {
     this.emit('marker:unbound', previousTimeline);
 };
 
-D3TableMarker.prototype.move = function() {
+D3TableMarker.prototype.move = function(transitionDuration) {
 
     var self = this;
 
@@ -202,9 +202,15 @@ D3TableMarker.prototype.hide = function() {
     this.container.style('display', 'none');
 };
 
-D3TableMarker.prototype.resize = function() {
+D3TableMarker.prototype.resize = function(transitionDuration) {
 
-    this.container
+    var container = this.container;
+
+    if (transitionDuration > 0) {
+        container = this.container.transition().duration(transitionDuration);
+    }
+
+    container
         .select('.' + this.options.bemBlockName + '-line')
         .attr({
             y1: -this.options.outerTickSize,

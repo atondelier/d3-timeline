@@ -32,5 +32,7 @@ module.exports = function(grunt) {
 
     grunt.registerTask('default', ['watchify:example:keepalive']);
     grunt.registerTask('build', ['watchify:dist']);
+    grunt.registerTask('b', ['build']);
     grunt.registerTask('demo', ['watchify:example']);
+    grunt.registerTask('d', ['demo']);
 };
