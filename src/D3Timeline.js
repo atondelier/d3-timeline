@@ -16,8 +16,6 @@ function D3Timeline(options) {
 
     D3BlockTable.call(this, options);
 
-    this._currentScaleConfig = null;
-
     this.currentTimeInterval = this.options.minimumTimeInterval;
 }
 

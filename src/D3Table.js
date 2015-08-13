@@ -282,7 +282,7 @@ D3Table.prototype.initializeEventListeners = function() {
 
 };
 
-D3Table.prototype.emitDetailedEvent = function(eventName, d3TargetSelection, delta, priorityArguments) {
+D3Table.prototype.emitDetailedEvent = function(eventName, d3TargetSelection, delta, priorityArguments, extraArguments) {
 
     var self = this;
 
@@ -315,6 +315,10 @@ D3Table.prototype.emitDetailedEvent = function(eventName, d3TargetSelection, del
 
     if (Array.isArray(priorityArguments)) {
         args = priorityArguments.concat(args);
+    }
+
+    if (Array.isArray(extraArguments)) {
+        args = args.concat(extraArguments);
     }
 
     args.unshift(this.options.bemBlockName + ':' + eventName); // the event name

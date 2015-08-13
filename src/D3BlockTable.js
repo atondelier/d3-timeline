@@ -24,7 +24,10 @@ D3BlockTable.prototype.defaults = extend(true, {}, D3Table.prototype.defaults, {
     automaticScrollMarginDelta: 30,
     appendText: true,
     alignLeft: true,
-    alignOnTranslate: true
+    alignOnTranslate: true,
+    maximumClickDragTime: 100,
+    maximumClickDragDistance: 12,
+    minimumDragDistance: 5
 });
 
 D3BlockTable.prototype.generateClipPathId = function(d) {
@@ -138,6 +141,7 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
     var dragStartX = 0, dragStartY = 0;
     var elementStartX = 0, elementStartY = 0;
     var dragPosition;
+    var startDragPosition;
 
     // movements
     var verticalMove = 0;
@@ -146,6 +150,7 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
     var horizontalSpeed = 0;
     var timerActive = false;
     var needTimerStop = false;
+    var startTime;
 
     // reset start position: to call on drag start or when things are redrawn
     function storeStart() {
@@ -216,7 +221,9 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
                 d3.event.sourceEvent.stopPropagation();
             }
 
-            dragPosition = d3.mouse(bodyNode);
+            startDragPosition = dragPosition = d3.mouse(bodyNode);
+
+            startTime = +new Date();
 
             storeStart();
 
@@ -293,7 +300,14 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
             var halfHeight = self.options.rowHeight / 2;
             self.elements.innerContainer.attr('transform', null);
 
-            self.emitDetailedEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
+            var totalDeltaX = dragPosition[0] - startDragPosition[0];
+            var totalDeltaY = dragPosition[1] - startDragPosition[1];
+            var dragDistance = Math.sqrt(totalDeltaX*totalDeltaX+totalDeltaY*totalDeltaY);
+            var timeDelta = +new Date() - startTime;
+
+            if ((timeDelta > self.options.maximumClickDragTime || dragDistance > self.options.maximumClickDragDistance) && dragDistance > self.options.minimumDragDistance) {
+                self.emitDetailedEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
+            }
 
             self
                 .updateY()
@@ -324,7 +338,9 @@ D3BlockTable.prototype.elementUpdate = function(selection, d, transitionDuration
             .attr('transform', d => 'translate(' + Math.max(-this.scales.x(this.getDataStart(d)), 2) + ',0)');
     }
 
-    selection.call(this.elementContentUpdate.bind(this));
+    selection.call(function() {
+        self.elementContentUpdate(selection, d, transitionDuration);
+    });
 
 };
 
