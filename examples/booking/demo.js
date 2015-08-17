@@ -262,16 +262,16 @@ var verticalMouseTracker = new D3TableMouseTracker({
 
 verticalMouseTracker.setTable(timeline);
 
-global.mouseTracker = verticalMouseTracker;
+global.verticalMouseTracker = verticalMouseTracker;
 
 var horizontalMouseTracker = new D3TableMouseTracker({
-    formatter: function() { return ''; },
+    formatter: function(d) { return timeline.data[d>>0].name; },
     layout: 'horizontal'
 });
 
 horizontalMouseTracker.setTable(timeline);
 
-global.mouseTracker = horizontalMouseTracker;
+global.horizontalMouseTracker = horizontalMouseTracker;
 
 var timeTracker = new D3TimelineTimeTracker({
     formatter: d3.time.format('%H:%M')

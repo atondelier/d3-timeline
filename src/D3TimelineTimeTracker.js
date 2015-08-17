@@ -17,7 +17,8 @@ inherits(D3TimelineTimeTracker, D3TableValueTracker);
 
 D3TimelineTimeTracker.prototype.defaults = extend(true, {}, D3TableValueTracker.prototype.defaults, {
     bemBlockName: 'timelineMarker',
-    bemModifier: '--timeTracker'
+    bemModifier: '--timeTracker',
+    layout: 'vertical'
 });
 
 D3TimelineTimeTracker.prototype.timeGetter = function() {

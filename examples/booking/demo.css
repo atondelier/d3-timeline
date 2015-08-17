@@ -62,3 +62,8 @@
     text-anchor: middle;
     fill: #00d800;
 }
+
+.tableMarker.tableMarker--mouseTracker.tableMarker--horizontal .tableMarker-label {
+    text-anchor: end;
+    fill: #00d800;
+}

@@ -112,7 +112,7 @@ D3TableMarker.prototype.bindTimeline = function() {
         .datum({
             value: this.value
         })
-        .attr('class', this.options.bemBlockName + (this.options.bemModifier ? ' ' + this.options.bemBlockName + this.options.bemModifier : ''));
+        .attr('class', this.options.bemBlockName + (this.options.bemModifier ? ' ' + this.options.bemBlockName + this.options.bemModifier : '') + ' ' + this.options.bemBlockName + '--' + this.options.layout);
 
     this.elements.line = this.container
         .append('line')
@@ -171,7 +171,8 @@ D3TableMarker.prototype.sizeLineAndLabel = function(transitionDuration) {
                     x2: this.timeline.dimensions.width
                 });
             label
-                .attr('dx', -this.options.outerTickSize-this.options.tickPadding);
+                .attr('dx', -this.options.outerTickSize-this.options.tickPadding)
+                .attr('dy', 4);
             break;
     }
 
@@ -208,6 +209,11 @@ D3TableMarker.prototype.move = function(transitionDuration) {
 
         self.container
             .each(function(d) {
+
+                if (d.value === null) {
+                    self.hide();
+                    return;
+                }
 
                 var scale, position = [0, 0], positionIndex;
 
