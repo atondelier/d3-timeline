@@ -138,6 +138,7 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
 
     // positions
     var currentTransform = null;
+    var originTransformString = null;
     var dragStartX = 0, dragStartY = 0;
     var elementStartX = 0, elementStartY = 0;
     var dragPosition;
@@ -154,7 +155,7 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
 
     // reset start position: to call on drag start or when things are redrawn
     function storeStart() {
-        currentTransform = d3.transform(selection.attr('transform'));
+        currentTransform = d3.transform(originTransformString = selection.attr('transform'));
         elementStartX = currentTransform.translate[0];
         elementStartY = currentTransform.translate[1];
         dragStartX = dragPosition[0];
@@ -307,6 +308,8 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
 
             if ((timeDelta > self.options.maximumClickDragTime || dragDistance > self.options.maximumClickDragDistance) && dragDistance > self.options.minimumDragDistance) {
                 self.emitDetailedEvent('element:dragend', selection, [-deltaFromTopLeftCorner[0], -deltaFromTopLeftCorner[1] + halfHeight], [data]);
+            } else {
+                selection.attr('transform', originTransformString);
             }
 
             self
