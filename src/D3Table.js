@@ -767,14 +767,14 @@ D3Table.prototype.drawXAxis = function(transitionDuration, skipTicks) {
 
     this._xAxisAF = this.requestAnimationFrame(function() {
 
-        self._wrapWithAnimation(self.elements.xAxisContainer, transitionDuration)
+        self.wrapWithAnimation(self.elements.xAxisContainer, transitionDuration)
             .call(self.axises.x)
             .selectAll('line')
             .style({
                 'stroke-width': self.options.xAxisStrokeWidth.bind(self)
             });
 
-        self._wrapWithAnimation(self.elements.x2AxisContainer, transitionDuration)
+        self.wrapWithAnimation(self.elements.x2AxisContainer, transitionDuration)
             .call(self.axises.x2)
             .selectAll('text')
             .attr({
@@ -812,7 +812,7 @@ D3Table.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTicks) 
 
     this._yAxisAF = this.requestAnimationFrame(function() {
 
-        var container = self._wrapWithAnimation(self.elements.yAxisContainer, transitionDuration);
+        var container = self.wrapWithAnimation(self.elements.yAxisContainer, transitionDuration);
         container.call(self.axises.y);
 
         container
@@ -915,7 +915,7 @@ D3Table.prototype.drawElements = function(transitionDuration) {
                 var exitTransform = endTransformMap[d.uid] || endTransformMap[d.id];
 
                 if (exitTransform) {
-                    self._wrapWithAnimation(g, transitionDuration)
+                    self.wrapWithAnimation(g, transitionDuration)
                         .attr('transform', exitTransform)
                         .remove();
                 } else {
@@ -959,7 +959,7 @@ D3Table.prototype.drawElements = function(transitionDuration) {
                     }
                 }
 
-                self._wrapWithAnimation(g, transitionDuration)
+                self.wrapWithAnimation(g, transitionDuration)
                     .attrTween("transform", function() {
                         var originTransform = modifiedOriginTransform || g.attr('transform');
                         if (enableYTransition) {
@@ -1103,7 +1103,7 @@ D3Table.prototype.elementUpdate = function(selection) { return selection; };
 
 D3Table.prototype.elementExit = function(selection) { return selection; };
 
-D3Table.prototype._wrapWithAnimation = function(selection, transitionDuration) {
+D3Table.prototype.wrapWithAnimation = function(selection, transitionDuration) {
     if (transitionDuration > 0) {
         return selection.transition().duration(transitionDuration).ease(this.options.transitionEasing);
     } else {

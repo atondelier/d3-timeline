@@ -323,7 +323,7 @@ D3BlockTable.prototype.elementUpdate = function(selection, d, transitionDuration
 
     var self = this;
 
-    this._wrapWithAnimation(selection.select('.' + this.options.bemBlockName + '-elementBackground'), transitionDuration)
+    this.wrapWithAnimation(selection.select('.' + this.options.bemBlockName + '-elementBackground'), transitionDuration)
         .attr({
             y: this.options.rowPadding,
             width: function(d) {
