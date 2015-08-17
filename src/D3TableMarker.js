@@ -18,6 +18,10 @@ function D3TableMarker(options) {
     this.timeline = null;
 
     this.container = null;
+    this.elements = {
+        line: null,
+        label: null
+    };
 
     /**
      * @type {Function}
@@ -39,20 +43,24 @@ function D3TableMarker(options) {
 
 inherits(D3TableMarker, EventEmitter);
 
+D3TableMarker.prototype.LAYOUT_HORIZONTAL = 'horizontal';
+D3TableMarker.prototype.LAYOUT_VERTICAL = 'vertical';
+
 D3TableMarker.prototype.defaults = {
-    xFormatter: function(d) { return d; },
+    formatter: function(d) { return d; },
     outerTickSize: 10,
     tickPadding: 10,
     roundPosition: false,
     bemBlockName: 'tableMarker',
-    bemModifier: ''
+    bemModifier: '',
+    layout: D3TableMarker.prototype.LAYOUT_VERTICAL
 };
 
 /**
  *
  * @param {D3Timeline} timeline
  */
-D3TableMarker.prototype.setTimeline = function(timeline) {
+D3TableMarker.prototype.setTable = function(timeline) {
 
     var previousTimeline = this.timeline;
 
@@ -106,19 +114,16 @@ D3TableMarker.prototype.bindTimeline = function() {
         })
         .attr('class', this.options.bemBlockName + (this.options.bemModifier ? ' ' + this.options.bemBlockName + this.options.bemModifier : ''));
 
-    this.container
+    this.elements.line = this.container
         .append('line')
         .attr('class', this.options.bemBlockName + '-line')
-        .style('pointer-events', 'none')
-        .attr({
-            y1: -this.options.outerTickSize,
-            y2: this.timeline.dimensions.height
-        });
+        .style('pointer-events', 'none');
 
-    this.container
+    this.elements.label = this.container
         .append('text')
-        .attr('class', this.options.bemBlockName + '-label')
-        .attr('dy', -this.options.outerTickSize-this.options.tickPadding);
+        .attr('class', this.options.bemBlockName + '-label');
+
+    this.sizeLineAndLabel();
 
     // on timeline move, move the marker
     this._timelineMoveListener = this.move.bind(this);
@@ -134,6 +139,41 @@ D3TableMarker.prototype.bindTimeline = function() {
     this.emit('marker:bound');
 
     this.move();
+
+};
+
+D3TableMarker.prototype.sizeLineAndLabel = function(transitionDuration) {
+
+    var layout = this.options.layout;
+
+    var line = this.elements.line;
+    var label = this.elements.label;
+
+    if (transitionDuration > 0) {
+        line = line.transition().duration(transitionDuration);
+        label = label.transition().duration(transitionDuration);
+    }
+
+    switch(layout) {
+        case this.LAYOUT_VERTICAL:
+            line
+                .attr({
+                    y1: -this.options.outerTickSize,
+                    y2: this.timeline.dimensions.height
+                });
+            label
+                .attr('dy', -this.options.outerTickSize-this.options.tickPadding);
+            break;
+        case this.LAYOUT_HORIZONTAL:
+            line
+                .attr({
+                    x1: -this.options.outerTickSize,
+                    x2: this.timeline.dimensions.width
+                });
+            label
+                .attr('dx', -this.options.outerTickSize-this.options.tickPadding);
+            break;
+    }
 
 };
 
@@ -158,6 +198,7 @@ D3TableMarker.prototype.unbindTimeline = function(previousTimeline) {
 D3TableMarker.prototype.move = function(transitionDuration) {
 
     var self = this;
+    var layout = this.options.layout;
 
     if (this._moveAF) {
         this.timeline.cancelAnimationFrame(this._moveAF);
@@ -168,10 +209,22 @@ D3TableMarker.prototype.move = function(transitionDuration) {
         self.container
             .each(function(d) {
 
-                var xScale = self.timeline.scales.x;
-                var xRange = xScale.range();
-                var left = self.timeline.scales.x(d.value);
-                var isInRange = left >= xRange[0] && left <= xRange[xRange.length - 1];
+                var scale, position = [0, 0], positionIndex;
+
+                switch(layout) {
+                    case self.LAYOUT_VERTICAL:
+                        scale = self.timeline.scales.x;
+                        positionIndex = 0;
+                        break;
+                    case self.LAYOUT_HORIZONTAL:
+                        scale = self.timeline.scales.y;
+                        positionIndex = 1;
+                }
+
+                position[positionIndex] = scale(d.value);
+
+                var range = scale.range();
+                var isInRange = position[positionIndex] >= range[0] && position[positionIndex] <= range[range.length - 1];
 
                 var g = d3.select(this);
 
@@ -179,10 +232,10 @@ D3TableMarker.prototype.move = function(transitionDuration) {
 
                     self.show();
 
-                    g.attr('transform', 'translate('+(self.timeline.margin.left + left >> 0)+','+self.timeline.margin.top+')');
+                    g.attr('transform', 'translate('+(self.timeline.margin.left + position[0] >> 0)+','+(self.timeline.margin.top + position[1] >> 0)+')');
 
                     g.select('.' + self.options.bemBlockName + '-label')
-                        .text(d => self.options.xFormatter(d.value));
+                        .text(d => self.options.formatter(d.value));
 
                 } else {
                     self.hide();
@@ -204,18 +257,7 @@ D3TableMarker.prototype.hide = function() {
 
 D3TableMarker.prototype.resize = function(transitionDuration) {
 
-    var container = this.container;
-
-    if (transitionDuration > 0) {
-        container = this.container.transition().duration(transitionDuration);
-    }
-
-    container
-        .select('.' + this.options.bemBlockName + '-line')
-        .attr({
-            y1: -this.options.outerTickSize,
-            y2: this.timeline.dimensions.height
-        });
+    this.sizeLineAndLabel(transitionDuration);
 
 };
 

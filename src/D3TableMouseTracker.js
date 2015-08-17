@@ -61,11 +61,20 @@ D3TableMouseTracker.prototype.handleTimelineUnbound = function(previousTimeline)
 
 };
 
+D3TableMouseTracker.prototype.getValueFromTableEvent = function(timeline, selection, d3Event, getTime, getRow) {
+    switch (this.options.layout) {
+        case 'vertical':
+            return getTime();
+        case 'horizontal':
+            return getRow();
+    }
+};
+
 D3TableMouseTracker.prototype.handleMouseenter = function(timeline, selection, d3Event, getTime, getRow) {
 
     var self = this;
 
-    var time = getTime();
+    var time = this.getValueFromTableEvent.apply(this, arguments);;
 
     timeline.requestAnimationFrame(function() {
         self.show();
@@ -77,7 +86,7 @@ D3TableMouseTracker.prototype.handleMouseenter = function(timeline, selection, d
 D3TableMouseTracker.prototype.handleMousemove = function(timeline, selection, d3Event, getTime, getRow) {
 
     var self = this;
-    var time = getTime();
+    var time = this.getValueFromTableEvent.apply(this, arguments);;
 
     if (this._moveAF) {
         timeline.cancelAnimationFrame(this._moveAF);

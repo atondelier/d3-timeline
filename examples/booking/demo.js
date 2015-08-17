@@ -156,7 +156,7 @@ timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event
     d.start = original.start = Math.round(getTime());
     d.end = original.end = new Date(+d.start + previousDuration);
     var currentRow = timeline.data[d.rowIndex];
-    var row = getRow();
+    var row = timeline.data[getRow() >> 0];
 
     currentRow.elements.splice(currentRow.elements.indexOf(d), 1);
 
@@ -255,16 +255,26 @@ handleDistributionMode(demoOptions.distributionMode, false, false);
  Markers
  */
 
-var mouseTracker = new D3TableMouseTracker({
-    xFormatter: d3.time.format('%H:%M')
+var verticalMouseTracker = new D3TableMouseTracker({
+    formatter: d3.time.format('%H:%M'),
+    layout: 'vertical'
 });
 
-mouseTracker.setTimeline(timeline);
+verticalMouseTracker.setTable(timeline);
 
-global.mouseTracker = mouseTracker;
+global.mouseTracker = verticalMouseTracker;
+
+var horizontalMouseTracker = new D3TableMouseTracker({
+    formatter: function() { return ''; },
+    layout: 'horizontal'
+});
+
+horizontalMouseTracker.setTable(timeline);
+
+global.mouseTracker = horizontalMouseTracker;
 
 var timeTracker = new D3TimelineTimeTracker({
-    xFormatter: d3.time.format('%H:%M')
+    formatter: d3.time.format('%H:%M')
 });
 
 timeTracker.setTimeline(timeline);

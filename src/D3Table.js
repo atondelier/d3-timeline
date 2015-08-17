@@ -309,7 +309,7 @@ D3Table.prototype.emitDetailedEvent = function(eventName, d3TargetSelection, del
         }, // a column getter
         function getRow() {
             var position = getPosition();
-            return self.data[self.scales.y.invert(position[1]) >> 0];
+            return self.scales.y.invert(position[1]);
         } // a row getter
     ];
 

@@ -26,10 +26,14 @@ D3TimelineTimeTracker.prototype.timeGetter = function() {
 
 D3TimelineTimeTracker.prototype.timeComparator = function(a,b) {
     return this.valueComparator(a,b);
-}
+};
 
 D3TimelineTimeTracker.prototype.setTime = function(time) {
     return this.setValue(time);
+};
+
+D3TimelineTimeTracker.prototype.setTimeline = function(timeline) {
+    return this.setTable(timeline);
 };
 
 D3TimelineTimeTracker.prototype.valueGetter = function() {
