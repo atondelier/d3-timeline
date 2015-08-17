@@ -12,14 +12,14 @@ import extend from 'extend';
 function D3TableMouseTracker(options) {
     D3TableMarker.call(this, options);
 
-    this._timelineMouseenterListener = null;
-    this._timelineMousemoveListener = null;
-    this._timelineMouseleaveListener = null;
+    this._tableMouseenterListener = null;
+    this._tableMousemoveListener = null;
+    this._tableMouseleaveListener = null;
 
     this._moveAF = null;
 
-    this.on('marker:bound', this.handleTimelineBound.bind(this));
-    this.on('marker:unbound', this.handleTimelineUnbound.bind(this));
+    this.on('marker:bound', this.handleTableBound.bind(this));
+    this.on('marker:unbound', this.handleTableUnbound.bind(this));
 
     this._isListeningToTouchEvents = false;
 }
@@ -31,37 +31,37 @@ D3TableMouseTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototyp
     listenToTouchEvents: true
 });
 
-D3TableMouseTracker.prototype.handleTimelineBound = function() {
+D3TableMouseTracker.prototype.handleTableBound = function() {
 
-    this._timelineMouseenterListener = this.handleMouseenter.bind(this);
-    this._timelineMousemoveListener = this.handleMousemove.bind(this);
-    this._timelineMouseleaveListener = this.handleMouseleave.bind(this);
+    this._tableMouseenterListener = this.handleMouseenter.bind(this);
+    this._tableMousemoveListener = this.handleMousemove.bind(this);
+    this._tableMouseleaveListener = this.handleMouseleave.bind(this);
 
-    this.timeline.on('timeline:mouseenter', this._timelineMouseenterListener);
-    this.timeline.on('timeline:mousemove', this._timelineMousemoveListener);
-    this.timeline.on('timeline:mouseleave', this._timelineMouseleaveListener);
+    this.table.on(this.table.options.bemBlockName + ':mouseenter', this._tableMouseenterListener);
+    this.table.on(this.table.options.bemBlockName + ':mousemove', this._tableMousemoveListener);
+    this.table.on(this.table.options.bemBlockName + ':mouseleave', this._tableMouseleaveListener);
 
     if (this.options.listenToTouchEvents) {
         this._isListeningToTouchEvents = true;
-        this.timeline.on('timeline:touchmove', this._timelineMousemoveListener);
+        this.table.on(this.table.options.bemBlockName + ':touchmove', this._tableMousemoveListener);
     } else {
         this._isListeningToTouchEvents = false;
     }
 };
 
-D3TableMouseTracker.prototype.handleTimelineUnbound = function(previousTimeline) {
+D3TableMouseTracker.prototype.handleTableUnbound = function(previousTable) {
 
-    previousTimeline.removeListener('timeline:mouseenter', this._timelineMouseenterListener);
-    previousTimeline.removeListener('timeline:mousemove', this._timelineMousemoveListener);
-    previousTimeline.removeListener('timeline:mouseleave', this._timelineMouseleaveListener);
+    previousTable.removeListener(this.table.options.bemBlockName + ':mouseenter', this._tableMouseenterListener);
+    previousTable.removeListener(this.table.options.bemBlockName + ':mousemove', this._tableMousemoveListener);
+    previousTable.removeListener(this.table.options.bemBlockName + ':mouseleave', this._tableMouseleaveListener);
 
     if (this._isListeningToTouchEvents) {
-        previousTimeline.removeListener('timeline:touchmove', this._timelineMousemoveListener);
+        previousTable.removeListener(this.table.options.bemBlockName + ':touchmove', this._tableMousemoveListener);
     }
 
 };
 
-D3TableMouseTracker.prototype.getValueFromTableEvent = function(timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.getValueFromTableEvent = function(table, selection, d3Event, getTime, getRow) {
     switch (this.options.layout) {
         case 'vertical':
             return getTime();
@@ -70,42 +70,42 @@ D3TableMouseTracker.prototype.getValueFromTableEvent = function(timeline, select
     }
 };
 
-D3TableMouseTracker.prototype.handleMouseenter = function(timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMouseenter = function(table, selection, d3Event, getTime, getRow) {
 
     var self = this;
 
-    var time = this.getValueFromTableEvent.apply(this, arguments);;
+    var time = this.getValueFromTableEvent.apply(this, arguments);
 
-    timeline.requestAnimationFrame(function() {
+    table.requestAnimationFrame(function() {
         self.show();
         self.setValue(time);
     });
 
 };
 
-D3TableMouseTracker.prototype.handleMousemove = function(timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMousemove = function(table, selection, d3Event, getTime, getRow) {
 
     var self = this;
-    var time = this.getValueFromTableEvent.apply(this, arguments);;
+    var time = this.getValueFromTableEvent.apply(this, arguments);
 
     if (this._moveAF) {
-        timeline.cancelAnimationFrame(this._moveAF);
+        table.cancelAnimationFrame(this._moveAF);
     }
 
-    this._moveAF = timeline.requestAnimationFrame(function() {
+    this._moveAF = table.requestAnimationFrame(function() {
         self.setValue(time);
     });
 
 };
 
-D3TableMouseTracker.prototype.handleMouseleave = function(timeline, selection, d3Event, getTime, getRow) {
+D3TableMouseTracker.prototype.handleMouseleave = function(table, selection, d3Event, getTime, getRow) {
 
     if (this._moveAF) {
-        timeline.cancelAnimationFrame(this._moveAF);
+        table.cancelAnimationFrame(this._moveAF);
     }
 
     var self = this;
-    timeline.requestAnimationFrame(function() {
+    table.requestAnimationFrame(function() {
         self.hide();
     });
 
