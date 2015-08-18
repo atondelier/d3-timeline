@@ -103,6 +103,7 @@ function D3Table(options) {
     this._preventDrawing = false;
     this._nextAnimationFrameHandlers = [];
     this._maxBodyHeight = Infinity;
+    this._frozenUids = [];
 }
 
 inherits(D3Table, EventEmitter);
@@ -627,9 +628,12 @@ D3Table.prototype.generateFlattenedData = function() {
     this.flattenedData.length = 0;
 
     this.data.forEach(function(d, i) {
-        d.elements.forEach(function(e) {
-            e.rowIndex = i;
-            self.flattenedData.push(e);
+        d.elements.forEach(function(element) {
+            element.rowIndex = i;
+            if (self._frozenUids.indexOf(element.uid) !== -1) {
+                element._defaultPrevented = true;
+            }
+            self.flattenedData.push(element);
         });
     });
 };

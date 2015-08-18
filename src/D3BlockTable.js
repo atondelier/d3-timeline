@@ -216,7 +216,7 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
     }
 
     var drag = d3.behavior.drag()
-        .on('dragstart', function() {
+        .on('dragstart', function(data) {
 
             if (d3.event.sourceEvent) {
                 d3.event.sourceEvent.stopPropagation();
@@ -227,6 +227,9 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
             startTime = +new Date();
 
             storeStart();
+
+            data._defaultPrevented = true;
+            self._frozenUids.push(data.uid);
 
         })
         .on('drag', function() {
@@ -275,9 +278,6 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
                 });
             }
 
-            var data = selection.datum();
-            data._defaultPrevented = true;
-
             if (self._dragAF) {
                 self.cancelAnimationFrame(self._dragAF);
             }
@@ -285,15 +285,15 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
             self._dragAF = self.requestAnimationFrame(updateTransform);
 
         })
-        .on('dragend', function() {
+        .on('dragend', function(data) {
 
             self.cancelAnimationFrame(self._dragAF);
             self._dragAF = null;
             horizontalMove = 0;
             verticalMove = 0;
 
-            var data = selection.datum();
             data._defaultPrevented = false;
+            self._frozenUids.splice(self._frozenUids.indexOf(data.uid), 1);
 
             d3.timer.flush();
 
