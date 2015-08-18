@@ -296,3 +296,29 @@ $(window).resize(_.debounce(function() {
 }, 100));
 
 global.timeline = timeline;
+
+timeline.on('timeline:element:dragstart', function (d, timeline, selection, d3Event, getTime, getRow) {
+
+    var event = d3Event;
+
+    verticalMouseTracker.getValue = function() {
+        d3.event = d3.event || event;
+        var mouseInSelection = d3.mouse(selection.node());
+        var mouseInElements = d3.mouse(timeline.elements.innerContainer.node());
+
+        return timeline.scales.x.invert(mouseInElements[0] - mouseInSelection[0]);
+    };
+
+    function dragListener(d, timeline, selection, d3Event, getTime, getRow) {
+        event = d3Event;
+    }
+
+    function dragEndListener(d, timeline, selection, d3Event, getTime, getRow) {
+        verticalMouseTracker.getValue = verticalMouseTracker.constructor.prototype.getValue;
+        timeline.removeListener('timeline:element:drag', dragListener);
+        timeline.removeListener('timeline:element:dragend', dragEndListener);
+    }
+
+    timeline.on('timeline:element:drag', dragListener);
+    timeline.on('timeline:element:dragend', dragEndListener);
+});

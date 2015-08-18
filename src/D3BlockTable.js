@@ -135,6 +135,7 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
 
     var self = this;
     var bodyNode = self.elements.body.node();
+    var dragStarted = false;
 
     // positions
     var currentTransform = null;
@@ -215,6 +216,7 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
         needTimerStop = realMove[2] === 0 && realMove[3] === 0;
     }
 
+    
     var drag = d3.behavior.drag()
         .on('dragstart', function(data) {
 
@@ -232,7 +234,18 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
             self._frozenUids.push(data.uid);
 
         })
-        .on('drag', function() {
+        .on('drag', function(data) {
+
+            var timeDelta = +new Date() - startTime;
+
+            if (!dragStarted && (timeDelta > self.options.maximumClickDragTime)) {
+                dragStarted = true;
+                self.emitDetailedEvent('element:dragstart', selection, null, [data]);
+            }
+
+            if (dragStarted) {
+                self.emitDetailedEvent('element:drag', selection, null, [data]);
+            }
 
             dragPosition = d3.mouse(bodyNode);
 
@@ -286,6 +299,8 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
 
         })
         .on('dragend', function(data) {
+
+            dragStarted = false;
 
             self.cancelAnimationFrame(self._dragAF);
             self._dragAF = null;

@@ -103,6 +103,10 @@ D3TableMarker.prototype.setValue = function(value) {
 
 };
 
+D3TableMarker.prototype.getValue = function(data) {
+    return data.value;
+};
+
 D3TableMarker.prototype.bindTable = function() {
 
     var self = this;
@@ -210,7 +214,9 @@ D3TableMarker.prototype.move = function(transitionDuration) {
         self.container
             .each(function(d) {
 
-                if (d.value === null) {
+                var value = self.getValue(d);
+
+                if (value === null) {
                     self.hide();
                     return;
                 }
@@ -227,7 +233,7 @@ D3TableMarker.prototype.move = function(transitionDuration) {
                         positionIndex = 1;
                 }
 
-                position[positionIndex] = scale(d.value);
+                position[positionIndex] = scale(value);
 
                 var range = scale.range();
                 var isInRange = position[positionIndex] >= range[0] && position[positionIndex] <= range[range.length - 1];
@@ -241,7 +247,7 @@ D3TableMarker.prototype.move = function(transitionDuration) {
                     g.attr('transform', 'translate('+(self.table.margin.left + position[0] >> 0)+','+(self.table.margin.top + position[1] >> 0)+')');
 
                     g.select('.' + self.options.bemBlockName + '-label')
-                        .text(d => self.options.formatter(d.value));
+                        .text(self.options.formatter(value));
 
                 } else {
                     self.hide();
