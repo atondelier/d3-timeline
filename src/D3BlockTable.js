@@ -216,7 +216,7 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
         needTimerStop = realMove[2] === 0 && realMove[3] === 0;
     }
 
-    
+
     var drag = d3.behavior.drag()
         .on('dragstart', function(data) {
 

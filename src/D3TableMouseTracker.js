@@ -51,12 +51,12 @@ D3TableMouseTracker.prototype.handleTableBound = function() {
 
 D3TableMouseTracker.prototype.handleTableUnbound = function(previousTable) {
 
-    previousTable.removeListener(this.table.options.bemBlockName + ':mouseenter', this._tableMouseenterListener);
-    previousTable.removeListener(this.table.options.bemBlockName + ':mousemove', this._tableMousemoveListener);
-    previousTable.removeListener(this.table.options.bemBlockName + ':mouseleave', this._tableMouseleaveListener);
+    previousTable.removeListener(previousTable.options.bemBlockName + ':mouseenter', this._tableMouseenterListener);
+    previousTable.removeListener(previousTable.options.bemBlockName + ':mousemove', this._tableMousemoveListener);
+    previousTable.removeListener(previousTable.options.bemBlockName + ':mouseleave', this._tableMouseleaveListener);
 
     if (this._isListeningToTouchEvents) {
-        previousTable.removeListener(this.table.options.bemBlockName + ':touchmove', this._tableMousemoveListener);
+        previousTable.removeListener(previousTable.options.bemBlockName + ':touchmove', this._tableMousemoveListener);
     }
 
 };
