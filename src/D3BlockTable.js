@@ -27,7 +27,8 @@ D3BlockTable.prototype.defaults = extend(true, {}, D3Table.prototype.defaults, {
     alignOnTranslate: true,
     maximumClickDragTime: 100,
     maximumClickDragDistance: 12,
-    minimumDragDistance: 5
+    minimumDragDistance: 5,
+    trackedElementDOMEvents: ['click', 'mouseenter', 'mouseleave'] // not dynamic
 });
 
 D3BlockTable.prototype.generateClipPathId = function(d) {
@@ -89,10 +90,12 @@ D3BlockTable.prototype.elementEnter = function(selection) {
             .attr('xlink:href', this.generateClipRectLink.bind(this));
     }
 
-    selection.on('click', function(d) {
-        if (!d3.event.defaultPrevented) {
-            self.emitDetailedEvent('element:click', selection, null, [d]);
-        }
+    this.options.trackedElementDOMEvents.forEach(function(eventName) {
+        selection.on(eventName, function(d) {
+            if (!d3.event.defaultPrevented) {
+                self.emitDetailedEvent('element:' + eventName, selection, null, [d]);
+            }
+        });
     });
 
     if (this.options.appendText) {

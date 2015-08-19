@@ -137,6 +137,18 @@ timeline.on('timeline:element:click', function (d, timeline, selection, d3Event,
     console.log('row:', getRow());
 });
 
+timeline.on('timeline:element:mouseenter', function (d, timeline, selection, d3Event, getTime, getRow) {
+    console.log('mouseenter on element', arguments);
+    console.log('time:', getTime());
+    console.log('row:', getRow());
+});
+
+timeline.on('timeline:element:mouseleave', function (d, timeline, selection, d3Event, getTime, getRow) {
+    console.log('mouseleave on element', arguments);
+    console.log('time:', getTime());
+    console.log('row:', getRow());
+});
+
 timeline.on('timeline:click', function (timeline, selection, d3Event, getTime, getRow){
     console.log('click on timeline', arguments);
     console.log('time:', getTime());
