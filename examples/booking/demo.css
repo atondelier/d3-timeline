@@ -54,11 +54,43 @@
     stroke: orange;
 }
 
+.timelineMarker .timelineMarker-rect {
+    stroke: orange;
+    fill: orange;
+    fill-opacity: 0.2;
+}
+
+.tableMarker .tableMarker-line {
+    stroke: red;
+}
+
+.tableMarker .tableMarker-label {
+    text-anchor: middle;
+    fill: red;
+}
+
 .tableMarker.tableMarker--mouseTracker .tableMarker-line {
     stroke: #00d800;
 }
 
-.tableMarker.tableMarker--mouseTracker .tableMarker-label {
-    text-anchor: middle;
+.tableMarker.tableMarker--mouseTracker .tableMarker-rect {
+    stroke: #00d800;
     fill: #00d800;
+    fill-opacity: 0.2;
+}
+
+.tableMarker.tableMarker--mouseTracker .tableMarker-label {
+    fill: #00d800;
+}
+
+.tableMarker.tableMarker--mouseTracker.tableMarker--horizontal .tableMarker-label {
+    text-anchor: end;
+    fill: #00d800;
+}
+
+.tableMarker.tableMarker--valueTracker.tableMarker--elementBound .tableMarker-line {
+    stroke: red;
+}
+.tableMarker.tableMarker--valueTracker.tableMarker--elementBound .tableMarker-label {
+    fill: red;
 }
