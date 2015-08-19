@@ -54,6 +54,12 @@
     stroke: orange;
 }
 
+.timelineMarker .timelineMarker-rect {
+    stroke: orange;
+    fill: orange;
+    fill-opacity: 0.2;
+}
+
 .tableMarker .tableMarker-line {
     stroke: red;
 }
@@ -65,6 +71,12 @@
 
 .tableMarker.tableMarker--mouseTracker .tableMarker-line {
     stroke: #00d800;
+}
+
+.tableMarker.tableMarker--mouseTracker .tableMarker-rect {
+    stroke: #00d800;
+    fill: #00d800;
+    fill-opacity: 0.2;
 }
 
 .tableMarker.tableMarker--mouseTracker .tableMarker-label {

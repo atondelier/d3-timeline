@@ -278,8 +278,18 @@ var horizontalMouseTracker = new D3TableMouseTracker({
         var row = timeline.data[d>>0];
         return row ? row.name : '';
     },
-    layout: 'horizontal'
+    layout: 'horizontal',
+    lineShape: 'rect',
+    outerTickSize: 0
 });
+
+horizontalMouseTracker.setValue = function(v) {
+    this.constructor.prototype.setValue.call(this, (v>>0) + 0.5);
+};
+
+horizontalMouseTracker.valueComparator = function() {
+    return true;
+};
 
 horizontalMouseTracker.setTable(timeline);
 

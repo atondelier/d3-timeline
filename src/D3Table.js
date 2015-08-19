@@ -115,6 +115,7 @@ D3Table.prototype.defaults = {
     yAxisWidth: 50,
     rowHeight: 30,
     rowPadding: 5,
+    tickPadding: 20,
     container: 'body',
     cullingX: true,
     cullingY: true,
@@ -223,7 +224,7 @@ D3Table.prototype.initializeD3Instances = function() {
         .orient('top')
         .tickFormat(this.options.xAxisTicksFormatter.bind(this))
         .outerTickSize(0)
-        .tickPadding(20);
+        .tickPadding(this.options.tickPadding);
 
     this.axises.x2 = d3.svg.axis()
         .scale(this.scales.x)
@@ -267,7 +268,7 @@ D3Table.prototype.initializeD3Instances = function() {
 
     this._lastTranslate = this.behaviors.zoom.translate();
     this._lastScale = this.behaviors.zoom.scale();
-}
+};
 
 D3Table.prototype.initializeEventListeners = function() {
 

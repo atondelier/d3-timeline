@@ -55,11 +55,13 @@ D3TableMarker.prototype.LAYOUT_VERTICAL = 'vertical';
 D3TableMarker.prototype.defaults = {
     formatter: function(d) { return d; },
     outerTickSize: 10,
-    tickPadding: 10,
+    tickPadding: 3,
     roundPosition: false,
     bemBlockName: 'tableMarker',
     bemModifiers: [],
-    layout: D3TableMarker.prototype.LAYOUT_VERTICAL
+    layout: D3TableMarker.prototype.LAYOUT_VERTICAL,
+    lineShape: 'line',
+    rectThickness: D3Table.prototype.defaults.rowHeight
 };
 
 /**
@@ -134,10 +136,20 @@ D3TableMarker.prototype.bindTable = function() {
         })
         .attr('class', className);
 
-    this.elements.line = this.container
-        .append('line')
-        .attr('class', this.options.bemBlockName + '-line')
-        .style('pointer-events', 'none');
+    switch(this.options.lineShape) {
+        case 'line':
+            this.elements.line = this.container
+                .append('line')
+                .attr('class', this.options.bemBlockName + '-line')
+                .style('pointer-events', 'none');
+            break;
+        case 'rect':
+            this.elements.line = this.container
+                .append('rect')
+                .attr('class', this.options.bemBlockName + '-rect')
+                .style('pointer-events', 'none');
+            break;
+    }
 
     this.elements.label = this.container
         .append('text')
@@ -180,24 +192,56 @@ D3TableMarker.prototype.sizeLineAndLabel = function(transitionDuration) {
     }
 
     switch(layout) {
+
         case this.LAYOUT_VERTICAL:
-            line
-                .attr({
-                    y1: -this.options.outerTickSize,
-                    y2: this.table.dimensions.height
-                });
+
+            switch(this.options.lineShape) {
+                case 'line':
+                    line
+                        .attr({
+                            y1: -this.options.outerTickSize,
+                            y2: this.table.dimensions.height
+                        });
+                    break;
+                case 'rect':
+                    line.attr({
+                        x: -this.options.rectThickness/2,
+                        y: -this.options.outerTickSize,
+                        width: this.options.rectThickness,
+                        height: this.options.outerTickSize + this.table.dimensions.height
+                    });
+                    break;
+            }
+
             label
                 .attr('dy', -this.options.outerTickSize-this.options.tickPadding);
+
             break;
+
         case this.LAYOUT_HORIZONTAL:
-            line
-                .attr({
-                    x1: -this.options.outerTickSize,
-                    x2: this.table.dimensions.width
-                });
+
+            switch(this.options.lineShape) {
+                case 'line':
+                    line
+                        .attr({
+                            x1: -this.options.outerTickSize,
+                            x2: this.table.dimensions.width
+                        });
+                    break;
+                case 'rect':
+                    line.attr({
+                        x: -this.options.outerTickSize,
+                        y: -this.options.rectThickness/2,
+                        width: this.options.outerTickSize + this.table.dimensions.width,
+                        height: this.options.rectThickness
+                    });
+                    break;
+            }
+
             label
                 .attr('dx', -this.options.outerTickSize-this.options.tickPadding)
                 .attr('dy', 4);
+
             break;
     }
 
