@@ -83,7 +83,7 @@ D3TableMarker.prototype.valueComparator = function(timeA, timeB) {
     return +timeA !== +timeB;
 };
 
-D3TableMarker.prototype.setValue = function(value) {
+D3TableMarker.prototype.setValue = function(value, silent) {
 
     var previousTimeUpdated = this._lastTimeUpdated;
 
@@ -98,7 +98,9 @@ D3TableMarker.prototype.setValue = function(value) {
                 value: value
             });
 
-        this.move();
+        if (!silent) {
+            this.move();
+        }
     }
 
 };
@@ -202,60 +204,66 @@ D3TableMarker.prototype.unbindTable = function(previousTable) {
 
 D3TableMarker.prototype.move = function(transitionDuration) {
 
-    var self = this;
-    var layout = this.options.layout;
-
     if (this._moveAF) {
         this.table.cancelAnimationFrame(this._moveAF);
     }
 
-    this._moveAF = this.table.requestAnimationFrame(function() {
+    this._moveAF = this.table.requestAnimationFrame(this.moveSync.bind(this));
 
-        self.container
-            .each(function(d) {
+};
 
-                var value = self.getValue(d);
+D3TableMarker.prototype.moveSync = function() {
 
-                if (value === null) {
-                    self.hide();
-                    return;
-                }
+    if (!this.table) {
+        return;
+    }
 
-                var scale, position = [0, 0], positionIndex;
+    var self = this;
+    var layout = this.options.layout;
 
-                switch(layout) {
-                    case self.LAYOUT_VERTICAL:
-                        scale = self.table.scales.x;
-                        positionIndex = 0;
-                        break;
-                    case self.LAYOUT_HORIZONTAL:
-                        scale = self.table.scales.y;
-                        positionIndex = 1;
-                }
+    this.container
+        .each(function(d) {
 
-                position[positionIndex] = scale(value);
+            var value = self.getValue(d);
 
-                var range = scale.range();
-                var isInRange = position[positionIndex] >= range[0] && position[positionIndex] <= range[range.length - 1];
+            if (value === null) {
+                self.hide();
+                return;
+            }
 
-                var g = d3.select(this);
+            var scale, position = [0, 0], positionIndex;
 
-                if (isInRange) {
+            switch(layout) {
+                case self.LAYOUT_VERTICAL:
+                    scale = self.table.scales.x;
+                    positionIndex = 0;
+                    break;
+                case self.LAYOUT_HORIZONTAL:
+                    scale = self.table.scales.y;
+                    positionIndex = 1;
+            }
 
-                    self.show();
+            position[positionIndex] = scale(value);
 
-                    g.attr('transform', 'translate('+(self.table.margin.left + position[0] >> 0)+','+(self.table.margin.top + position[1] >> 0)+')');
+            var range = scale.range();
+            var isInRange = position[positionIndex] >= range[0] && position[positionIndex] <= range[range.length - 1];
 
-                    g.select('.' + self.options.bemBlockName + '-label')
-                        .text(self.options.formatter(value));
+            var g = d3.select(this);
 
-                } else {
-                    self.hide();
-                }
+            if (isInRange) {
 
-            });
+                self.show();
 
-    });
+                g.attr('transform', 'translate('+(self.table.margin.left + position[0] >> 0)+','+(self.table.margin.top + position[1] >> 0)+')');
+
+                g.select('.' + self.options.bemBlockName + '-label')
+                    .text(self.options.formatter(value));
+
+            } else {
+                self.hide();
+            }
+
+        });
 
 };
 

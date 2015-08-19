@@ -4,6 +4,7 @@ import regeneratorRuntime from 'babel-runtime/regenerator';
 import D3Timeline from '../../src/D3Timeline';
 import D3TableMouseTracker from '../../src/D3TableMouseTracker';
 import D3TimelineTimeTracker from '../../src/D3TimelineTimeTracker';
+import D3TableValueTracker from '../../src/D3TableValueTracker';
 import Faker from 'Faker';
 import dat from 'dat-gui';
 import _ from 'lodash';
@@ -149,6 +150,13 @@ timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event
 });
 
 timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event, getTime, getRow) {
+    var row = timeline.data[getRow() >> 0];
+
+    if (!row) {
+        timeline.drawElements();
+        return;
+    }
+
     var original = _.findWhere(bookings, { uid: d.uid }) || _.findWhere(bookings, { id: d.id });
 
     var previousDuration = Math.floor(+timeline.getDataEnd(d) - +timeline.getDataStart(d));
@@ -156,7 +164,6 @@ timeline.on('timeline:element:dragend', function(d, timeline, selection, d3Event
     d.start = original.start = Math.round(getTime());
     d.end = original.end = new Date(+d.start + previousDuration);
     var currentRow = timeline.data[d.rowIndex];
-    var row = timeline.data[getRow() >> 0];
 
     currentRow.elements.splice(currentRow.elements.indexOf(d), 1);
 
@@ -255,8 +262,10 @@ handleDistributionMode(demoOptions.distributionMode, false, false);
  Markers
  */
 
+var utcTimeFormatter = d3.time.format('%H:%M');
+
 var verticalMouseTracker = new D3TableMouseTracker({
-    formatter: d3.time.format('%H:%M'),
+    formatter: utcTimeFormatter,
     layout: 'vertical'
 });
 
@@ -265,7 +274,10 @@ verticalMouseTracker.setTable(timeline);
 global.verticalMouseTracker = verticalMouseTracker;
 
 var horizontalMouseTracker = new D3TableMouseTracker({
-    formatter: function(d) { return timeline.data[d>>0].name; },
+    formatter: function(d) {
+        var row = timeline.data[d>>0];
+        return row ? row.name : '';
+    },
     layout: 'horizontal'
 });
 
@@ -274,7 +286,7 @@ horizontalMouseTracker.setTable(timeline);
 global.horizontalMouseTracker = horizontalMouseTracker;
 
 var timeTracker = new D3TimelineTimeTracker({
-    formatter: d3.time.format('%H:%M')
+    formatter: utcTimeFormatter
 });
 
 timeTracker.setTimeline(timeline);
@@ -297,28 +309,70 @@ $(window).resize(_.debounce(function() {
 
 global.timeline = timeline;
 
+
+var dragStartXLeftMarker = new D3TableValueTracker({
+    outerTickSize: 30,
+    tickPadding: 5,
+    formatter: utcTimeFormatter,
+    layout: 'vertical'
+});
+
+dragStartXLeftMarker.setTable(timeline);
+
+global.dragStartXLeftMarker = dragStartXLeftMarker;
+
+var dragStartXRightMarker = new D3TableValueTracker({
+    outerTickSize: 30,
+    tickPadding: 5,
+    formatter: utcTimeFormatter,
+    layout: 'vertical'
+});
+
+dragStartXRightMarker.setTable(timeline);
+
+global.dragStartXRightMarker = dragStartXRightMarker;
+
+
+
 timeline.on('timeline:element:dragstart', function (d, timeline, selection, d3Event, getTime, getRow) {
 
-    var event = d3Event;
+    verticalMouseTracker.setTable(null);
 
-    verticalMouseTracker.getValue = function() {
-        d3.event = d3.event || event;
-        var mouseInSelection = d3.mouse(selection.node());
-        var mouseInElements = d3.mouse(timeline.elements.innerContainer.node());
+    dragStartXLeftMarker.valueGetter = function() {
 
-        return timeline.scales.x.invert(mouseInElements[0] - mouseInSelection[0]);
+        var bodyCTM = timeline.elements.body.node().getScreenCTM();
+        var elementCTM = selection.node().getScreenCTM();
+
+        return timeline.scales.x.invert(elementCTM.e - bodyCTM.e);
+
     };
 
-    function dragListener(d, timeline, selection, d3Event, getTime, getRow) {
-        event = d3Event;
-    }
+    dragStartXRightMarker.valueGetter = function() {
+
+        var bodyCTM = timeline.elements.body.node().getScreenCTM();
+        var elementCTM = selection.node().getScreenCTM();
+
+        return timeline.scales.x.invert(elementCTM.e - bodyCTM.e + +selection.select('.timeline-elementBackground').attr('width'));
+
+    };
+
+    dragStartXLeftMarker.start();
+    dragStartXRightMarker.start();
+
 
     function dragEndListener(d, timeline, selection, d3Event, getTime, getRow) {
-        verticalMouseTracker.getValue = verticalMouseTracker.constructor.prototype.getValue;
-        timeline.removeListener('timeline:element:drag', dragListener);
+
+        verticalMouseTracker.setTable(timeline);
+
+        dragStartXLeftMarker.stop();
+        dragStartXRightMarker.stop();
+
+        delete dragStartXLeftMarker.valueGetter;
+        delete dragStartXRightMarker.valueGetter;
+
         timeline.removeListener('timeline:element:dragend', dragEndListener);
+
     }
 
-    timeline.on('timeline:element:drag', dragListener);
     timeline.on('timeline:element:dragend', dragEndListener);
 });

@@ -35,7 +35,7 @@ D3TableValueTracker.prototype.start = function() {
 
     d3.timer(function() {
 
-        self.setValue(self.timeGetter());
+        self.setValue(self.valueGetter());
 
         return !self.enabled;
 

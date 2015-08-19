@@ -54,12 +54,20 @@
     stroke: orange;
 }
 
+.tableMarker .tableMarker-line {
+    stroke: red;
+}
+
+.tableMarker .tableMarker-label {
+    text-anchor: middle;
+    fill: red;
+}
+
 .tableMarker.tableMarker--mouseTracker .tableMarker-line {
     stroke: #00d800;
 }
 
 .tableMarker.tableMarker--mouseTracker .tableMarker-label {
-    text-anchor: middle;
     fill: #00d800;
 }
 
