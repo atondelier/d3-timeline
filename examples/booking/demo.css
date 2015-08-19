@@ -75,3 +75,10 @@
     text-anchor: end;
     fill: #00d800;
 }
+
+.tableMarker.tableMarker--valueTracker.tableMarker--elementBound .tableMarker-line {
+    stroke: red;
+}
+.tableMarker.tableMarker--valueTracker.tableMarker--elementBound .tableMarker-label {
+    fill: red;
+}

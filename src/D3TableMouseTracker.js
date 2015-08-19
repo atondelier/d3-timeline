@@ -27,7 +27,7 @@ function D3TableMouseTracker(options) {
 inherits(D3TableMouseTracker, D3TableMarker);
 
 D3TableMouseTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototype.defaults, {
-    bemModifier: '--mouseTracker',
+    bemModifiers: ['mouseTracker'],
     listenToTouchEvents: true
 });
 

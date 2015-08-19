@@ -52,7 +52,7 @@ D3TableMarker.prototype.defaults = {
     tickPadding: 10,
     roundPosition: false,
     bemBlockName: 'tableMarker',
-    bemModifier: '',
+    bemModifiers: [],
     layout: D3TableMarker.prototype.LAYOUT_VERTICAL
 };
 
@@ -113,12 +113,20 @@ D3TableMarker.prototype.bindTable = function() {
 
     var self = this;
 
+    var className = this.options.bemBlockName + ' ' + this.options.bemBlockName + '--' + this.options.layout;
+
+    if (this.options.bemModifiers && Array.isArray(this.options.bemModifiers) && this.options.bemModifiers.length > 0) {
+        className = className + ' ' + this.options.bemModifiers.map(function(modifier) {
+            return self.options.bemBlockName + '--' + modifier;
+        }).join(' ');
+    }
+
     this.container = this.table.container
         .append('g')
         .datum({
             value: this.value
         })
-        .attr('class', this.options.bemBlockName + (this.options.bemModifier ? ' ' + this.options.bemBlockName + this.options.bemModifier : '') + ' ' + this.options.bemBlockName + '--' + this.options.layout);
+        .attr('class', className);
 
     this.elements.line = this.container
         .append('line')

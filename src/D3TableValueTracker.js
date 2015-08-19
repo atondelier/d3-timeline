@@ -18,7 +18,7 @@ function D3TableValueTracker(options) {
 inherits(D3TableValueTracker, D3TableMarker);
 
 D3TableValueTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototype.defaults, {
-    bemModifier: '--valueTracker'
+    bemModifiers: ['valueTracker']
 });
 
 D3TableValueTracker.prototype.valueGetter = function() {

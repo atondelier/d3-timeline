@@ -314,7 +314,8 @@ var dragStartXLeftMarker = new D3TableValueTracker({
     outerTickSize: 30,
     tickPadding: 5,
     formatter: utcTimeFormatter,
-    layout: 'vertical'
+    layout: 'vertical',
+    bemModifiers: D3TableValueTracker.prototype.defaults.bemModifiers.concat(['elementBound', 'elementLeftBound'])
 });
 
 dragStartXLeftMarker.setTable(timeline);
@@ -325,7 +326,8 @@ var dragStartXRightMarker = new D3TableValueTracker({
     outerTickSize: 30,
     tickPadding: 5,
     formatter: utcTimeFormatter,
-    layout: 'vertical'
+    layout: 'vertical',
+    bemModifiers: D3TableValueTracker.prototype.defaults.bemModifiers.concat(['elementBound', 'elementRightBound'])
 });
 
 dragStartXRightMarker.setTable(timeline);
