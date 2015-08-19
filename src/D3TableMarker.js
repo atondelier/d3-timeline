@@ -209,7 +209,9 @@ D3TableMarker.prototype.unbindTable = function(previousTable) {
     previousTable.removeListener(previousTable.options.bemBlockName + ':resize', this._tableResizeListener);
     previousTable.removeListener(previousTable.options.bemBlockName + ':destroy', this._tableDestroyListener);
 
-    this.container.remove();
+    if (this.container) {
+        this.container.remove();
+    }
 
     if (this._moveAF) {
         previousTable.cancelAnimationFrame(this._moveAF);
@@ -288,11 +290,15 @@ D3TableMarker.prototype.moveSync = function() {
 };
 
 D3TableMarker.prototype.show = function() {
-    this.container.style('display', '');
+    if (this.container) {
+        this.container.style('display', '');
+    }
 };
 
 D3TableMarker.prototype.hide = function() {
-    this.container.style('display', 'none');
+    if (this.container) {
+        this.container.style('display', 'none');
+    }
 };
 
 D3TableMarker.prototype.resize = function(transitionDuration) {
