@@ -363,6 +363,8 @@ D3Table.prototype.updateMargins = function(updateDimensions) {
 
 D3Table.prototype.destroy = function() {
 
+    this.emit(this.options.bemBlockName + ':destroy', this);
+
     // remove behavior listeners
     this.behaviors.zoom.on('zoom', null);
 
@@ -378,6 +380,8 @@ D3Table.prototype.destroy = function() {
     this.behaviors = null;
     this.data = null;
     this.flattenedData = null;
+
+    this.emit(this.options.bemBlockName + ':destroyed', this);
 };
 
 D3Table.prototype.restoreZoom = function() {

@@ -334,9 +334,7 @@ dragStartXRightMarker.setTable(timeline);
 
 global.dragStartXRightMarker = dragStartXRightMarker;
 
-
-
-timeline.on('timeline:element:dragstart', function (d, timeline, selection, d3Event, getTime, getRow) {
+function dragStartListener(d, timeline, selection, d3Event, getTime, getRow) {
 
     verticalMouseTracker.setTable(null);
 
@@ -377,4 +375,11 @@ timeline.on('timeline:element:dragstart', function (d, timeline, selection, d3Ev
     }
 
     timeline.on('timeline:element:dragend', dragEndListener);
+}
+
+
+timeline.on('timeline:element:dragstart', dragStartListener);
+
+timeline.once('timeline:destroy', function(timeline) {
+    timeline.removeListener('timeline:element:dragstart', dragStartListener);
 });

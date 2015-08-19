@@ -35,6 +35,12 @@ function D3TableMarker(options) {
      */
     this._tableResizeListener = null;
 
+    /**
+     * @type {Function}
+     * @private
+     */
+    this._tableDestroyListener = null;
+
     this._moveAF = null;
 
     this.value = null;
@@ -150,6 +156,11 @@ D3TableMarker.prototype.bindTable = function() {
     };
     this.table.on(this.table.options.bemBlockName + ':resize', this._tableResizeListener);
 
+    this._tableDestroyListener = function(table) {
+        self.unbindTable(table);
+    };
+    this.table.on(this.table.options.bemBlockName + ':destroy', this._tableDestroyListener);
+
     this.emit('marker:bound');
 
     this.move();
@@ -196,6 +207,7 @@ D3TableMarker.prototype.unbindTable = function(previousTable) {
 
     previousTable.removeListener(previousTable.options.bemBlockName + ':move', this._tableMoveListener);
     previousTable.removeListener(previousTable.options.bemBlockName + ':resize', this._tableResizeListener);
+    previousTable.removeListener(previousTable.options.bemBlockName + ':destroy', this._tableDestroyListener);
 
     this.container.remove();
 
