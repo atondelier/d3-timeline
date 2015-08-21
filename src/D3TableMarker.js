@@ -6,6 +6,12 @@ import EventEmitter from 'events/events';
 import d3 from 'd3';
 import D3Table from './D3Table';
 
+/**
+ * Table marker options which knows how to represent itself in a {@link D3Table#container}
+ *
+ * @param {D3TableMarkerOptions} options
+ * @constructor
+ */
 function D3TableMarker(options) {
 
     EventEmitter.call(this);
@@ -17,11 +23,20 @@ function D3TableMarker(options) {
      */
     this.table = null;
 
+    /**
+     * @type {d3.Selection}
+     */
     this.container = null;
-    this.elements = {
-        line: null,
-        label: null
-    };
+
+    /**
+     * @type {{line: d3.Selection, label: d3.Selection}}
+     */
+    this.elements = {};
+
+    /**
+     * @type {Number}
+     */
+    this.value = null;
 
     /**
      * @type {Function}
@@ -42,8 +57,6 @@ function D3TableMarker(options) {
     this._tableDestroyListener = null;
 
     this._moveAF = null;
-
-    this.value = null;
     this._lastTimeUpdated = null;
 }
 
@@ -52,6 +65,9 @@ inherits(D3TableMarker, EventEmitter);
 D3TableMarker.prototype.LAYOUT_HORIZONTAL = 'horizontal';
 D3TableMarker.prototype.LAYOUT_VERTICAL = 'vertical';
 
+/**
+ * @type {D3TableMarkerOptions}
+ */
 D3TableMarker.prototype.defaults = {
     formatter: function(d) { return d; },
     outerTickSize: 10,
@@ -65,7 +81,7 @@ D3TableMarker.prototype.defaults = {
 };
 
 /**
- *
+ * Set the table it should draw itself onto
  * @param {D3Table} table
  */
 D3TableMarker.prototype.setTable = function(table) {
@@ -87,10 +103,24 @@ D3TableMarker.prototype.setTable = function(table) {
 
 };
 
-D3TableMarker.prototype.valueComparator = function(timeA, timeB) {
-    return +timeA !== +timeB;
+/**
+ * Compare two values
+ * To be overridden if you wish the marker not to be moved for some value changes which should not impact the marker position
+ *
+ * @param {Number} a
+ * @param {Number} b
+ * @returns {Boolean}
+ */
+D3TableMarker.prototype.valueComparator = function(a, b) {
+    return +a !== +b;
 };
 
+/**
+ * Set the value for the marker, which updates if it needs to
+ *
+ * @param {Number} value
+ * @param {Boolean} [silent]
+ */
 D3TableMarker.prototype.setValue = function(value, silent) {
 
     var previousTimeUpdated = this._lastTimeUpdated;
@@ -113,10 +143,20 @@ D3TableMarker.prototype.setValue = function(value, silent) {
 
 };
 
+/**
+ * Value getter from d3 selection datum which should be made of a value
+ * To be overridden if you wish to alter this value dynamically
+ *
+ * @param {value: Number} data
+ * @returns {*}
+ */
 D3TableMarker.prototype.getValue = function(data) {
     return data.value;
 };
 
+/**
+ * Handle a D3Table being bound
+ */
 D3TableMarker.prototype.bindTable = function() {
 
     var self = this;
@@ -179,6 +219,11 @@ D3TableMarker.prototype.bindTable = function() {
 
 };
 
+/**
+ * Set the correct dimensions and label content
+ *
+ * @param {Number} [transitionDuration]
+ */
 D3TableMarker.prototype.sizeLineAndLabel = function(transitionDuration) {
 
     var layout = this.options.layout;
@@ -247,6 +292,11 @@ D3TableMarker.prototype.sizeLineAndLabel = function(transitionDuration) {
 
 };
 
+/**
+ * Handle D3Table unbound
+ *
+ * @param {D3Table} previousTable
+ */
 D3TableMarker.prototype.unbindTable = function(previousTable) {
 
     previousTable.removeListener(previousTable.options.bemBlockName + ':move', this._tableMoveListener);
@@ -268,6 +318,11 @@ D3TableMarker.prototype.unbindTable = function(previousTable) {
     this.emit('marker:unbound', previousTable);
 };
 
+/**
+ * Move the marker requesting an animation frame
+ *
+ * @param {Number} [transitionDuration]
+ */
 D3TableMarker.prototype.move = function(transitionDuration) {
 
     if (this._moveAF) {
@@ -278,6 +333,9 @@ D3TableMarker.prototype.move = function(transitionDuration) {
 
 };
 
+/**
+ * Move the marker synchronously
+ */
 D3TableMarker.prototype.moveSync = function() {
 
     if (!this.table) {
@@ -288,9 +346,9 @@ D3TableMarker.prototype.moveSync = function() {
     var layout = this.options.layout;
 
     this.container
-        .each(function(d) {
+        .each(function(data) {
 
-            var value = self.getValue(d);
+            var value = self.getValue(data);
 
             if (value === null) {
                 self.hide();
@@ -314,16 +372,16 @@ D3TableMarker.prototype.moveSync = function() {
             var range = scale.range();
             var isInRange = position[positionIndex] >= range[0] && position[positionIndex] <= range[range.length - 1];
 
-            var g = d3.select(this);
+            var group = d3.select(this);
 
             if (isInRange) {
 
                 self.show();
 
-                g.attr('transform', 'translate('+(self.table.margin.left + position[0] >> 0)+','+(self.table.margin.top + position[1] >> 0)+')');
+                group.attr('transform', 'translate('+(self.table.margin.left + position[0] >> 0)+','+(self.table.margin.top + position[1] >> 0)+')');
 
-                g.select('.' + self.options.bemBlockName + '-label')
-                    .text(self.options.formatter(value));
+                group.select('.' + self.options.bemBlockName + '-label')
+                    .text(self.options.formatter.call(self, value));
 
             } else {
                 self.hide();
@@ -333,12 +391,18 @@ D3TableMarker.prototype.moveSync = function() {
 
 };
 
+/**
+ * Show the marker
+ */
 D3TableMarker.prototype.show = function() {
     if (this.container) {
         this.container.style('display', '');
     }
 };
 
+/**
+ * Hide the marker
+ */
 D3TableMarker.prototype.hide = function() {
     if (this.container) {
         this.container.style('display', 'none');
@@ -348,6 +412,11 @@ D3TableMarker.prototype.hide = function() {
     }
 };
 
+/**
+ * Implement resizing the marker, which should be called on D3Table resize event
+ *
+ * @param transitionDuration
+ */
 D3TableMarker.prototype.resize = function(transitionDuration) {
 
     this.sizeLineAndLabel(transitionDuration);

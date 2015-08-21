@@ -5,7 +5,9 @@ import inherits from 'inherits';
 import extend from 'extend';
 
 /**
+ * Mouse position tracker which responds to D3Table events (which listens itself to mouse events)
  *
+ * @param {D3TableMouseTrackerOptions} options
  * @extends {D3TableMarker}
  * @constructor
  */
@@ -22,15 +24,26 @@ function D3TableMouseTracker(options) {
     this.on('marker:unbound', this.handleTableUnbound.bind(this));
 
     this._isListeningToTouchEvents = false;
+
+    /**
+     * @name D3TableMouseTracker#options
+     * @type {D3TableMouseTrackerOptions}
+     */
 }
 
 inherits(D3TableMouseTracker, D3TableMarker);
 
+/**
+ * @type {D3TableMouseTrackerOptions}
+ */
 D3TableMouseTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototype.defaults, {
     bemModifiers: ['mouseTracker'],
     listenToTouchEvents: true
 });
 
+/**
+ * Implement the listener for D3Table being bound
+ */
 D3TableMouseTracker.prototype.handleTableBound = function() {
 
     this._tableMouseenterListener = this.handleMouseenter.bind(this);
@@ -49,6 +62,9 @@ D3TableMouseTracker.prototype.handleTableBound = function() {
     }
 };
 
+/**
+ * Implement the listener for D3Table being unbound
+ */
 D3TableMouseTracker.prototype.handleTableUnbound = function(previousTable) {
 
     previousTable.removeListener(previousTable.options.bemBlockName + ':mouseenter', this._tableMouseenterListener);
@@ -61,6 +77,18 @@ D3TableMouseTracker.prototype.handleTableUnbound = function(previousTable) {
 
 };
 
+/**
+ * Implement getting x and y positions from D3Table event
+ *
+ * @param {D3Table} table
+ * @param {d3.Selection} selection
+ * @param {d3.Event} d3Event
+ * @param {Function} getTime
+ * @param {Function} getRow
+ *
+ * @see D3Table#emitDetailedEvent for arguments description
+ * @returns {*}
+ */
 D3TableMouseTracker.prototype.getValueFromTableEvent = function(table, selection, d3Event, getTime, getRow) {
     switch (this.options.layout) {
         case 'vertical':
@@ -70,6 +98,19 @@ D3TableMouseTracker.prototype.getValueFromTableEvent = function(table, selection
     }
 };
 
+/**
+ * Implement mouse enter handling
+ *  - show the marker and set the value from mouse position
+ *
+ * @param {D3Table} table
+ * @param {d3.Selection} selection
+ * @param {d3.Event} d3Event
+ * @param {Function} getTime
+ * @param {Function} getRow
+ *
+ * @see D3Table#emitDetailedEvent for arguments description
+ * @returns {*}
+ */
 D3TableMouseTracker.prototype.handleMouseenter = function(table, selection, d3Event, getTime, getRow) {
 
     var self = this;
@@ -83,6 +124,19 @@ D3TableMouseTracker.prototype.handleMouseenter = function(table, selection, d3Ev
 
 };
 
+/**
+ * Implement mouse move handling
+ *  - set the value from mouse position
+ *
+ * @param {D3Table} table
+ * @param {d3.Selection} selection
+ * @param {d3.Event} d3Event
+ * @param {Function} getTime
+ * @param {Function} getRow
+ *
+ * @see D3Table#emitDetailedEvent for arguments description
+ * @returns {*}
+ */
 D3TableMouseTracker.prototype.handleMousemove = function(table, selection, d3Event, getTime, getRow) {
 
     var self = this;
@@ -98,6 +152,19 @@ D3TableMouseTracker.prototype.handleMousemove = function(table, selection, d3Eve
 
 };
 
+/**
+ * Implement mouse leave handling
+ *  - hide the marker and set the value from mouse position
+ *
+ * @param {D3Table} table
+ * @param {d3.Selection} selection
+ * @param {d3.Event} d3Event
+ * @param {Function} getTime
+ * @param {Function} getRow
+ *
+ * @see D3Table#emitDetailedEvent for arguments description
+ * @returns {*}
+ */
 D3TableMouseTracker.prototype.handleMouseleave = function(table, selection, d3Event, getTime, getRow) {
 
     if (this._moveAF) {

@@ -263,8 +263,7 @@ timeline
     .toggleDrawing(false)
     .initialize()
     .setTimeRange(minDate, maxDate)
-    .setAvailableWidth(innerWidth)
-    .setAvailableHeight(innerHeight-5)
+    .setAvailableDimensions(innerWidth, innerHeight-5)
     .toggleDrawing(true);
 
 handleDistributionMode(demoOptions.distributionMode, false, false);

@@ -5,16 +5,29 @@ import inherits from 'inherits';
 import extend from 'extend';
 
 /**
+ * Add behaviors to a D3Table to handle elements as visual blocks with:
+ *  - element drag (+ automatic scroll)
+ *  - element clipping
+ *  - element text (+ alignment)
  *
+ * @param {D3TableBlockOptions} options
  * @extends {D3Table}
  * @constructor
  */
 function D3BlockTable(options) {
     D3Table.call(this, options);
+
+    /**
+     * @name D3BlockTable#options
+     * @type {D3TableBlockOptions}
+     */
 }
 
 inherits(D3BlockTable, D3Table);
 
+/**
+ * @type {D3TableBlockOptions}
+ */
 D3BlockTable.prototype.defaults = extend(true, {}, D3Table.prototype.defaults, {
     clipElement: true,
     clipElementFilter: null,
@@ -31,23 +44,57 @@ D3BlockTable.prototype.defaults = extend(true, {}, D3Table.prototype.defaults, {
     trackedElementDOMEvents: ['click', 'mouseenter', 'mouseleave'] // not dynamic
 });
 
-D3BlockTable.prototype.generateClipPathId = function(d) {
-    return this.options.bemBlockName + '-elementClipPath_' + this.instanceNumber + '_' + d.uid;
+/**
+ * Compute the clip path id for each element
+ *
+ * @param {D3TableElement} element
+ * @returns {String}
+ */
+D3BlockTable.prototype.generateClipPathId = function(element) {
+    return this.options.bemBlockName + '-elementClipPath_' + this.instanceNumber + '_' + element.uid;
 };
 
-D3BlockTable.prototype.generateClipRectLink = function(d) {
-    return '#' + this.generateClipRectId(d);
+/**
+ * Compute the clip path link for each element
+ *
+ * @param {D3TableElement} element
+ * @returns {String}
+ */
+D3BlockTable.prototype.generateClipPathLink = function(element) {
+    return 'url(#' + this.generateClipPathId(element) + ')';
 };
 
-D3BlockTable.prototype.generateClipPathLink = function(d) {
-    return 'url(#' + this.generateClipPathId(d) + ')';
+/**
+ * Compute the clip rect id for each element
+ *
+ * @param {D3TableElement} element
+ * @returns {String}
+ */
+D3BlockTable.prototype.generateClipRectId = function(element) {
+    return this.options.bemBlockName + '-elementClipRect_' + this.instanceNumber + '_' + element.uid;
 };
 
-D3BlockTable.prototype.generateClipRectId = function(d) {
-    return this.options.bemBlockName + '-elementClipRect_' + this.instanceNumber + '_' + d.uid;
+/**
+ * Compute the clip rect link for each element
+ *
+ * @param {D3TableElement} element
+ * @returns {String}
+ */
+D3BlockTable.prototype.generateClipRectLink = function(element) {
+    return '#' + this.generateClipRectId(element);
 };
 
-D3BlockTable.prototype.elementEnter = function(selection) {
+/**
+ * Implements element entering:
+ *  - append clipped rect
+ *  - append text
+ *  - call {@link D3BlockTable#elementContentEnter}
+ *  - call custom drag behavior
+ *
+ * @param {d3.Selection} selection
+ * @param {D3TableElement} element
+ */
+D3BlockTable.prototype.elementEnter = function(selection, element) {
 
     var self = this;
 
@@ -91,9 +138,9 @@ D3BlockTable.prototype.elementEnter = function(selection) {
     }
 
     this.options.trackedElementDOMEvents.forEach(function(eventName) {
-        selection.on(eventName, function(d) {
+        selection.on(eventName, function(data) {
             if (!d3.event.defaultPrevented) {
-                self.emitDetailedEvent('element:' + eventName, selection, null, [d]);
+                self.emitDetailedEvent('element:' + eventName, selection, null, [data]);
             }
         });
     });
@@ -108,33 +155,110 @@ D3BlockTable.prototype.elementEnter = function(selection) {
 
     selection.call(this.elementContentEnter.bind(this));
 
-    this.bindDragAndDropOnSelection(selection);
+    this.bindDragAndDropOnSelection(selection, element);
 
 };
 
-
-D3BlockTable.prototype.elementsTranslate = function(selection, d) {
+/**
+ * Implement element being translated:
+ *  - align text
+ *
+ * @param {d3.Selection} selection
+ * @param {D3TableElement} element
+ */
+D3BlockTable.prototype.elementsTranslate = function(selection, element) {
 
     var self = this;
 
-    if (this.options.appendText && this.options.alignLeft && this.options.alignOnTranslate && !d._defaultPrevented) {
+    if (this.options.appendText && this.options.alignLeft && this.options.alignOnTranslate && !element._defaultPrevented) {
 
         selection
             .select('.' + this.options.bemBlockName + '-elementMovableContent')
-            .attr('transform', function(d) {
-                return 'translate(' + Math.max(-self.scales.x(self.getDataStart(d)), 2) + ',0)'
+            .attr('transform', function(data) {
+                return 'translate(' + Math.max(-self.scales.x(self.getDataStart(data)), 2) + ',0)'
             });
     }
 
 };
 
-D3BlockTable.prototype.elementContentEnter = function() {};
+/**
+ * Implement element being updated:
+ *  - transition width
+ *  - align text
+ *  - call {@link D3BlockTable#elementContentUpdate}
+ *
+ * @param {d3.Selection} selection
+ * @param {D3TableElement} element
+ * @param transitionDuration
+ */
+D3BlockTable.prototype.elementUpdate = function(selection, element, transitionDuration) {
 
-D3BlockTable.prototype.elementContentUpdate = function() {};
+    var self = this;
 
+    this.wrapWithAnimation(selection.select('.' + this.options.bemBlockName + '-elementBackground'), transitionDuration)
+        .attr({
+            y: this.options.rowPadding,
+            width: function(d) {
+                return self.scales.x(self.getDataEnd(d)) - self.scales.x(self.getDataStart(d))
+            }
+        });
 
-// @todo clean up
-D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
+    if (this.options.appendText && this.options.alignLeft && !element._defaultPrevented) {
+
+        selection
+            .select('.' + this.options.bemBlockName + '-elementMovableContent')
+            .attr('transform', d => 'translate(' + Math.max(-this.scales.x(this.getDataStart(d)), 2) + ',0)');
+    }
+
+    selection.call(function() {
+        self.elementContentUpdate(selection, element, transitionDuration);
+    });
+
+};
+
+/**
+ * Implement element exiting:
+ *  - remove click listener
+ *  - remove drag listeners
+ *
+ * @param {D3TableElement} element
+ * @param selection
+ */
+D3BlockTable.prototype.elementExit = function(selection, element) {
+
+    selection.on('click', null);
+
+    if (element._drag) {
+        element._drag.on('dragstart', null);
+        element._drag.on('drag', null);
+        element._drag.on('dragend', null);
+        element._drag = null;
+    }
+
+};
+
+/**
+ * Will be called on selection when element content enters
+ *
+ * @param {d3.Selection} selection
+ */
+D3BlockTable.prototype.elementContentEnter = function(selection) {};
+
+/**
+ * Will be called on selection when element content updates
+ *
+ * @param {d3.Selection} selection
+ */
+D3BlockTable.prototype.elementContentUpdate = function(selection) {};
+
+/**
+ * Implement element drag with automatic scroll on provided selection
+ *
+ * @todo clean up
+ * @param {d3.Selection} selection
+ * @param {D3TableElement} element
+ */
+D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection, element) {
 
     var self = this;
     var bodyNode = self.elements.body.node();
@@ -220,7 +344,9 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
     }
 
 
-    var drag = d3.behavior.drag()
+    var drag = element._drag = d3.behavior.drag();
+
+    drag
         .on('dragstart', function(data) {
 
             if (d3.event.sourceEvent) {
@@ -338,38 +464,6 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection) {
         });
 
     selection.call(drag);
-
-};
-
-
-D3BlockTable.prototype.elementUpdate = function(selection, d, transitionDuration) {
-
-    var self = this;
-
-    this.wrapWithAnimation(selection.select('.' + this.options.bemBlockName + '-elementBackground'), transitionDuration)
-        .attr({
-            y: this.options.rowPadding,
-            width: function(d) {
-                return self.scales.x(self.getDataEnd(d)) - self.scales.x(self.getDataStart(d))
-            }
-        });
-
-    if (this.options.appendText && this.options.alignLeft && !d._defaultPrevented) {
-
-        selection
-            .select('.' + this.options.bemBlockName + '-elementMovableContent')
-            .attr('transform', d => 'translate(' + Math.max(-this.scales.x(this.getDataStart(d)), 2) + ',0)');
-    }
-
-    selection.call(function() {
-        self.elementContentUpdate(selection, d, transitionDuration);
-    });
-
-};
-
-D3BlockTable.prototype.elementExit = function(selection) {
-
-    selection.on('click', null);
 
 };
 

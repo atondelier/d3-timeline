@@ -5,7 +5,11 @@ import inherits from 'inherits';
 import extend from 'extend';
 
 /**
+ * A D3TableValueTracker is a D3TableMarker which behaves alone and can be started and stopped,
+ * getting its value from the implemented valueGetter
  *
+ * @see d3.timer to understand how it behaves automatically
+ * @param {D3TableMarkerOptions} options
  * @extends {D3TableMarker}
  * @constructor
  */
@@ -17,16 +21,27 @@ function D3TableValueTracker(options) {
 
 inherits(D3TableValueTracker, D3TableMarker);
 
+/**
+ * @type {D3TableMarkerOptions}
+ */
 D3TableValueTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototype.defaults, {
     bemModifiers: ['valueTracker']
 });
 
+/**
+ * By default, the value it gets is 0
+ *
+ * @returns {Number}
+ */
 D3TableValueTracker.prototype.valueGetter = function() {
 
    return 0;
 
 };
 
+/**
+ * Start the tracker
+ */
 D3TableValueTracker.prototype.start = function() {
 
     var self = this;
@@ -42,6 +57,9 @@ D3TableValueTracker.prototype.start = function() {
     });
 };
 
+/**
+ * Stop the tracker
+ */
 D3TableValueTracker.prototype.stop = function() {
 
     this.enabled = false;
