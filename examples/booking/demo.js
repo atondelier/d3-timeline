@@ -113,8 +113,8 @@ Timeline instantiation and listeners
 var timeline = new D3Timeline({
     container: '#container',
     renderOnIdle: true,
-    hideTicksOnZoom: true,
-    hideTicksOnDrag: true,
+    hideTicksOnZoom: false,
+    hideTicksOnDrag: false,
     clipElementFilter: function(selection) {
         return selection.datum().card.name.length > 10;
     },

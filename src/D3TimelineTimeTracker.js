@@ -25,8 +25,10 @@ D3TimelineTimeTracker.prototype.timeGetter = function() {
     return new Date();
 };
 
-D3TimelineTimeTracker.prototype.timeComparator = function(a,b) {
-    return this.valueComparator(a,b);
+D3TimelineTimeTracker.prototype.timeComparator = D3TableValueTracker.prototype.valueComparator;
+
+D3TimelineTimeTracker.prototype.valueComparator = function(a,b) {
+    return this.timeComparator(a,b);
 };
 
 D3TimelineTimeTracker.prototype.setTime = function(time) {

@@ -491,7 +491,7 @@ D3Table.prototype.handleWheeling = function() {
 
     }
 
-    this.move(dx, dy, false, !movingX);
+    this.move(dx, dy, false, !movingX, true);
 
 };
 
