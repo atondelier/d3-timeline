@@ -7,9 +7,9 @@ import d3 from 'd3';
 import D3Table from './D3Table';
 
 /**
- * Table marker options which knows how to represent itself in a {@link D3Table#container}
+ * Table marker options which knows how to represent itself in a {@link d3Timeline.D3Table#container}
  *
- * @param {D3TableMarkerOptions} options
+ * @param {d3Timeline.D3TableMarkerOptions} options
  * @constructor
  */
 function D3TableMarker(options) {
@@ -19,7 +19,7 @@ function D3TableMarker(options) {
     this.options = extend(true, {}, this.defaults, options);
 
     /**
-     * @type {D3Table}
+     * @type {d3Timeline.D3Table}
      */
     this.table = null;
 
@@ -66,7 +66,7 @@ D3TableMarker.prototype.LAYOUT_HORIZONTAL = 'horizontal';
 D3TableMarker.prototype.LAYOUT_VERTICAL = 'vertical';
 
 /**
- * @type {D3TableMarkerOptions}
+ * @type {d3Timeline.D3TableMarkerOptions}
  */
 D3TableMarker.prototype.defaults = {
     formatter: function(d) { return d; },
@@ -82,7 +82,7 @@ D3TableMarker.prototype.defaults = {
 
 /**
  * Set the table it should draw itself onto
- * @param {D3Table} table
+ * @param {d3Timeline.D3Table} table
  */
 D3TableMarker.prototype.setTable = function(table) {
 
@@ -295,7 +295,7 @@ D3TableMarker.prototype.sizeLineAndLabel = function(transitionDuration) {
 /**
  * Handle D3Table unbound
  *
- * @param {D3Table} previousTable
+ * @param {d3Timeline.D3Table} previousTable
  */
 D3TableMarker.prototype.unbindTable = function(previousTable) {
 

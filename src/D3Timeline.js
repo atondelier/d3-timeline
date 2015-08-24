@@ -13,7 +13,7 @@ import d3 from 'd3';
  *  - and special methods proxying to D3BlockTable methods
  *
  *
- * @param {D3TimelineOptions} options
+ * @param {d3Timeline.D3TimelineOptions} options
  * @constructor
  * @extends {D3BlockTable}
  */
@@ -25,7 +25,7 @@ function D3Timeline(options) {
 
     /**
      * @name D3Timeline#options
-     * @type {D3TimelineOptions}
+     * @type {d3Timeline.D3TimelineOptions}
      */
 }
 
@@ -56,7 +56,7 @@ D3Timeline.prototype.xScaleFactory = function() {
 /**
  * Use data start property without casting
  *
- * @param {D3TableElement} data
+ * @param {d3Timeline.D3TableElement} data
  * @returns {start|any}
  */
 D3Timeline.prototype.getDataStart = function(data) {
@@ -66,7 +66,7 @@ D3Timeline.prototype.getDataStart = function(data) {
 /**
  * Use data end property without casting
  *
- * @param {D3TableElement} data
+ * @param {d3Timeline.D3TableElement} data
  * @returns {start|any}
  */
 D3Timeline.prototype.getDataEnd = function(data) {
@@ -79,7 +79,7 @@ D3Timeline.prototype.getDataEnd = function(data) {
  *  - minimumTimeInterval: the time interval should never be lower than that
  *  - availableTimeIntervals: the list of available time intervals
  *
- * @returns {D3Timeline}
+ * @returns {d3Timeline.D3Timeline}
  */
 D3Timeline.prototype.updateXAxisInterval = function() {
 
@@ -146,11 +146,11 @@ D3Timeline.prototype.updateXAxisInterval = function() {
 };
 
 /**
- * Proxy to {@link D3Table#setXRange}
+ * Proxy to {@link d3Timeline.D3Table#setXRange}
  *
  * @param {Date} minDate
  * @param {Date} maxDate
- * @returns {D3Timeline}
+ * @returns {d3Timeline.D3Timeline}
  */
 D3Timeline.prototype.setTimeRange = function(minDate, maxDate) {
     return this.setXRange(minDate, maxDate);

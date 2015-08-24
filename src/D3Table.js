@@ -10,14 +10,14 @@ import d3 from 'd3';
 
 /**
  * An instance of D3Table uses d3.js to build a svg grid with axises.
- * You set a data set with {@link D3Table.setData}.
- * Each group of element {@link D3TableRow} is drawn in rows (y axis)
- * and each element {@link D3TableElement} of a row is drawn in this row
+ * You set a data set with {@link d3Timeline.D3Table.setData}.
+ * Each group of element {@link d3Timeline.D3TableRow} is drawn in rows (y axis)
+ * and each element {@link d3Timeline.D3TableElement} of a row is drawn in this row
  * There is no graphical element for rows.
  *
  * The provided nested data set is first flattened to enable transition between differents rows.
  *
- * @param {D3TableOptions} options
+ * @param {d3Timeline.D3TableOptions} options
  * @constructor
  */
 function D3Table(options) {
@@ -29,7 +29,7 @@ function D3Table(options) {
     this.instanceNumber = D3Table.instancesCount;
 
     /**
-     * @type {D3TableOptions}
+     * @type {d3Timeline.D3TableOptions}
      */
     this.options = extend(true, {}, this.defaults, options);
 
@@ -190,7 +190,7 @@ function D3Table(options) {
 inherits(D3Table, EventEmitter);
 
 /**
- * @type {D3TableOptions}
+ * @type {d3Timeline.D3TableOptions}
  */
 D3Table.prototype.defaults = {
     bemBlockName: 'table',
@@ -247,7 +247,7 @@ D3Table.prototype.noop = function() {};
  *
  * Data will be drawn in the inner container
  *
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.initialize = function() {
 
@@ -661,7 +661,7 @@ D3Table.prototype.updateMargins = function(updateDimensions) {
  * @param {Array<D3TableRow>} data
  * @param {Number} [transitionDuration]
  * @param {Boolean} [animateY]
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.setData = function(data, transitionDuration, animateY) {
 
@@ -690,7 +690,7 @@ D3Table.prototype.setData = function(data, transitionDuration, animateY) {
  *
  * @param {Date} minX
  * @param {Date} maxX
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.setXRange = function(minX, maxX) {
 
@@ -715,7 +715,7 @@ D3Table.prototype.setXRange = function(minX, maxX) {
  *
  * @param {Number} availableWidth
  * @param {Number} availableHeight
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.setAvailableDimensions = function(availableWidth, availableHeight) {
 
@@ -745,7 +745,7 @@ D3Table.prototype.setAvailableDimensions = function(availableWidth, availableHei
  * Set available width so that every thing update correspondingly
  *
  * @param {Number} availableWidth
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.setAvailableWidth = function(availableWidth) {
 
@@ -772,7 +772,7 @@ D3Table.prototype.setAvailableWidth = function(availableWidth) {
  * Set available height so that every thing update correspondingly
  *
  * @param {Number} availableHeight
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.setAvailableHeight = function(availableHeight) {
 
@@ -892,7 +892,7 @@ D3Table.prototype.updateY = function (transitionDuration) {
 /**
  * Update column with, basically the width corresponding to 1 unit in x data dimension
  *
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.updateXAxisInterval = function() {
 
@@ -906,7 +906,7 @@ D3Table.prototype.updateXAxisInterval = function() {
  *
  * @param {Number} [transitionDuration]
  * @param {Boolean} [skipTicks] Should not draw tick lines
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.drawXAxis = function(transitionDuration, skipTicks) {
 
@@ -953,7 +953,7 @@ D3Table.prototype.drawXAxis = function(transitionDuration, skipTicks) {
  *
  * @param {Number} [transitionDuration]
  * @param {Boolean} [skipTicks] Should not draw tick lines
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.drawYAxis = function drawYAxis(transitionDuration, skipTicks) {
 
@@ -1005,7 +1005,7 @@ D3Table.prototype.cloneData = function() {
     return this.data.map(function(d) {
 
         /**
-         * @type {D3TableRow}
+         * @type {d3Timeline.D3TableRow}
          */
         var res = {};
 
@@ -1032,7 +1032,7 @@ D3Table.prototype.cloneFlattenedData = function() {
     return this.flattenedData.map(function(e) {
 
         /**
-         * @type {D3TableElement}
+         * @type {d3Timeline.D3TableElement}
          */
         var res = {};
 
@@ -1049,12 +1049,12 @@ D3Table.prototype.cloneFlattenedData = function() {
 /**
  * This clone method does not clone the entities itself
  *
- * @returns {D3TableElement}
+ * @returns {d3Timeline.D3TableElement}
  */
 D3Table.prototype.cloneElement = function(e) {
 
     /**
-     * @type {D3TableElement}
+     * @type {d3Timeline.D3TableElement}
      */
     var res = {};
 
@@ -1070,8 +1070,8 @@ D3Table.prototype.cloneElement = function(e) {
 /**
  * Get the row holding the provided element (reference equality test)
  *
- * @param {D3TableElement} element
- * @returns {D3TableRow}
+ * @param {d3Timeline.D3TableElement} element
+ * @returns {d3Timeline.D3TableRow}
  */
 D3Table.prototype.getElementRow = function(element) {
     return this._find(this.data, function(row) {
@@ -1113,7 +1113,7 @@ D3Table.prototype.generateFlattenedData = function() {
 /**
  * Compute the transform string for a given element
  *
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @returns {string}
  */
 D3Table.prototype.getTransformFromData = function(element) {
@@ -1123,7 +1123,7 @@ D3Table.prototype.getTransformFromData = function(element) {
 /**
  * Returns true if the element with the provided bound data should be culled
  *
- * @param {D3TableElement} data
+ * @param {d3Timeline.D3TableElement} data
  * @returns {Boolean}
  */
 D3Table.prototype.cullingFilter = function(data) {
@@ -1150,7 +1150,7 @@ D3Table.prototype.cullingFilter = function(data) {
 /**
  * Get start value of the provided data, used to represent element start
  *
- * @param {D3TableElement} data
+ * @param {d3Timeline.D3TableElement} data
  * @returns {number}
  */
 D3Table.prototype.getDataStart = function(data) {
@@ -1160,7 +1160,7 @@ D3Table.prototype.getDataStart = function(data) {
 /**
  * Get end value of the provided data, used to represent element end
  *
- * @param {D3TableElement} data
+ * @param {d3Timeline.D3TableElement} data
  * @returns {number}
  */
 D3Table.prototype.getDataEnd = function(data) {
@@ -1229,7 +1229,7 @@ D3Table.prototype.moveElements = function(forceDraw, skipXAxis, forceTicks) {
  * Draw elements (entering, exiting, updating)
  *
  * @param {Number} [transitionDuration]
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.drawElements = function(transitionDuration) {
 
@@ -1269,7 +1269,7 @@ D3Table.prototype.drawElements = function(transitionDuration) {
             if (self.previousFlattenedData) {
                 self.previousFlattenedData.forEach(
                     /**
-                     * @param {D3TableElement} data
+                     * @param {d3Timeline.D3TableElement} data
                      */
                     function(data) {
                         if (!startTransformMap[data.uid]) {
@@ -1280,7 +1280,7 @@ D3Table.prototype.drawElements = function(transitionDuration) {
             if (self.flattenedData) {
                 self.flattenedData.forEach(
                     /**
-                     * @param {D3TableElement} data
+                     * @param {d3Timeline.D3TableElement} data
                      */
                     function(data) {
                         if (!endTransformMap[data.uid]) {
@@ -1308,7 +1308,7 @@ D3Table.prototype.drawElements = function(transitionDuration) {
 
             exiting.each(
                 /**
-                 * @param {D3TableElement} data
+                 * @param {d3Timeline.D3TableElement} data
                  */
                 function(data) {
 
@@ -1352,7 +1352,7 @@ D3Table.prototype.drawElements = function(transitionDuration) {
 
         groups.each(
             /**
-             * @param {D3TableElement} data
+             * @param {d3Timeline.D3TableElement} data
              */
             function(data) {
 
@@ -1457,14 +1457,14 @@ D3Table.prototype.stopElementTransition = function() {
 
 /**
  * @param {d3.Selection} selection
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @returns {d3.Selection}
  */
 D3Table.prototype.elementEnter = function(selection, element) { return selection; };
 
 /**
  * @param {d3.Selection} selection
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @param {Number} transitionDuration
  * @returns {d3.Selection}
  */
@@ -1472,7 +1472,7 @@ D3Table.prototype.elementUpdate = function(selection, element, transitionDuratio
 
 /**
  * @param {d3.Selection} selection
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @returns {d3.Selection}
  */
 D3Table.prototype.elementExit = function(selection, element) { return selection; };
@@ -1543,7 +1543,7 @@ D3Table.prototype.ensureInDomains = function() {
  * Toggle internal drawing prevent flag
  *
  * @param {Boolean} [active] If not provided, it negates the current flag value
- * @returns {D3Table}
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.toggleDrawing = function(active) {
 

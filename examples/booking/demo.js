@@ -108,7 +108,7 @@ Timeline instantiation and listeners
  */
 
 /**
- * @type {D3Timeline}
+ * @type {d3Timeline.D3Timeline}
  */
 var timeline = new D3Timeline({
     container: '#container',

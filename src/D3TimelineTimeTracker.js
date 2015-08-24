@@ -5,9 +5,9 @@ import inherits from 'inherits';
 import extend from 'extend';
 
 /**
- * Timeline time tracker which can be started and stopped as it is a {@link D3TableValueTracker}
+ * Timeline time tracker which can be started and stopped as it is a {@link d3Timeline.D3TableValueTracker}
  *
- * @extends {D3TableValueTracker}
+ * @extends {d3Timeline.D3TableValueTracker}
  * @constructor
  */
 function D3TimelineTimeTracker(options) {
@@ -22,7 +22,7 @@ function D3TimelineTimeTracker(options) {
 inherits(D3TimelineTimeTracker, D3TableValueTracker);
 
 /**
- * @type {D3TableMarkerOptions}
+ * @type {d3Timeline.D3TableMarkerOptions}
  */
 D3TimelineTimeTracker.prototype.defaults = extend(true, {}, D3TableValueTracker.prototype.defaults, {
     bemBlockName: 'timelineMarker',
@@ -41,21 +41,21 @@ D3TimelineTimeTracker.prototype.timeGetter = function() {
 };
 
 /**
- * Proxy to {@link D3TableValueTracker#timeGetter}
+ * Proxy to {@link d3Timeline.D3TableValueTracker#timeGetter}
  *
  * @returns {Date}
  */
 D3TimelineTimeTracker.prototype.valueGetter = D3TimelineTimeTracker.prototype.timeGetter;
 
 /**
- * Compare times, defaults to {@link D3TableValueTracker#valueComparator}
+ * Compare times, defaults to {@link d3Timeline.D3TableValueTracker#valueComparator}
  *
  * @type {Function|*}
  */
 D3TimelineTimeTracker.prototype.timeComparator = D3TableValueTracker.prototype.valueComparator;
 
 /**
- * Proxy to {@link D3TimelineTimeTracker.timeComparator}
+ * Proxy to {@link d3Timeline.D3TimelineTimeTracker.timeComparator}
  *
  * @param {Date} a
  * @param {Date} b
@@ -65,7 +65,7 @@ D3TimelineTimeTracker.prototype.valueComparator = function(a,b) {
 };
 
 /**
- * Proxy to {@link D3TableValueTracker#setValue}
+ * Proxy to {@link d3Timeline.D3TableValueTracker#setValue}
  * To be overridden if you which to alter the value set
  *
  * @param {Date} time
@@ -73,9 +73,9 @@ D3TimelineTimeTracker.prototype.valueComparator = function(a,b) {
 D3TimelineTimeTracker.prototype.setTime = D3TableValueTracker.prototype.setValue;
 
 /**
- * Proxy to {@link D3TableValueTracker#setTable}
+ * Proxy to {@link d3Timeline.D3TableValueTracker#setTable}
  *
- * @param {D3Timeline} timeline
+ * @param {d3Timeline.D3Timeline} timeline
  */
 D3TimelineTimeTracker.prototype.setTimeline = D3TableValueTracker.prototype.setTable;
 

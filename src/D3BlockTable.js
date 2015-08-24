@@ -10,8 +10,8 @@ import extend from 'extend';
  *  - element clipping
  *  - element text (+ alignment)
  *
- * @param {D3TableBlockOptions} options
- * @extends {D3Table}
+ * @param {d3Timeline.D3TableBlockOptions} options
+ * @extends {d3Timeline.D3Table}
  * @constructor
  */
 function D3BlockTable(options) {
@@ -19,14 +19,14 @@ function D3BlockTable(options) {
 
     /**
      * @name D3BlockTable#options
-     * @type {D3TableBlockOptions}
+     * @type {d3Timeline.D3TableBlockOptions}
      */
 }
 
 inherits(D3BlockTable, D3Table);
 
 /**
- * @type {D3TableBlockOptions}
+ * @type {d3Timeline.D3TableBlockOptions}
  */
 D3BlockTable.prototype.defaults = extend(true, {}, D3Table.prototype.defaults, {
     clipElement: true,
@@ -47,7 +47,7 @@ D3BlockTable.prototype.defaults = extend(true, {}, D3Table.prototype.defaults, {
 /**
  * Compute the clip path id for each element
  *
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @returns {String}
  */
 D3BlockTable.prototype.generateClipPathId = function(element) {
@@ -57,7 +57,7 @@ D3BlockTable.prototype.generateClipPathId = function(element) {
 /**
  * Compute the clip path link for each element
  *
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @returns {String}
  */
 D3BlockTable.prototype.generateClipPathLink = function(element) {
@@ -67,7 +67,7 @@ D3BlockTable.prototype.generateClipPathLink = function(element) {
 /**
  * Compute the clip rect id for each element
  *
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @returns {String}
  */
 D3BlockTable.prototype.generateClipRectId = function(element) {
@@ -77,7 +77,7 @@ D3BlockTable.prototype.generateClipRectId = function(element) {
 /**
  * Compute the clip rect link for each element
  *
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @returns {String}
  */
 D3BlockTable.prototype.generateClipRectLink = function(element) {
@@ -92,7 +92,7 @@ D3BlockTable.prototype.generateClipRectLink = function(element) {
  *  - call custom drag behavior
  *
  * @param {d3.Selection} selection
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  */
 D3BlockTable.prototype.elementEnter = function(selection, element) {
 
@@ -164,7 +164,7 @@ D3BlockTable.prototype.elementEnter = function(selection, element) {
  *  - align text
  *
  * @param {d3.Selection} selection
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  */
 D3BlockTable.prototype.elementsTranslate = function(selection, element) {
 
@@ -188,7 +188,7 @@ D3BlockTable.prototype.elementsTranslate = function(selection, element) {
  *  - call {@link D3BlockTable#elementContentUpdate}
  *
  * @param {d3.Selection} selection
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @param transitionDuration
  */
 D3BlockTable.prototype.elementUpdate = function(selection, element, transitionDuration) {
@@ -221,7 +221,7 @@ D3BlockTable.prototype.elementUpdate = function(selection, element, transitionDu
  *  - remove click listener
  *  - remove drag listeners
  *
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  * @param selection
  */
 D3BlockTable.prototype.elementExit = function(selection, element) {
@@ -256,7 +256,7 @@ D3BlockTable.prototype.elementContentUpdate = function(selection) {};
  *
  * @todo clean up
  * @param {d3.Selection} selection
- * @param {D3TableElement} element
+ * @param {d3Timeline.D3TableElement} element
  */
 D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection, element) {
 
