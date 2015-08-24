@@ -124,7 +124,6 @@ var timeline = new D3Timeline({
     usePreviousDataForTransform: true
 });
 
-
 timeline.elementContentUpdate = function(selection) {
     selection
         .select('.timeline-entityLabel')

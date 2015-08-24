@@ -18,6 +18,7 @@ import d3 from 'd3';
  * The provided nested data set is first flattened to enable transition between differents rows.
  *
  * @param {d3Timeline.D3TableOptions} options
+ * @name d3Timeline.D3Table
  * @constructor
  */
 function D3Table(options) {

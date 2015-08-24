@@ -8,6 +8,7 @@ import extend from 'extend';
  * Mouse position tracker which responds to D3Table events (which listens itself to mouse events)
  *
  * @param {d3Timeline.D3TableMouseTrackerOptions} options
+ * @name d3Timeline.D3TableMouseTracker
  * @extends {d3Timeline.D3TableMarker}
  * @constructor
  */

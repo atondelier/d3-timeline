@@ -11,6 +11,7 @@ import extend from 'extend';
  *  - element text (+ alignment)
  *
  * @param {d3Timeline.D3TableBlockOptions} options
+ * @name d3Timeline.D3BlockTable
  * @extends {d3Timeline.D3Table}
  * @constructor
  */
@@ -18,7 +19,7 @@ function D3BlockTable(options) {
     D3Table.call(this, options);
 
     /**
-     * @name D3BlockTable#options
+     * @name d3Timeline.D3BlockTable#options
      * @type {d3Timeline.D3TableBlockOptions}
      */
 }
@@ -88,7 +89,7 @@ D3BlockTable.prototype.generateClipRectLink = function(element) {
  * Implements element entering:
  *  - append clipped rect
  *  - append text
- *  - call {@link D3BlockTable#elementContentEnter}
+ *  - call {@link d3Timeline.D3BlockTable#elementContentEnter}
  *  - call custom drag behavior
  *
  * @param {d3.Selection} selection
@@ -185,7 +186,7 @@ D3BlockTable.prototype.elementsTranslate = function(selection, element) {
  * Implement element being updated:
  *  - transition width
  *  - align text
- *  - call {@link D3BlockTable#elementContentUpdate}
+ *  - call {@link d3Timeline.D3BlockTable#elementContentUpdate}
  *
  * @param {d3.Selection} selection
  * @param {d3Timeline.D3TableElement} element

@@ -14,8 +14,9 @@ import d3 from 'd3';
  *
  *
  * @param {d3Timeline.D3TimelineOptions} options
+ * @name d3Timeline.D3Timeline
  * @constructor
- * @extends {D3BlockTable}
+ * @extends {d3Timeline.D3BlockTable}
  */
 function D3Timeline(options) {
 

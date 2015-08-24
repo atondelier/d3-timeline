@@ -8,6 +8,7 @@ import extend from 'extend';
  * Timeline time tracker which can be started and stopped as it is a {@link d3Timeline.D3TableValueTracker}
  *
  * @extends {d3Timeline.D3TableValueTracker}
+ * @name d3Timeline.D3TimelineTimeTracker
  * @constructor
  */
 function D3TimelineTimeTracker(options) {

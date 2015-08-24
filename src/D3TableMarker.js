@@ -10,6 +10,7 @@ import D3Table from './D3Table';
  * Table marker options which knows how to represent itself in a {@link d3Timeline.D3Table#container}
  *
  * @param {d3Timeline.D3TableMarkerOptions} options
+ * @name d3Timeline.D3TableMarker
  * @constructor
  */
 function D3TableMarker(options) {

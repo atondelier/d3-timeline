@@ -9,8 +9,9 @@ import extend from 'extend';
  * getting its value from the implemented valueGetter
  *
  * @see d3.timer to understand how it behaves automatically
- * @param {d3Timeline.D3TableMarkerOptions} options
- * @extends {d3Timeline.D3TableMarker}
+ * @param {D3TableMarkerOptions} options
+ * @name d3Timeline.D3TableValueTracker
+ * @extends {D3TableMarker}
  * @constructor
  */
 function D3TableValueTracker(options) {
@@ -22,7 +23,7 @@ function D3TableValueTracker(options) {
 inherits(D3TableValueTracker, D3TableMarker);
 
 /**
- * @type {d3Timeline.D3TableMarkerOptions}
+ * @type {D3TableMarkerOptions}
  */
 D3TableValueTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototype.defaults, {
     bemModifiers: ['valueTracker']
