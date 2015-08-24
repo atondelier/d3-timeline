@@ -448,8 +448,6 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection, element)
             data._defaultPrevented = false;
             self._frozenUids.splice(self._frozenUids.indexOf(data.uid), 1);
 
-            d3.timer.flush();
-
             var deltaFromTopLeftCorner = d3.mouse(selection.node());
             var halfHeight = self.options.rowHeight / 2;
             self.elements.innerContainer.attr('transform', null);

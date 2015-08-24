@@ -325,6 +325,8 @@ D3Table.prototype.destroy = function() {
     this.elements.body.on('.zoom', null);
     this.elements.body.on('click', null);
 
+    this.container.remove();
+
     // remove references
     this.container = null;
     this.elements = null;
