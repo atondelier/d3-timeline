@@ -4,15 +4,16 @@ import D3TableMarker from './D3TableMarker';
 import inherits from 'inherits';
 import extend from 'extend';
 
+var d3Timeline = {};
+
 /**
  * Mouse position tracker which responds to D3Table events (which listens itself to mouse events)
  *
  * @param {d3Timeline.D3TableMouseTrackerOptions} options
- * @name d3Timeline.D3TableMouseTracker
  * @extends {d3Timeline.D3TableMarker}
  * @constructor
  */
-function D3TableMouseTracker(options) {
+d3Timeline.D3TableMouseTracker = function D3TableMouseTracker(options) {
     D3TableMarker.call(this, options);
 
     this._tableMouseenterListener = null;
@@ -27,10 +28,12 @@ function D3TableMouseTracker(options) {
     this._isListeningToTouchEvents = false;
 
     /**
-     * @name D3TableMouseTracker#options
+     * @name d3Timeline.D3TableMouseTracker#options
      * @type {d3Timeline.D3TableMouseTrackerOptions}
      */
-}
+};
+
+var D3TableMouseTracker = d3Timeline.D3TableMouseTracker;
 
 inherits(D3TableMouseTracker, D3TableMarker);
 

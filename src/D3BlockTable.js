@@ -4,6 +4,8 @@ import D3Table from './D3Table';
 import inherits from 'inherits';
 import extend from 'extend';
 
+var d3Timeline = {};
+
 /**
  * Add behaviors to a D3Table to handle elements as visual blocks with:
  *  - element drag (+ automatic scroll)
@@ -11,18 +13,19 @@ import extend from 'extend';
  *  - element text (+ alignment)
  *
  * @param {d3Timeline.D3TableBlockOptions} options
- * @name d3Timeline.D3BlockTable
  * @extends {d3Timeline.D3Table}
  * @constructor
  */
-function D3BlockTable(options) {
+d3Timeline.D3BlockTable = function D3BlockTable(options) {
     D3Table.call(this, options);
 
     /**
      * @name d3Timeline.D3BlockTable#options
      * @type {d3Timeline.D3TableBlockOptions}
      */
-}
+};
+
+var D3BlockTable = d3Timeline.D3BlockTable;
 
 inherits(D3BlockTable, D3Table);
 

@@ -7,6 +7,8 @@ import inherits from 'inherits';
 import EventEmitter from 'events/events';
 import d3 from 'd3';
 
+var d3Timeline = {};
+
 
 /**
  * An instance of D3Table uses d3.js to build a svg grid with axises.
@@ -18,10 +20,9 @@ import d3 from 'd3';
  * The provided nested data set is first flattened to enable transition between differents rows.
  *
  * @param {d3Timeline.D3TableOptions} options
- * @name d3Timeline.D3Table
  * @constructor
  */
-function D3Table(options) {
+d3Timeline.D3Table = function D3Table(options) {
 
     EventEmitter.call(this);
 
@@ -186,7 +187,9 @@ function D3Table(options) {
      * @private
      */
     this._disabled = false;
-}
+};
+
+var D3Table = d3Timeline.D3Table;
 
 inherits(D3Table, EventEmitter);
 

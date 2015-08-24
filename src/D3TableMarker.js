@@ -6,14 +6,15 @@ import EventEmitter from 'events/events';
 import d3 from 'd3';
 import D3Table from './D3Table';
 
+var d3Timeline = {};
+
 /**
  * Table marker options which knows how to represent itself in a {@link d3Timeline.D3Table#container}
  *
  * @param {d3Timeline.D3TableMarkerOptions} options
- * @name d3Timeline.D3TableMarker
  * @constructor
  */
-function D3TableMarker(options) {
+d3Timeline.D3TableMarker = function D3TableMarker(options) {
 
     EventEmitter.call(this);
 
@@ -59,7 +60,9 @@ function D3TableMarker(options) {
 
     this._moveAF = null;
     this._lastTimeUpdated = null;
-}
+};
+
+var D3TableMarker = d3Timeline.D3TableMarker;
 
 inherits(D3TableMarker, EventEmitter);
 

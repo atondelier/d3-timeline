@@ -4,21 +4,24 @@ import D3TableMarker from './D3TableMarker';
 import inherits from 'inherits';
 import extend from 'extend';
 
+var d3Timeline = {};
+
 /**
  * A D3TableValueTracker is a D3TableMarker which behaves alone and can be started and stopped,
  * getting its value from the implemented valueGetter
  *
  * @see d3.timer to understand how it behaves automatically
  * @param {D3TableMarkerOptions} options
- * @name d3Timeline.D3TableValueTracker
  * @extends {D3TableMarker}
  * @constructor
  */
-function D3TableValueTracker(options) {
+d3Timeline.D3TableValueTracker = function D3TableValueTracker(options) {
     D3TableMarker.call(this, options);
 
     this.enabled = false;
-}
+};
+
+var D3TableValueTracker = d3Timeline.D3TableValueTracker;
 
 inherits(D3TableValueTracker, D3TableMarker);
 

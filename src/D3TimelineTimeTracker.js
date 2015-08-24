@@ -4,21 +4,24 @@ import D3TableValueTracker from './D3TableValueTracker';
 import inherits from 'inherits';
 import extend from 'extend';
 
+var d3Timeline = {};
+
 /**
  * Timeline time tracker which can be started and stopped as it is a {@link d3Timeline.D3TableValueTracker}
  *
  * @extends {d3Timeline.D3TableValueTracker}
- * @name d3Timeline.D3TimelineTimeTracker
  * @constructor
  */
-function D3TimelineTimeTracker(options) {
+d3Timeline.D3TimelineTimeTracker = function D3TimelineTimeTracker(options) {
     D3TableValueTracker.call(this, options);
 
     /**
-     * @name D3TimelineTimeTracker#value
+     * @name d3Timeline.D3TimelineTimeTracker#value
      * @type {Date}
      */
-}
+};
+
+var D3TimelineTimeTracker = d3Timeline.D3TimelineTimeTracker;
 
 inherits(D3TimelineTimeTracker, D3TableValueTracker);
 

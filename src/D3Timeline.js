@@ -7,6 +7,8 @@ import inherits from 'inherits';
 import D3BlockTable from './D3BlockTable';
 import d3 from 'd3';
 
+var d3Timeline = {};
+
 /**
  * Timeline version of a D3BlockTable with
  *  - time scale as x scale
@@ -14,24 +16,28 @@ import d3 from 'd3';
  *
  *
  * @param {d3Timeline.D3TimelineOptions} options
- * @name d3Timeline.D3Timeline
  * @constructor
  * @extends {d3Timeline.D3BlockTable}
  */
-function D3Timeline(options) {
+d3Timeline.D3Timeline = function D3Timeline(options) {
 
     D3BlockTable.call(this, options);
 
     this.currentTimeInterval = this.options.minimumTimeInterval;
 
     /**
-     * @name D3Timeline#options
+     * @name d3Timeline.D3Timeline#options
      * @type {d3Timeline.D3TimelineOptions}
      */
-}
+};
+
+var D3Timeline = d3Timeline.D3Timeline;
 
 inherits(D3Timeline, D3BlockTable);
 
+/**
+ * @type {d3Timeline.D3TimelineOptions}
+ */
 D3Timeline.prototype.defaults = extend(true, {}, D3BlockTable.prototype.defaults, {
     bemBlockName: 'timeline',
     bemBlockModifier: '',
