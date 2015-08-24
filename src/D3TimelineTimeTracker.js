@@ -49,7 +49,9 @@ D3TimelineTimeTracker.prototype.timeGetter = function() {
  *
  * @returns {Date}
  */
-D3TimelineTimeTracker.prototype.valueGetter = D3TimelineTimeTracker.prototype.timeGetter;
+D3TimelineTimeTracker.prototype.valueGetter = function() {
+    return this.timeGetter();
+};
 
 /**
  * Compare times, defaults to {@link d3Timeline.D3TableValueTracker#valueComparator}
@@ -74,7 +76,9 @@ D3TimelineTimeTracker.prototype.valueComparator = function(a,b) {
  *
  * @param {Date} time
  */
-D3TimelineTimeTracker.prototype.setTime = D3TableValueTracker.prototype.setValue;
+D3TimelineTimeTracker.prototype.setTime = function(time) {
+    return this.setValue(time);
+};
 
 /**
  * Proxy to {@link d3Timeline.D3TableValueTracker#setTable}

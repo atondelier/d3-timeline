@@ -11,8 +11,8 @@ var d3Timeline = {};
  * getting its value from the implemented valueGetter
  *
  * @see d3.timer to understand how it behaves automatically
- * @param {D3TableMarkerOptions} options
- * @extends {D3TableMarker}
+ * @param {d3Timeline.D3TableMarkerOptions} options
+ * @extends {d3Timeline.D3TableMarker}
  * @constructor
  */
 d3Timeline.D3TableValueTracker = function D3TableValueTracker(options) {
@@ -26,7 +26,7 @@ var D3TableValueTracker = d3Timeline.D3TableValueTracker;
 inherits(D3TableValueTracker, D3TableMarker);
 
 /**
- * @type {D3TableMarkerOptions}
+ * @type {d3Timeline.D3TableMarkerOptions}
  */
 D3TableValueTracker.prototype.defaults = extend(true, {}, D3TableMarker.prototype.defaults, {
     bemModifiers: ['valueTracker']
