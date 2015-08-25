@@ -2,12 +2,14 @@
  * Drag simulation helper
  *
  * @param element
- * @param parent
+ * @param container
+ * @param relative
  * @constructor
  */
-function DragSimulator(element, parent) {
+function DragSimulator(element, container, relative) {
     this.element = element;
-    this.parent = parent;
+    this.container = container;
+    this.relative = relative;
     this.center = null;
     this.transitionDuration = 500;
 }
@@ -17,10 +19,10 @@ DragSimulator.prototype.moveEventType = 'mousemove';
 DragSimulator.prototype.stopEventType = 'mouseup';
 
 DragSimulator.prototype.createEvent = function(type, x, y) {
-    var evt = document.createEvent('CustomEvent');  // MUST be 'CustomEvent'
+    var evt = document.createEvent('CustomEvent');
     evt.initCustomEvent(type, true, true, null);
-    evt.pageX = evt.clientX = evt.x = x;
-    evt.pageY = evt.clientY = evt.y = y;
+    evt.pageX = evt.clientX = x;
+    evt.pageY = evt.clientY = y;
     return evt;
 };
 
@@ -37,17 +39,18 @@ DragSimulator.prototype.getElementOffset = function(element) {
 
 DragSimulator.prototype.getSVGElementOffset = function(element) {
     var elementCTM = element.getScreenCTM();
+    var elementBBox = element.tagName === 'svg' ? {x:0, y:0} : element.getBBox();
     return {
-        x: elementCTM.e,
-        y: elementCTM.f
+        x: elementCTM.e + elementBBox.x,
+        y: elementCTM.f + elementBBox.y
     };
 };
 
-DragSimulator.prototype.getElementPosition = function(element, parent) {
-    parent = parent || document.body;
+DragSimulator.prototype.getElementPosition = function(element, container) {
+    container = container || document.body;
     var elementPosition = this.getElementOffset(element);
-    var parentPosition = this.getElementOffset(parent);
-    return { x: elementPosition.x - parentPosition.x, y: elementPosition.y - parentPosition.y };
+    var containerPosition = this.getElementOffset(container);
+    return { x: elementPosition.x - containerPosition.x, y: elementPosition.y - containerPosition.y };
 };
 
 DragSimulator.prototype.dispatchAction = function(action, element, x, y) {
@@ -56,7 +59,9 @@ DragSimulator.prototype.dispatchAction = function(action, element, x, y) {
 };
 
 DragSimulator.prototype.start = function() {
-    this.center = this.getElementPosition(this.element, this.parent);
+    var elementRelative = this.getElementPosition(this.element, this.relative);
+    var relativeParent = this.getElementPosition(this.relative, this.container);
+    this.center = { x: elementRelative.x +relativeParent.x, y: elementRelative.y + relativeParent.y };
     this.dispatchAction(this.startEventType, this.element, this.center.x, this.center.y);
 };
 
@@ -108,7 +113,7 @@ DragSimulator.prototype.dragBy = function(dx, dy, cb) {
 };
 
 DragSimulator.prototype.dragTo = function(x, y, cb) {
-    var elementPosition = this.getElementPosition(this.element, this.parent);
+    var elementPosition = this.getElementPosition(this.element, this.relative);
     var dx = x - elementPosition.x;
     var dy = y - elementPosition.y;
     this.dragBy(dx, dy, cb);

@@ -29,7 +29,7 @@ describe('e2e', function () {
             timeline.destroy();
         }
 
-        timeline = new d3Timeline.D3Timeline({
+        window.timeline = timeline = new d3Timeline.D3Timeline({
             container: '#container',
             cullingX: false,
             cullingY: false
@@ -45,7 +45,7 @@ describe('e2e', function () {
             .toggleDrawing(false)
             .initialize()
             .setTimeRange(minDate, maxDate)
-            .setAvailableDimensions(innerWidth,innerHeight)
+            .setAvailableDimensions(800, 500)
             .toggleDrawing(true)
             .setData(data)
             .requestAnimationFrame(done);
@@ -118,7 +118,7 @@ describe('e2e', function () {
 
     });
 
-    describe('timeline-element drag', function () {
+    describe('timeline-element drag (with automatic scroll)', function () {
 
         var startSpy;
         var moveSpy;
@@ -133,7 +133,7 @@ describe('e2e', function () {
         before(function (done) {
 
             targetDate = new Date(+minDate + 3 * 60 * 60 * 1000);
-            targetRow = 10;
+            targetRow = timeline.scales.y.domain()[1]+3;
 
             startSpy = sinon.spy(function(element, timeline, d3Selection, d3Event, getTime, getRow) {
                 dragStartTimelineTime = getTime();
@@ -150,11 +150,41 @@ describe('e2e', function () {
 
             domElement = $('.timeline-element')[0];
 
+            // scroll to the bottom of the timeline
+            console.log('drag: going down');
             simulateTimelineDrag(timeline, domElement, targetRow, targetDate, function() {
 
-                done();
+                targetRow = timeline.scales.y.domain()[1] + 3;
 
-            }, 1000);
+                console.log('drag: keeping down');
+                simulateTimelineDrag(timeline, domElement, targetRow, targetDate, function() {
+
+                    targetRow = timeline.scales.y.domain()[1] - 5;
+
+                    console.log('drag: going up a little');
+                    // then continue scrolling, staying at the same place to keep automatic scroll scrolling
+                    simulateTimelineDrag(timeline, domElement, targetRow, targetDate, function() {
+
+                        targetRow = 42;
+
+                        console.log('drag: going up to the target');
+                        // then scroll up (it might still be in the automatic scroll area so we will have to adjust)
+                        simulateTimelineDrag(timeline, domElement, targetRow, targetDate, function() {
+
+                            // finally adjust with final drag
+                            requestAnimationFrame(function() {
+                                done();
+                            });
+
+                        }, 1000);
+
+                    }, 200);
+
+                }, 1500);
+
+            }, 100);
+
+
 
         });
 
@@ -165,20 +195,25 @@ describe('e2e', function () {
         });
 
         it('should emit timeline events (dragstart, drag, dragend)', function () {
-            startSpy.should.have.been.calledOnce;
+
+            startSpy.should.have.been.called;
             moveSpy.should.have.been.called;
-            stopSpy.should.have.been.calledOnce;
+            stopSpy.should.have.been.called;
+
         });
 
         it('should wait for a distance before starting drag', function () {
+
             dragStartTimelineTime.getTime().should.not.almost.equal(+domElement.__data__.start, -5);
         });
 
         it('should call the dragend listener with the right time', function () {
+
             dragEndTimelineTime.getTime().should.almost.equal(+targetDate, -5);
         });
 
         it('should call the dragend listener with the right time', function () {
+
             dragEndTimelineRow.should.almost.equal(+targetRow, -1);
         });
 

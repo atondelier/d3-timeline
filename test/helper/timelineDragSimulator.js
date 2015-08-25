@@ -6,11 +6,12 @@
  * @param row
  * @param column
  * @param done
+ * @param transitionDuration
  * @returns {DragSimulator}
  */
 function simulateTimelineDrag(timeline, domElement, row, column, done, transitionDuration) {
 
-    var dragSimulation = new DragSimulator(domElement, timeline.elements.body.node());
+    var dragSimulation = new DragSimulator(domElement, timeline.container.node(), timeline.elements.body.select('.timeline-boundingRect').node());
 
     if (transitionDuration) {
         dragSimulation.transitionDuration = transitionDuration;

@@ -41,6 +41,11 @@ module.exports = function(config) {
         },
         babelPreprocessor: {
             stage: function() { return 0; }
+        },
+        client: {
+            mocha: {
+                timeout : 20000 // 20 seconds
+            }
         }
     });
 
