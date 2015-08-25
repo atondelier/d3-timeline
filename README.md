@@ -119,6 +119,14 @@ To experiment improvements in the demo, run `grunt` then make your edits and ref
 To build the dist file before committing, run `grunt build`.
 
 
+## Tests
+
+As of now, there are only end to end tests, which ensure:
+ - elements are drawn at the correct place with the right dimensions
+ - elements are clickable and emit the corresponding event
+ - elements are draggable and emit the corresponding events.
+
+
 ## Features
 
  - pan X and Y while dragging

@@ -118,6 +118,28 @@ describe('e2e', function () {
 
     });
 
+    describe('timeline-element click', function () {
+
+        it('should emit the right event', function (done) {
+
+            var clickSpy = sinon.spy();
+
+            timeline.on('timeline:element:click', clickSpy);
+
+            var domElement = $('.timeline-element')[0];
+
+            simulateTimelineClick(timeline, domElement, function() {
+
+                clickSpy.should.have.been.calledWith(domElement.__data__);
+                timeline.removeListener('timeline:element:click', clickSpy);
+
+                done();
+
+            });
+        });
+
+    });
+
     describe('timeline-element drag (with automatic scroll)', function () {
 
         var startSpy;
@@ -131,6 +153,8 @@ describe('e2e', function () {
         var targetRow;
 
         before(function (done) {
+
+            console.log('[executing drag behavior before making assertions]');
 
             targetDate = new Date(+minDate + 3 * 60 * 60 * 1000);
             targetRow = timeline.scales.y.domain()[1]+3;

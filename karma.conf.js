@@ -23,16 +23,26 @@ module.exports = function(config) {
         colors: true,
         logLevel: config.LOG_INFO,
         files: [
-            'node_modules/chai-stats/chai-stats.js',
-            'node_modules/requestanimationframe/app/requestAnimationFrame.js',
-            'node_modules/karma-babel-preprocessor/node_modules/babel-core/browser-polyfill.js',
+            // styles
             { pattern: 'examples/booking/*.css', included: false },
+
+            // scripts
+            'test/lib/inherits.js',
+            'node_modules/chai-stats/chai-stats.js',
+            'node_modules/karma-babel-preprocessor/node_modules/babel-core/browser-polyfill.js',
+            'node_modules/requestanimationframe/app/requestAnimationFrame.js',
             'node_modules/jquery/dist/jquery.js',
             'node_modules/d3/d3.js',
             'dist/built.js',
 
+            // test lib & helpers
+            'test/helper/EventSimulator.js',
+            'test/helper/DragSimulator.js',
+            'test/helper/generateRandomData.js',
+            'test/helper/timelineClickSimulator.js',
+            'test/helper/timelineDragSimulator.js',
+
             // specs
-            'test/helper/*.js',
             'test/e2e.js'
         ],
         preprocessors: {
