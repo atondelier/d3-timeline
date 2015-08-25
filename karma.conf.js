@@ -11,6 +11,7 @@ module.exports = function(config) {
         frameworks: ['mocha', 'chai', 'sinon-chai', 'chai-jquery', 'chai-as-promised', 'chai-things'],
         plugins: [
             'karma-babel-preprocessor',
+            'karma-firefox-launcher',
             'karma-chrome-launcher',
             'karma-phantomjs-launcher',
             'karma-mocha-reporter',
