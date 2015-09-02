@@ -93,13 +93,6 @@ function handleDistributionMode(mode, keepExisting, animate) {
     randomizeMethodByMode[mode](randomDataRows, randomDataElements, keepExisting);
 
     timeline.setData(gdsData, animate ? 400 : 0);
-
-    timeline
-        .updateY()
-        .updateX()
-        .updateXAxisInterval()
-        .drawXAxis()
-        .drawYAxis();
 }
 
 

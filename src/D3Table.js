@@ -681,8 +681,8 @@ D3Table.prototype.setData = function(data, transitionDuration, animateY) {
 
     if (isSizeChanging || this._dataChangeCount === 1) {
         this
+            .updateXY(animateY ? transitionDuration : undefined)
             .updateXAxisInterval()
-            .updateY(animateY ? transitionDuration : undefined)
             .drawXAxis()
             .drawYAxis();
     }
@@ -735,6 +735,7 @@ D3Table.prototype.setAvailableDimensions = function(availableWidth, availableHei
     var isAvailableWidthChanging = _lastAvailableWidth !== this._lastAvailableWidth;
     var isAvailableHeightChanging = _lastAvailableHeight !== this._lastAvailableHeight;
 
+    debugger;
     if (isAvailableWidthChanging || isAvailableHeightChanging || this._dimensionsChangeCount === 2) {
         this
             .updateX()
@@ -804,12 +805,14 @@ D3Table.prototype.setAvailableHeight = function(availableHeight) {
  * Update elements which depends on x and y dimensions
  *
  * @param {Number} [transitionDuration]
+ * @returns {d3Timeline.D3Table}
  */
 D3Table.prototype.updateXY = function(transitionDuration) {
     this._preventEventEmission = true;
     this.updateX(transitionDuration);
     this._preventEventEmission = false;
     this.updateY(transitionDuration);
+    return this;
 };
 
 /**
@@ -818,8 +821,6 @@ D3Table.prototype.updateXY = function(transitionDuration) {
  * @param {Number} [transitionDuration]
  */
 D3Table.prototype.updateX = function(transitionDuration) {
-
-    this.container.attr('width', this.dimensions.width + this.margin.left + this.margin.right);
 
     this.scales.x
         .domain([this.minX, this.maxX])
@@ -833,10 +834,13 @@ D3Table.prototype.updateX = function(transitionDuration) {
         .translate(this.behaviors.zoom.translate())
         .scale(this.behaviors.zoom.scale());
 
-    this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect').attr('width', this.dimensions.width);
-    this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('width', this.dimensions.width);
-    this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('width', this.dimensions.width);
-    this.elements.clip.select('rect').attr('width', this.dimensions.width);
+    if (!this._preventDrawing) {
+        this.container.attr('width', this.dimensions.width + this.margin.left + this.margin.right);
+        this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect').attr('width', this.dimensions.width);
+        this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('width', this.dimensions.width);
+        this.container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('width', this.dimensions.width);
+        this.elements.clip.select('rect').attr('width', this.dimensions.width);
+    }
 
     this.emit(this.options.bemBlockName + ':resize', this, this.container, transitionDuration);
 
@@ -849,16 +853,6 @@ D3Table.prototype.updateX = function(transitionDuration) {
  * @param {Number} [transitionDuration]
  */
 D3Table.prototype.updateY = function (transitionDuration) {
-
-    var container = this.container;
-    var clip = this.elements.clip.select('rect');
-    var boundingRect = this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect');
-
-    if (transitionDuration) {
-        container = container.transition().duration(transitionDuration);
-        clip = clip.transition().duration(transitionDuration);
-        boundingRect = boundingRect.transition().duration(transitionDuration);
-    }
 
     var elementAmount = this.data.length;
 
@@ -874,19 +868,34 @@ D3Table.prototype.updateY = function (transitionDuration) {
     // update Y scale, axis and zoom behavior
     this.scales.y.domain(elementsRange).range([0, this.dimensions.height]);
 
+    // y scale has been updated so tell the zoom behavior to apply the previous translate and scale on it
     this.behaviors.zoomY.y(this.scales.y).translate(this._lastTranslate).scale(this._yScale);
 
     // and update X axis ticks height
     this.axises.x.innerTickSize(-this.dimensions.height);
 
-    // update svg height
-    container.attr('height',this.dimensions.height + this.margin.top + this.margin.bottom);
+    if (!this._preventDrawing) {
 
-    // update inner rect height
-    this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('height', this.dimensions.height);
-    boundingRect.attr('height', this.dimensions.height);
-    container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('height', this.dimensions.height);
-    clip.attr('height', this.dimensions.height);
+        var container = this.container;
+        var clip = this.elements.clip.select('rect');
+        var boundingRect = this.elements.body.select('rect.' + this.options.bemBlockName + '-boundingRect');
+
+        if (transitionDuration) {
+            container = container.transition().duration(transitionDuration);
+            clip = clip.transition().duration(transitionDuration);
+            boundingRect = boundingRect.transition().duration(transitionDuration);
+        }
+
+        // update svg height
+        container.attr('height', this.dimensions.height + this.margin.top + this.margin.bottom);
+
+        // update inner rect height
+        this.elements.body.select('rect.' + this.options.bemBlockName + '-contactRect').attr('height', this.dimensions.height);
+        boundingRect.attr('height', this.dimensions.height);
+        container.select('rect.' + this.options.bemBlockName + '-backgroundRect').attr('height', this.dimensions.height);
+        clip.attr('height', this.dimensions.height);
+
+    }
 
     this.stopElementTransition();
 
