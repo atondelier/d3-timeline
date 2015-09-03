@@ -735,7 +735,6 @@ D3Table.prototype.setAvailableDimensions = function(availableWidth, availableHei
     var isAvailableWidthChanging = _lastAvailableWidth !== this._lastAvailableWidth;
     var isAvailableHeightChanging = _lastAvailableHeight !== this._lastAvailableHeight;
 
-    debugger;
     if (isAvailableWidthChanging || isAvailableHeightChanging || this._dimensionsChangeCount === 2) {
         this
             .updateX()
