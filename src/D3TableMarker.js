@@ -410,9 +410,6 @@ D3TableMarker.prototype.show = function() {
 D3TableMarker.prototype.hide = function() {
     if (this.container) {
         this.container.style('display', 'none');
-        this.container.datum({
-            value: null
-        });
     }
 };
 
