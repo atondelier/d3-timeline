@@ -1551,6 +1551,10 @@ D3Table.prototype.cancelAnimationFrame = function(listener) {
     }
 };
 
+D3Table.prototype.cancelAllAnimationFrames = function() {
+    this._nextAnimationFrameHandlers.length = 0;
+};
+
 /**
  * Call a move forcing the drawings to fit within scale domains
  *
