@@ -736,9 +736,16 @@ D3Table.prototype.setAvailableDimensions = function(availableWidth, availableHei
     var isAvailableHeightChanging = _lastAvailableHeight !== this._lastAvailableHeight;
 
     if (isAvailableWidthChanging || isAvailableHeightChanging || this._dimensionsChangeCount === 2) {
+        if (isAvailableWidthChanging) {
+            this
+                .updateX()
+                .updateXAxisInterval();
+        }
+        if (isAvailableHeightChanging) {
+            this
+                .updateY();
+        }
         this
-            .updateX()
-            .updateXAxisInterval()
             .drawXAxis()
             .drawYAxis()
             .drawElements();
