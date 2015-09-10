@@ -860,13 +860,13 @@ D3Table.prototype.updateX = function(transitionDuration) {
  */
 D3Table.prototype.updateY = function (transitionDuration) {
 
-    var elementAmount = this.data.length;
+    var elementAmount = Math.max(this.data.length, 1);
 
     // have 1 more elemnt to force representing one more tick
     var elementsRange = [0, elementAmount];
 
     // compute new height
-    this.dimensions.height = Math.min(this.data.length * this.options.rowHeight, this._maxBodyHeight);
+    this.dimensions.height = Math.min(elementAmount * this.options.rowHeight, this._maxBodyHeight);
 
     // compute new Y scale
     this._yScale = this.options.rowHeight / this.dimensions.height * elementAmount;

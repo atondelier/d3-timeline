@@ -99,7 +99,7 @@ function handleDistributionMode(mode, keepExisting, animate) {
 /*
 Timeline instantiation and listeners
  */
-
+debugger;
 /**
  * @type {d3Timeline.D3Timeline}
  */
