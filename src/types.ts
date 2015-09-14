@@ -80,6 +80,7 @@ declare module d3Timeline {
 
     interface D3TableMarkerOptions {
         formatter?(data: D3TableElement): string;
+        insertionMethod: string;
         outerTickSize: number;
         tickPadding: number;
         roundPosition: boolean;

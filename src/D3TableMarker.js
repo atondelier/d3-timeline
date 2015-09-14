@@ -69,11 +69,15 @@ inherits(D3TableMarker, EventEmitter);
 D3TableMarker.prototype.LAYOUT_HORIZONTAL = 'horizontal';
 D3TableMarker.prototype.LAYOUT_VERTICAL = 'vertical';
 
+D3TableMarker.prototype.INSERT_ON_TOP = 'insertOnTop';
+D3TableMarker.prototype.INSERT_BEHIND = 'insertBehind';
+
 /**
  * @type {d3Timeline.D3TableMarkerOptions}
  */
 D3TableMarker.prototype.defaults = {
     formatter: function(d) { return d; },
+    insertionMethod: D3TableMarker.prototype.INSERT_ON_TOP,
     outerTickSize: 10,
     tickPadding: 3,
     roundPosition: false,
@@ -173,8 +177,20 @@ D3TableMarker.prototype.bindTable = function() {
         }).join(' ');
     }
 
-    this.container = this.table.container
-        .append('g')
+    switch(this.options.insertionMethod) {
+        case this.INSERT_BEHIND:
+            this.container = this.table.container
+                .insert('g', function() {
+                    return self.table.elements.body.node();
+                });
+            break;
+        case this.INSERT_ON_TOP:
+            this.container = this.table.container
+                .append('g');
+            break;
+    }
+
+    this.container
         .datum({
             value: this.value
         })

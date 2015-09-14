@@ -2,6 +2,7 @@
 
 import regeneratorRuntime from 'babel-runtime/regenerator';
 import D3Timeline from '../../src/D3Timeline';
+import D3TableMarker from '../../src/D3TableMarker';
 import D3TableMouseTracker from '../../src/D3TableMouseTracker';
 import D3TimelineTimeTracker from '../../src/D3TimelineTimeTracker';
 import D3TableValueTracker from '../../src/D3TableValueTracker';
@@ -99,7 +100,6 @@ function handleDistributionMode(mode, keepExisting, animate) {
 /*
 Timeline instantiation and listeners
  */
-debugger;
 /**
  * @type {d3Timeline.D3Timeline}
  */
@@ -269,7 +269,7 @@ var utcTimeFormatter = d3.time.format('%H:%M');
 
 var verticalMouseTracker = new D3TableMouseTracker({
     formatter: utcTimeFormatter,
-    layout: 'vertical'
+    layout: D3TableMouseTracker.prototype.LAYOUT_VERTICAL
 });
 
 verticalMouseTracker.setTable(timeline);
@@ -281,7 +281,8 @@ var horizontalMouseTracker = new D3TableMouseTracker({
         var row = timeline.data[d>>0];
         return row ? row.name : '';
     },
-    layout: 'horizontal',
+    layout: D3TableMouseTracker.prototype.LAYOUT_HORIZONTAL,
+    insertionMethod: D3TableMarker.prototype.INSERT_BEHIND,
     lineShape: 'rect',
     outerTickSize: 0
 });
@@ -327,7 +328,7 @@ var dragStartXLeftMarker = new D3TableValueTracker({
     outerTickSize: 30,
     tickPadding: 5,
     formatter: utcTimeFormatter,
-    layout: 'vertical',
+    layout: D3TableMouseTracker.prototype.LAYOUT_VERTICAL,
     bemModifiers: D3TableValueTracker.prototype.defaults.bemModifiers.concat(['elementBound', 'elementLeftBound'])
 });
 
@@ -339,7 +340,7 @@ var dragStartXRightMarker = new D3TableValueTracker({
     outerTickSize: 30,
     tickPadding: 5,
     formatter: utcTimeFormatter,
-    layout: 'vertical',
+    layout: D3TableMouseTracker.prototype.LAYOUT_VERTICAL,
     bemModifiers: D3TableValueTracker.prototype.defaults.bemModifiers.concat(['elementBound', 'elementRightBound'])
 });
 
