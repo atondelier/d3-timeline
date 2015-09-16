@@ -374,7 +374,7 @@ D3Table.prototype.initializeD3Instances = function() {
         .scale(this.scales.y)
         .orient('left')
         .tickFormat(function(d) {
-            return self.options.yAxisFormatter.call(self, self.data[(d|0)]);
+            return self.options.yAxisFormatter.call(self, self.data[(d|0)], d);
         })
         .outerTickSize(0);
 
