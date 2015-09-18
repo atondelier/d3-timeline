@@ -353,8 +353,22 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection, element)
     drag
         .on('dragstart', function(data) {
 
+            if (data._defaultPrevented) {
+                if (d3.event.sourceEvent) {
+                    d3.event.sourceEvent.preventDefault();
+                }
+                return;
+            }
+
             if (d3.event.sourceEvent) {
                 d3.event.sourceEvent.stopPropagation();
+                if (d3.event.sourceEvent.ctrlKey) {
+                    d3.event.sourceEvent.preventDefault();
+                }
+                if (!d3.event.sourceEvent.changedTouches && d3.event.sourceEvent.which !== 1) {
+                    d3.event.sourceEvent.preventDefault();
+                    return;
+                }
             }
 
             startDragPosition = dragPosition = d3.mouse(bodyNode);
@@ -368,6 +382,10 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection, element)
 
         })
         .on('drag', function(data) {
+
+            if (!data._defaultPrevented) {
+                return;
+            }
 
             dragPosition = d3.mouse(bodyNode);
 
@@ -439,6 +457,10 @@ D3BlockTable.prototype.bindDragAndDropOnSelection = function(selection, element)
 
         })
         .on('dragend', function(data) {
+
+            if (!data._defaultPrevented) {
+                return;
+            }
 
             self.cancelAnimationFrame(self._dragAF);
             self._dragAF = null;
