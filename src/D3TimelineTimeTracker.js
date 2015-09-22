@@ -26,7 +26,7 @@ var D3TimelineTimeTracker = d3Timeline.D3TimelineTimeTracker;
 inherits(D3TimelineTimeTracker, D3TableValueTracker);
 
 /**
- * @type {d3Timeline.D3TableMarkerOptions}
+ * @type {d3Timeline.D3TableStaticMarkerOptions}
  */
 D3TimelineTimeTracker.prototype.defaults = extend(true, {}, D3TableValueTracker.prototype.defaults, {
     bemBlockName: 'timelineMarker',

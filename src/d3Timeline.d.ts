@@ -78,7 +78,7 @@ declare module d3Timeline {
         xAxisStrokeWidth?(d: any): number;
     }
 
-    interface D3TableMarkerOptions {
+    interface D3TableStaticMarkerOptions {
         formatter?(data: D3TableElement): string;
         insertionMethod: string;
         outerTickSize: number;
@@ -91,7 +91,7 @@ declare module d3Timeline {
         rectThickness: number;
     }
 
-    interface D3TableMouseTrackerOptions extends D3TableMarkerOptions {
+    interface D3TableMouseTrackerOptions extends D3TableStaticMarkerOptions {
         listenToTouchEvents: boolean;
     }
 

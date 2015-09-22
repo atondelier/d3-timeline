@@ -2,10 +2,12 @@
 
 import regeneratorRuntime from 'babel-runtime/regenerator';
 import D3Timeline from '../../src/D3Timeline';
+import D3TableStaticMarker from '../../src/D3TableStaticMarker';
 import D3TableMarker from '../../src/D3TableMarker';
 import D3TableMouseTracker from '../../src/D3TableMouseTracker';
 import D3TimelineTimeTracker from '../../src/D3TimelineTimeTracker';
 import D3TableValueTracker from '../../src/D3TableValueTracker';
+import D3TableScrollBar from '../../src/D3TableScrollBar';
 import Faker from 'Faker';
 import dat from 'dat-gui';
 import _ from 'lodash';
@@ -322,6 +324,38 @@ $(window).resize(_.debounce(function() {
 }, 100));
 
 global.timeline = timeline;
+
+/*
+ Vertical scroll bar
+ */
+/**
+ * @type {d3Timeline.D3TableScrollBar}
+ */
+var verticalScrollBar = new D3TableScrollBar({
+    outerTickSize: 0,
+    tickPadding: 0,
+    layout: D3TableMouseTracker.prototype.LAYOUT_VERTICAL,
+    lineShape: 'rect',
+    rectThickness: 5
+});
+
+verticalScrollBar.setTable(timeline);
+
+/*
+ Horizontal scroll bar
+ */
+/**
+ * @type {d3Timeline.D3TableScrollBar}
+ */
+var horizontalScrollBar = new D3TableScrollBar({
+    outerTickSize: 0,
+    tickPadding: 0,
+    layout: D3TableMouseTracker.prototype.LAYOUT_HORIZONTAL,
+    lineShape: 'rect',
+    rectThickness: 5
+});
+
+horizontalScrollBar.setTable(timeline);
 
 
 var dragStartXLeftMarker = new D3TableValueTracker({
