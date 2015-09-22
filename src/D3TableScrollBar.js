@@ -121,6 +121,9 @@ D3TableScrollBar.prototype.moveSync = function() {
 
 };
 
+/**
+ * Update the scroll bar size
+ */
 D3TableScrollBar.prototype.updateSize = function() {
 
     var scale, start, end, min, quantity, domain, multiplier, positionRule, sizeRule;
@@ -134,6 +137,14 @@ D3TableScrollBar.prototype.updateSize = function() {
             domain = scale.domain();
             start = domain[0];
             end = domain[1];
+
+            if (start == 0 && end == data.length) {
+                this.hide();
+                return;
+            } else {
+                this.show();
+            }
+
             min = 0;
             quantity = data.length;
             multiplier = this.table.dimensions.height / quantity;
@@ -148,6 +159,14 @@ D3TableScrollBar.prototype.updateSize = function() {
             domain = scale.domain();
             start = domain[0];
             end = domain[1];
+
+            if (+start == +this.table.minX && +end == +this.table.maxX) {
+                this.hide();
+                return;
+            } else {
+                this.show();
+            }
+
             min = this.table.minX;
             quantity = +this.table.maxX - this.table.minX;
             multiplier = this.table.dimensions.width / quantity;
