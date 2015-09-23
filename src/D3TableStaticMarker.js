@@ -30,6 +30,11 @@ d3Timeline.D3TableStaticMarker = function D3TableStaticMarker(options) {
     this.table = null;
 
     /**
+     * @type {Boolean}
+     */
+    this.visible = true;
+
+    /**
      * @type {d3.Selection}
      */
     this.container = null;
@@ -348,7 +353,8 @@ D3TableStaticMarker.prototype.moveSync = function() {
  * Show the marker
  */
 D3TableStaticMarker.prototype.show = function() {
-    if (this.container) {
+    if (!this.visible && this.container) {
+        this.visible = true;
         this.container.style('display', '');
     }
 };
@@ -357,7 +363,8 @@ D3TableStaticMarker.prototype.show = function() {
  * Hide the marker
  */
 D3TableStaticMarker.prototype.hide = function() {
-    if (this.container) {
+    if (this.visible && this.container) {
+        this.visible = false;
         this.container.style('display', 'none');
     }
 };
