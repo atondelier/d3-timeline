@@ -353,7 +353,7 @@ D3TableStaticMarker.prototype.moveSync = function() {
  * Show the marker
  */
 D3TableStaticMarker.prototype.show = function() {
-    if (!this.visible && this.container) {
+    if (this.container) {
         this.visible = true;
         this.container.style('display', '');
     }
@@ -363,7 +363,7 @@ D3TableStaticMarker.prototype.show = function() {
  * Hide the marker
  */
 D3TableStaticMarker.prototype.hide = function() {
-    if (this.visible && this.container) {
+    if (this.container) {
         this.visible = false;
         this.container.style('display', 'none');
     }

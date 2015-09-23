@@ -139,10 +139,14 @@ D3TableScrollBar.prototype.updateSize = function() {
             end = domain[1];
 
             if (start == 0 && end == data.length) {
-                this.hide();
+                if (this.visible) {
+                    this.hide();
+                }
                 return;
             } else {
-                this.show();
+                if (!this.visible) {
+                    this.show();
+                }
             }
 
             min = 0;
