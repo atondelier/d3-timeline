@@ -94,3 +94,7 @@
 .tableMarker.tableMarker--valueTracker.tableMarker--elementBound .tableMarker-label {
     fill: red;
 }
+
+.tableMarker--scrollBar rect {
+    fill-opacity: 0.4;
+}
